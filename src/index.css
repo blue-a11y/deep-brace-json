@@ -98,10 +98,18 @@ body {
   height: 0;
   overflow: hidden;
 }
+/* ButtonGroup Separator 的 absolute 定位锚点(官方样式未提供) */
+.button-group {
+  position: relative;
+}
 /* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体) */
+.theme-tabs .tabs__list {
+  min-height: 28px !important;
+}
 .theme-tabs .tabs__tab {
-  padding: 0 7px !important;
+  padding: 0 6px !important;
   min-height: 26px !important;
+  line-height: 1 !important;
   gap: 4px;
 }
 .tree-children {
