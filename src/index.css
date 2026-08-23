@@ -150,6 +150,10 @@ body {
 .tree-nowrap {
   overflow-x: auto;
 }
+/* 不换行时内容撑开宽度触发水平滚动 */
+.tree-nowrap > div {
+  min-width: max-content;
+}
 .tree-nowrap .tree-line {
   white-space: nowrap;
   overflow-wrap: normal;

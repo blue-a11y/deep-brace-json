@@ -39,7 +39,7 @@ function LeafValue({ value }: { value: unknown }) {
 /* ---------- key 标签：属性名 / 数组索引 ---------- */
 
 function KeyLabel({ label }: { label: string }) {
-  return <span className="text-sky-700 dark:text-sky-300">"{label}"</span>
+  return <span className="shrink-0 text-sky-700 dark:text-sky-300">"{label}"</span>
 }
 
 /** 尾逗号(非末位条目),呈现 JSON 文本形态 */
@@ -77,7 +77,7 @@ export function TreeNode({
         {label !== null && (
           <>
             <KeyLabel label={label} />
-            <span className={PUNCT}>:</span>
+            <span className={`shrink-0 ${PUNCT}`}>:</span>
           </>
         )}
         <LeafValue value={value} />
