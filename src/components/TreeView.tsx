@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Button, Chip } from '@heroui/react'
+import { Button } from '@heroui/react'
 import { ChevronRight, Eye, FoldVertical, OctagonAlert, UnfoldVertical } from 'lucide-react'
 import { type NodePath, pathKey } from '../lib/parse'
 import { useStore } from '../store/useStore'
@@ -272,9 +272,6 @@ export function TreeView() {
         title="树形预览"
         extra={
           <>
-            <Chip size="sm" variant="soft" className="font-mono">
-              {stats.rootType} · {stats.nodes} 节点 · 深度 {stats.maxDepth}
-            </Chip>
             <Tip label="展开全部">
               <Button isIconOnly size="sm" variant="ghost" className="size-7 min-w-7" onPress={onExpandAll}>
                 <UnfoldVertical size={14} />
