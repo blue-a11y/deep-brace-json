@@ -131,10 +131,15 @@ body {
 .tree-children-inner {
   overflow: hidden;
   min-height: 0;
+  transition: opacity 160ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
 }
 /* 收起子树的行号隐藏:行号 ::before 绝对定位相对 tree-body,
    inner 的 overflow 裁剪不到它,须显式透明(随收起动画淡出) */
 .tree-children:not([data-open='true']) .tree-line::before {
+  opacity: 0;
+}
+/* 收起时内容淡出,让"裁剪感"变成"收拢感" */
+.tree-children:not([data-open='true']) .tree-children-inner {
   opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
