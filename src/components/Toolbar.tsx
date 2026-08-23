@@ -11,8 +11,6 @@ import {
 import { Tip } from './Tip'
 import { useStore } from '../store/useStore'
 
-const iconBtn = 'size-7 min-w-7'
-
 export function Toolbar() {
   const loadSample = useStore(s => s.loadSample)
   const toggleTheme = useStore(s => s.toggleTheme)
@@ -46,8 +44,9 @@ export function Toolbar() {
 
       <div className="ml-auto flex items-center gap-2">
         <Tip label="载入示例">
-          <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={loadSample}>
+          <Button size="sm" variant="ghost" onPress={loadSample}>
             <Sparkles size={15} />
+            <span className="hidden md:inline">示例</span>
           </Button>
         </Tip>
 
