@@ -103,11 +103,15 @@ body {
   position: relative;
 }
 /* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体) */
+.theme-tabs,
+.theme-tabs .tabs__list-container,
 .theme-tabs .tabs__list {
   min-height: 28px !important;
+  height: 28px !important;
 }
 .theme-tabs .tabs__tab {
   padding: 0 6px !important;
+  height: 26px !important;
   min-height: 26px !important;
   line-height: 1 !important;
   gap: 4px;

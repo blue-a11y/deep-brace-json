@@ -50,15 +50,15 @@ export function Toolbar() {
         </span>
         {/* 工具特性 */}
         <div className="hidden items-center gap-1.5 lg:flex">
-          <Chip color="success" variant="soft">
+          <Chip size="sm" color="success" variant="soft">
             <Check width={12} />
             <Chip.Label>JSON5</Chip.Label>
           </Chip>
-          <Chip color="accent" variant="soft">
+          <Chip size="sm" color="accent" variant="soft">
             <Zap width={12} />
             <Chip.Label>自动解析</Chip.Label>
           </Chip>
-          <Chip color="default" variant="soft">
+          <Chip size="sm" color="default" variant="soft">
             <Eye width={12} />
             <Chip.Label>树形预览</Chip.Label>
           </Chip>
@@ -80,7 +80,7 @@ export function Toolbar() {
       </HeroToolbar>
 
       <div className="ml-auto flex items-center gap-2">
-        <HeroToolbar aria-label="编辑操作">
+        <ButtonGroup size="sm" aria-label="编辑操作">
           <Tip label="载入示例">
             <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={loadSample}>
               <Sparkles size={15} />
@@ -96,7 +96,7 @@ export function Toolbar() {
               <Trash2 size={15} />
             </Button>
           </Tip>
-        </HeroToolbar>
+        </ButtonGroup>
 
         <Tabs
           className="theme-tabs"
