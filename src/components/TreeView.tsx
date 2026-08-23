@@ -277,7 +277,7 @@ function TreeChildren({
     >
       <div
         className="tree-children-inner border-l border-foreground/10"
-        style={{ paddingLeft: `${indent * 4}px` }}
+        style={{ paddingLeft: '12px' }}
       >
         {children}
         <div className={`tree-line ${PUNCT} py-px`}>
