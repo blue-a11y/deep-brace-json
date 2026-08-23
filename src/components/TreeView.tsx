@@ -290,7 +290,16 @@ export function TreeView() {
           <>
             <Tip label={copied ? '已复制' : '复制内容'}>
               <Button size="sm" variant="ghost" onPress={copy}>
-                {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                <span className="relative inline-grid place-items-center">
+                  <Copy
+                    size={14}
+                    className={`col-start-1 row-start-1 transition-all duration-200 ${!copied ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}
+                  />
+                  <Check
+                    size={14}
+                    className={`col-start-1 row-start-1 text-emerald-500 transition-all duration-200 ${copied ? 'scale-100 rotate-0 opacity-100' : 'scale-50 -rotate-90 opacity-0'}`}
+                  />
+                </span>
                 <span className="hidden md:inline">{copied ? '已复制' : '复制'}</span>
               </Button>
             </Tip>
