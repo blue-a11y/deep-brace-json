@@ -306,7 +306,16 @@ export function TreeView() {
                 variant="ghost"
                 onPress={() => setWrap(w => !w)}
               >
-                {wrap ? <WrapText size={14} /> : <ArrowLeftRight size={14} />}
+                <span className="relative inline-grid place-items-center">
+                  <WrapText
+                    size={14}
+                    className={`col-start-1 row-start-1 transition-all duration-200 ${wrap ? 'rotate-0 opacity-100' : 'rotate-90 opacity-0'}`}
+                  />
+                  <ArrowLeftRight
+                    size={14}
+                    className={`col-start-1 row-start-1 transition-all duration-200 ${!wrap ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`}
+                  />
+                </span>
                 <span className="hidden md:inline">{wrap ? '换行' : '不换行'}</span>
               </Button>
             </Tip>
@@ -316,7 +325,16 @@ export function TreeView() {
                 variant="ghost"
                 onPress={collapsed.size > 0 ? onExpandAll : onCollapseAll}
               >
-                {collapsed.size > 0 ? <UnfoldVertical size={14} /> : <FoldVertical size={14} />}
+                <span className="relative inline-grid place-items-center">
+                  <UnfoldVertical
+                    size={14}
+                    className={`col-start-1 row-start-1 transition-all duration-200 ${collapsed.size > 0 ? 'rotate-0 opacity-100' : 'rotate-180 opacity-0'}`}
+                  />
+                  <FoldVertical
+                    size={14}
+                    className={`col-start-1 row-start-1 transition-all duration-200 ${collapsed.size === 0 ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'}`}
+                  />
+                </span>
                 <span className="hidden md:inline">
                   {collapsed.size > 0 ? '展开' : '折叠'}
                 </span>
