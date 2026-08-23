@@ -198,19 +198,6 @@ function countLines(v: unknown): number {
 
 /* ---------- 子树容器:展开/收起动画 ---------- */
 
-/**
- * 行号跳变遮罩(区段级):counter 重排只影响该节点之后的兄弟行号,
- * 在跳变窗口内给节点根挂 line-jump,CSS 经 ~ 命中其后所有行的行号
- * 做淡出淡入;节点之前的行号不受影响。
- */
-let lineFadeTimer: ReturnType<typeof setTimeout> | undefined
-function fadeLinesAfter(el: Element | null | undefined, holdMs = 260) {
-  if (!el) return
-  el.classList.add('line-jump')
-  clearTimeout(lineFadeTimer)
-  lineFadeTimer = setTimeout(() => el.classList.remove('line-jump'), holdMs)
-}
-
 function TreeChildren({
   open,
   comma,
@@ -227,8 +214,7 @@ function TreeChildren({
   const wrapRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     if (open) {
-      // 首次展开:占位(+N)与真实行(N)切换,理论上号不变,遮罩兜底一帧闪动
-      fadeLinesAfter(wrapRef.current?.parentElement)
+      // 稳定编号下展开不产生行号跳变(占位与真实行号数一致),无需遮罩
       let raf2 = 0
       const raf1 = requestAnimationFrame(() => {
         raf2 = requestAnimationFrame(() => setEntered(true))
