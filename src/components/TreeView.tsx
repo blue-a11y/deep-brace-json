@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Button, Chip } from '@heroui/react'
 import { ChevronRight, Eye, FoldVertical, OctagonAlert, UnfoldVertical } from 'lucide-react'
 import { type NodePath, pathKey } from '../lib/parse'
@@ -113,6 +113,7 @@ export function TreeNode({
 
   const key = pathKey(path)
   const open = !collapsed.has(key)
+  const linesCount = useMemo(() => countLines(value), [value])
   const summary = isArray
     ? `${entries.length} 项`
     : `{ ${entries
@@ -153,6 +154,13 @@ export function TreeNode({
           </>
         )}
       </div>
+      {/* 未挂载的折叠子树:counter 占位补足行数,保证其后行号与展开时一致 */}
+      {!open && !touched.has(key) && (
+        <span
+          className="tree-line-holder"
+          style={{ counterIncrement: `treeline ${linesCount - 1}` }}
+        />
+      )}
       {/* 展开过的子树保留 DOM 由 grid 0fr→1fr 做折叠动画;从未展开的保持懒渲染 */}
       {(open || touched.has(key)) && (
         <TreeChildren open={open} comma={comma} closeB={closeB}>
@@ -174,7 +182,21 @@ export function TreeNode({
   )
 }
 
-/* ---------- 子树容器:展开/收起动画 + 行号跟随过渡 ---------- */
+/* ---------- 子树行数(用于折叠占位补号) ---------- */
+
+/** 该值展开后占的行数:容器=头+子孙+闭合,叶子=1,空容器=1 */
+function countLines(v: unknown): number {
+  if (Array.isArray(v)) {
+    return v.length === 0 ? 1 : 2 + v.reduce<number>((s, i) => s + countLines(i), 0)
+  }
+  if (v && typeof v === 'object') {
+    const vals = Object.values(v as Record<string, unknown>)
+    return vals.length === 0 ? 1 : 2 + vals.reduce<number>((s, i) => s + countLines(i), 0)
+  }
+  return 1
+}
+
+/* ---------- 子树容器:展开/收起动画 ---------- */
 
 /**
  * 行号跳变遮罩(区段级):counter 重排只影响该节点之后的兄弟行号,
@@ -202,15 +224,11 @@ function TreeChildren({
 }) {
   // entered: 首次渲染从 0fr 起始,双 rAF 后切 1fr 获得展开动画
   const [entered, setEntered] = useState(false)
-  // hidden: 收起动画完成后 display:none —— CSS counter 不再计数,
-  // 可见行号保持连续(编辑器式重排);重新展开时先恢复渲染再动画
-  const [hidden, setHidden] = useState(false)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
-    const nodeRoot = wrapRef.current?.parentElement
     if (open) {
-      setHidden(false)
-      fadeLinesAfter(nodeRoot) // 其后行号即将 +N,淡入前遮住跳变
+      // 首次展开:占位(+N)与真实行(N)切换,理论上号不变,遮罩兜底一帧闪动
+      fadeLinesAfter(wrapRef.current?.parentElement)
       let raf2 = 0
       const raf1 = requestAnimationFrame(() => {
         raf2 = requestAnimationFrame(() => setEntered(true))
@@ -221,20 +239,13 @@ function TreeChildren({
       }
     }
     setEntered(false)
-    // 收起动画中段开始淡出其后行号,220ms 释放 counter(跳变落在透明窗口内)
-    const fadeT = setTimeout(() => fadeLinesAfter(nodeRoot, 300), 120)
-    const t = setTimeout(() => setHidden(true), 220)
-    return () => {
-      clearTimeout(fadeT)
-      clearTimeout(t)
-    }
   }, [open])
+  // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
   return (
     <div
       ref={wrapRef}
       className="tree-children ml-[7px] pl-3"
       data-open={entered}
-      style={hidden ? { display: 'none' } : undefined}
     >
       <div className="tree-children-inner border-l border-foreground/10 pl-3">
         {children}

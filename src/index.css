@@ -91,6 +91,13 @@ body {
 .line-jump ~ * .tree-line::before {
   opacity: 0;
 }
+/* 折叠占位:不可见但参与 counter 计数(补足折叠子树的行数) */
+.tree-line-holder {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
 .tree-children {
   display: grid;
   grid-template-rows: 0fr;
