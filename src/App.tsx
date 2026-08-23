@@ -24,7 +24,7 @@ export default function App() {
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const paneClass =
-    'h-full overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-foreground/5'
+    'h-full overflow-hidden rounded-2xl bg-white dark:bg-foreground/5'
   const editorPane = (
     <div className={paneClass}>
       <EditorPane />
