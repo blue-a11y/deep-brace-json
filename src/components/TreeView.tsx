@@ -288,7 +288,7 @@ export function TreeView() {
           </>
         }
       />
-      <div className="tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 py-3">
+      <div className="tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 py-1.5">
         <TreeNode label={null} value={data} path={[]} collapsed={collapsed} touched={touched} onToggle={onToggle} />
       </div>
     </section>
