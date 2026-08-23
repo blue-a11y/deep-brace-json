@@ -54,22 +54,30 @@ body {
 }
 
 /*
- * 树形预览:行号(CSS counter,折叠后自动重排)与折叠动画(grid 0fr→1fr)。
+ * 树形预览:行号(统一左侧一列,CSS counter,折叠后编号稳定)与折叠动画(grid 0fr→1fr)。
  */
 .tree-body {
+  position: relative;
   counter-reset: treeline;
 }
 .tree-line {
   counter-increment: treeline;
+  padding-left: 3.5ch;
+  cursor: default;
+}
+.tree-line--toggle {
+  cursor: pointer;
 }
 .tree-line::before {
   content: counter(treeline);
-  min-width: 2.5ch;
-  margin-right: 8px;
+  position: absolute;
+  left: 8px;
+  width: 3ch;
   text-align: right;
   color: color-mix(in oklab, var(--color-foreground) 32%, transparent);
   font-variant-numeric: tabular-nums;
   user-select: none;
+  pointer-events: none;
 }
 .tree-line:hover::before {
   color: color-mix(in oklab, var(--color-foreground) 55%, transparent);

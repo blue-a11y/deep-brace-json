@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Button, Chip } from '@heroui/react'
 import { ChevronRight, Eye, FoldVertical, OctagonAlert, UnfoldVertical } from 'lucide-react'
 import { type NodePath, pathKey } from '../lib/parse'
@@ -109,20 +109,24 @@ export function TreeNode({ label, value, path, collapsed, touched, onToggle }: T
         .map(([k]) => k)
         .join(', ')}${entries.length > 3 ? ', …' : ''} }`
 
+  const toggleRow = () => {
+    // 拖选文本时的 click 不是折叠意图
+    if (window.getSelection()?.toString()) return
+    onToggle(key)
+  }
+
   return (
     <div className="font-mono text-[13px] leading-6">
-      <div className="tree-line flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5">
-        <button
-          type="button"
-          onClick={() => onToggle(key)}
-          className="grid size-4 shrink-0 translate-y-1 place-items-center rounded text-foreground/40 hover:text-foreground"
-          aria-label={open ? '折叠' : '展开'}
-        >
+      <div
+        className="tree-line tree-line--toggle flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5"
+        onClick={toggleRow}
+      >
+        <span className="grid size-4 shrink-0 translate-y-1 place-items-center text-foreground/40">
           <ChevronRight
             size={12}
             className={`transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
           />
-        </button>
+        </span>
         {label !== null && (
           <>
             <KeyLabel label={label} />
@@ -132,36 +136,49 @@ export function TreeNode({ label, value, path, collapsed, touched, onToggle }: T
         <span className={PUNCT}>{openB}</span>
         {!open && (
           <>
-            <button
-              type="button"
-              onClick={() => onToggle(key)}
-              className="truncate text-left text-foreground/45 hover:text-foreground/75"
-            >
-              {summary}
-            </button>
+            <span className="truncate text-left text-foreground/45">{summary}</span>
             <span className={PUNCT}>{closeB}</span>
           </>
         )}
       </div>
       {/* 展开过的子树保留 DOM 由 grid 0fr→1fr 做折叠动画;从未展开的保持懒渲染 */}
       {(open || touched.has(key)) && (
-        <div className="tree-children ml-[7px] pl-3" data-open={open}>
-          <div className="tree-children-inner border-l border-foreground/10 pl-3">
-            {entries.map(([k, v]) => (
-              <TreeNode
-                key={String(k)}
-                label={k}
-                value={v}
-                path={[...path, k]}
-                collapsed={collapsed}
-                touched={touched}
-                onToggle={onToggle}
-              />
-            ))}
-            <div className={`tree-line ${PUNCT} py-px`}>{closeB}</div>
-          </div>
-        </div>
+        <TreeChildren open={open}>
+          {entries.map(([k, v]) => (
+            <TreeNode
+              key={String(k)}
+              label={k}
+              value={v}
+              path={[...path, k]}
+              collapsed={collapsed}
+              touched={touched}
+              onToggle={onToggle}
+            />
+          ))}
+          <div className={`tree-line ${PUNCT} py-px`}>{closeB}</div>
+        </TreeChildren>
       )}
+    </div>
+  )
+}
+
+/* ---------- 子树容器:首次挂载从 0fr 过渡展开 ---------- */
+
+function TreeChildren({ open, children }: { open: boolean; children: ReactNode }) {
+  const [entered, setEntered] = useState(false)
+  useEffect(() => {
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setEntered(true))
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
+  }, [])
+  return (
+    <div className="tree-children ml-[7px] pl-3" data-open={open && entered}>
+      <div className="tree-children-inner border-l border-foreground/10 pl-3">{children}</div>
     </div>
   )
 }
