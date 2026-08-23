@@ -110,6 +110,11 @@ body {
   overflow: hidden;
   min-height: 0;
 }
+/* 收起子树的行号隐藏:行号 ::before 绝对定位相对 tree-body,
+   inner 的 overflow 裁剪不到它,须显式透明(随收起动画淡出) */
+.tree-children:not([data-open='true']) .tree-line::before {
+  opacity: 0;
+}
 @media (prefers-reduced-motion: reduce) {
   .tree-children {
     transition: none;
