@@ -272,12 +272,12 @@ function TreeChildren({
     <div
       ref={wrapRef}
       className="tree-children"
-      style={{ marginLeft: '28px', paddingLeft: `${indent * 5}px` }}
+      style={{ marginLeft: '28px', paddingLeft: `${indent * 4}px` }}
       data-open={entered}
     >
       <div
         className="tree-children-inner border-l border-foreground/10"
-        style={{ paddingLeft: `${indent * 5}px` }}
+        style={{ paddingLeft: `${indent * 4}px` }}
       >
         {children}
         <div className={`tree-line ${PUNCT} py-px`}>
