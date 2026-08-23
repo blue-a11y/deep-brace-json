@@ -45,7 +45,7 @@ export default function App() {
   )
 
   return (
-    <div className="flex h-full flex-col gap-3 bg-background p-3">
+    <div className="flex h-full flex-col gap-2 bg-background p-3">
       <Toolbar />
 
       {isDesktop ? (
