@@ -102,6 +102,19 @@ body {
 .button-group {
   position: relative;
 }
+/* 缩进 Select 小尺寸(官方 Trigger 默认 min-h-9 太高) */
+.indent-select .select__trigger {
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  gap: 4px;
+}
+.indent-select .select__indicator svg {
+  width: 12px;
+  height: 12px;
+}
+
 /* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体;item 官方为 h-8,整体缩一档,
    容器高度不强制,自适应 item 避免错位) */
 .theme-tabs .tabs__list {
