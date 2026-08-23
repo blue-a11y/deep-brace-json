@@ -266,13 +266,18 @@ function TreeChildren({
     setEntered(false)
   }, [open])
   // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
+  const indent = useStore(s => s.indent)
   return (
     <div
       ref={wrapRef}
-      className="tree-children ml-[7px] pl-3"
+      className="tree-children"
+      style={{ paddingLeft: `${indent * 5}px` }}
       data-open={entered}
     >
-      <div className="tree-children-inner border-l border-foreground/10 pl-3">
+      <div
+        className="tree-children-inner border-l border-foreground/10"
+        style={{ paddingLeft: `${indent * 5}px` }}
+      >
         {children}
         <div className={`tree-line ${PUNCT} py-px`}>
           {closeB}
