@@ -58,7 +58,7 @@ let autoParseTimer: ReturnType<typeof setTimeout> | undefined
 const applyOk = (r: ParseOk) => ({
   result: r as ParseResult,
   dirty: false,
-  collapsed: collectContainerPaths(r.data, 'deep'),
+  collapsed: new Set<string>(),
   touched: new Set<string>(),
 })
 
