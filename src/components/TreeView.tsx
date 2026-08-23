@@ -68,11 +68,16 @@ function CopyValueButton({ value }: { value: unknown }) {
       className="ml-1.5 inline-grid size-5 shrink-0 translate-y-[3px] cursor-pointer place-items-center rounded text-foreground/35 opacity-0 transition-all hover:text-foreground group-hover:opacity-100"
       onClick={copy}
     >
-      {copied ? (
-        <Check size={11} className="text-emerald-500" />
-      ) : (
-        <Copy size={11} />
-      )}
+      <span className="relative col-start-1 row-start-1 inline-grid place-items-center">
+        <Copy
+          size={11}
+          className={`col-start-1 row-start-1 transition-all duration-200 ${!copied ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}
+        />
+        <Check
+          size={11}
+          className={`col-start-1 row-start-1 text-emerald-500 transition-all duration-200 ${copied ? 'scale-100 rotate-0 opacity-100' : 'scale-50 -rotate-90 opacity-0'}`}
+        />
+      </span>
     </button>
   )
 }
