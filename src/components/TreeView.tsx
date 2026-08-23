@@ -162,22 +162,36 @@ export function TreeNode({ label, value, path, collapsed, touched, onToggle }: T
   )
 }
 
-/* ---------- 子树容器:首次挂载从 0fr 过渡展开 ---------- */
+/* ---------- 子树容器:展开/收起动画 + 收起后释放行号 ---------- */
 
 function TreeChildren({ open, children }: { open: boolean; children: ReactNode }) {
+  // entered: 首次渲染从 0fr 起始,双 rAF 后切 1fr 获得展开动画
   const [entered, setEntered] = useState(false)
+  // hidden: 收起动画完成后 display:none —— CSS counter 不再计数,
+  // 可见行号保持连续(编辑器式重排);重新展开时先恢复渲染再动画
+  const [hidden, setHidden] = useState(false)
   useEffect(() => {
-    let raf2 = 0
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setEntered(true))
-    })
-    return () => {
-      cancelAnimationFrame(raf1)
-      cancelAnimationFrame(raf2)
+    if (open) {
+      setHidden(false)
+      let raf2 = 0
+      const raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => setEntered(true))
+      })
+      return () => {
+        cancelAnimationFrame(raf1)
+        cancelAnimationFrame(raf2)
+      }
     }
-  }, [])
+    setEntered(false)
+    const t = setTimeout(() => setHidden(true), 220)
+    return () => clearTimeout(t)
+  }, [open])
   return (
-    <div className="tree-children ml-[7px] pl-3" data-open={open && entered}>
+    <div
+      className="tree-children ml-[7px] pl-3"
+      data-open={entered}
+      style={hidden ? { display: 'none' } : undefined}
+    >
       <div className="tree-children-inner border-l border-foreground/10 pl-3">{children}</div>
     </div>
   )
