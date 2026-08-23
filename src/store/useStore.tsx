@@ -141,8 +141,14 @@ export const useStore = create<JsonLensState>()(
 
       collapseAll: () => {
         const { result } = get()
-        // 不清空 touched:保留 DOM 让所有已展开子树走 grid 收起过渡(而非瞬间卸载)
-        if (result?.ok) set({ collapsed: collectContainerPaths(result.data, 'all') })
+        // 把所有路径补进 touched,确保子树保留 DOM 走 grid 收起过渡
+        // (默认展开的节点未经 toggleCollapse,touched 里没有它们的 key)
+        if (result?.ok) {
+          const collapsed = collectContainerPaths(result.data, 'all')
+          const touched = new Set(get().touched)
+          for (const key of collapsed) touched.add(key)
+          set({ collapsed, touched })
+        }
       },
       }
     },
