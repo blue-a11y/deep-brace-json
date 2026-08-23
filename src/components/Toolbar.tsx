@@ -57,7 +57,7 @@ export function Toolbar() {
 
         {/* 全局缩进 */}
         <Select
-          className="indent-select w-[76px]"
+          className="indent-select w-[110px]"
           aria-label="缩进"
           selectedKey={String(indent)}
           onSelectionChange={k => setIndent(Number(k))}
