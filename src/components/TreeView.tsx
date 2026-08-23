@@ -45,6 +45,38 @@ function KeyLabel({ label }: { label: string }) {
 /** 尾逗号(非末位条目),呈现 JSON 文本形态 */
 const Comma = () => <span className={PUNCT}>,</span>
 
+/* ---------- 行内复制按钮(hover 显示) ---------- */
+
+function CopyValueButton({ value }: { value: unknown }) {
+  const [copied, setCopied] = useState(false)
+  const copy = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      toast.success(typeof value === 'string' ? '已复制值' : '已复制节点')
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* 剪贴板不可用时静默 */
+    }
+  }
+  return (
+    <button
+      type="button"
+      aria-label="复制"
+      className="ml-1.5 inline-grid size-5 shrink-0 translate-y-[3px] cursor-pointer place-items-center rounded text-foreground/35 opacity-0 transition-all hover:text-foreground group-hover:opacity-100"
+      onClick={copy}
+    >
+      {copied ? (
+        <Check size={11} className="text-emerald-500" />
+      ) : (
+        <Copy size={11} />
+      )}
+    </button>
+  )
+}
+
 /* ---------- 树节点（递归） ---------- */
 
 interface TreeNodeProps {
@@ -72,7 +104,7 @@ export function TreeNode({
 
   if (!isArray && !isObject) {
     return (
-      <div className="tree-line flex items-baseline gap-1.5 rounded px-0.5 py-px font-mono text-[13px] leading-6 hover:bg-foreground/5">
+      <div className="tree-line group flex items-baseline gap-1.5 rounded px-0.5 py-px font-mono text-[13px] leading-6 hover:bg-foreground/5">
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
@@ -82,6 +114,7 @@ export function TreeNode({
         )}
         <LeafValue value={value} />
         {comma && <Comma />}
+        <CopyValueButton value={value} />
       </div>
     )
   }
@@ -130,7 +163,7 @@ export function TreeNode({
   return (
     <div className="font-mono text-[13px] leading-6">
       <div
-        className="tree-line tree-line--toggle flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5"
+        className="tree-line tree-line--toggle group flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5"
         onClick={toggleRow}
       >
         <span className="grid size-4 shrink-0 self-center place-items-center text-foreground/40">
@@ -153,6 +186,7 @@ export function TreeNode({
             {comma && <Comma />}
           </>
         )}
+        <CopyValueButton value={value} />
       </div>
       {/* 未挂载的折叠子树:counter 占位补足行数,保证其后行号与展开时一致 */}
       {!open && !touched.has(key) && (
