@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Button, Chip } from '@heroui/react'
 import { ChevronRight, Eye, FoldVertical, OctagonAlert, UnfoldVertical } from 'lucide-react'
 import { type NodePath, pathKey } from '../lib/parse'
@@ -38,26 +38,35 @@ function LeafValue({ value }: { value: unknown }) {
 
 /* ---------- key 标签：属性名 / 数组索引 ---------- */
 
-function KeyLabel({ label }: { label: string | number }) {
-  return typeof label === 'number' ? (
-    <span className="text-zinc-500 dark:text-zinc-400">[{label}]</span>
-  ) : (
-    <span className="text-sky-700 dark:text-sky-300">{label}</span>
-  )
+function KeyLabel({ label }: { label: string }) {
+  return <span className="text-sky-700 dark:text-sky-300">"{label}"</span>
 }
+
+/** 尾逗号(非末位条目),呈现 JSON 文本形态 */
+const Comma = () => <span className={PUNCT}>,</span>
 
 /* ---------- 树节点（递归） ---------- */
 
 interface TreeNodeProps {
-  label: string | number | null
+  label: string | null
   value: unknown
   path: NodePath
   collapsed: Set<string>
   touched: Set<string>
+  /** 本条目之后还有兄弟条目时显示尾逗号 */
+  comma?: boolean
   onToggle: (key: string) => void
 }
 
-export function TreeNode({ label, value, path, collapsed, touched, onToggle }: TreeNodeProps) {
+export function TreeNode({
+  label,
+  value,
+  path,
+  collapsed,
+  touched,
+  comma,
+  onToggle,
+}: TreeNodeProps) {
   const isArray = Array.isArray(value)
   const isObject = !isArray && value !== null && typeof value === 'object'
 
@@ -72,6 +81,7 @@ export function TreeNode({ label, value, path, collapsed, touched, onToggle }: T
           </>
         )}
         <LeafValue value={value} />
+        {comma && <Comma />}
       </div>
     )
   }
@@ -96,6 +106,7 @@ export function TreeNode({ label, value, path, collapsed, touched, onToggle }: T
           {openB}
           {closeB}
         </span>
+        {comma && <Comma />}
       </div>
     )
   }
@@ -121,7 +132,7 @@ export function TreeNode({ label, value, path, collapsed, touched, onToggle }: T
         className="tree-line tree-line--toggle flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5"
         onClick={toggleRow}
       >
-        <span className="grid size-4 shrink-0 translate-y-1 place-items-center text-foreground/40">
+        <span className="grid size-4 shrink-0 self-center place-items-center text-foreground/40">
           <ChevronRight
             size={12}
             className={`transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
@@ -138,41 +149,68 @@ export function TreeNode({ label, value, path, collapsed, touched, onToggle }: T
           <>
             <span className="truncate text-left text-foreground/45">{summary}</span>
             <span className={PUNCT}>{closeB}</span>
+            {comma && <Comma />}
           </>
         )}
       </div>
       {/* 展开过的子树保留 DOM 由 grid 0fr→1fr 做折叠动画;从未展开的保持懒渲染 */}
       {(open || touched.has(key)) && (
-        <TreeChildren open={open}>
-          {entries.map(([k, v]) => (
+        <TreeChildren open={open} comma={comma} closeB={closeB}>
+          {entries.map(([k, v], i) => (
             <TreeNode
               key={String(k)}
-              label={k}
+              label={isArray ? null : String(k)}
               value={v}
               path={[...path, k]}
               collapsed={collapsed}
               touched={touched}
+              comma={i < entries.length - 1}
               onToggle={onToggle}
             />
           ))}
-          <div className={`tree-line ${PUNCT} py-px`}>{closeB}</div>
         </TreeChildren>
       )}
     </div>
   )
 }
 
-/* ---------- 子树容器:展开/收起动画 + 收起后释放行号 ---------- */
+/* ---------- 子树容器:展开/收起动画 + 行号跟随过渡 ---------- */
 
-function TreeChildren({ open, children }: { open: boolean; children: ReactNode }) {
+/**
+ * 行号跳变遮罩(区段级):counter 重排只影响该节点之后的兄弟行号,
+ * 在跳变窗口内给节点根挂 line-jump,CSS 经 ~ 命中其后所有行的行号
+ * 做淡出淡入;节点之前的行号不受影响。
+ */
+let lineFadeTimer: ReturnType<typeof setTimeout> | undefined
+function fadeLinesAfter(el: Element | null | undefined, holdMs = 260) {
+  if (!el) return
+  el.classList.add('line-jump')
+  clearTimeout(lineFadeTimer)
+  lineFadeTimer = setTimeout(() => el.classList.remove('line-jump'), holdMs)
+}
+
+function TreeChildren({
+  open,
+  comma,
+  closeB,
+  children,
+}: {
+  open: boolean
+  comma?: boolean
+  closeB: string
+  children: ReactNode
+}) {
   // entered: 首次渲染从 0fr 起始,双 rAF 后切 1fr 获得展开动画
   const [entered, setEntered] = useState(false)
   // hidden: 收起动画完成后 display:none —— CSS counter 不再计数,
   // 可见行号保持连续(编辑器式重排);重新展开时先恢复渲染再动画
   const [hidden, setHidden] = useState(false)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
+    const nodeRoot = wrapRef.current?.parentElement
     if (open) {
       setHidden(false)
+      fadeLinesAfter(nodeRoot) // 其后行号即将 +N,淡入前遮住跳变
       let raf2 = 0
       const raf1 = requestAnimationFrame(() => {
         raf2 = requestAnimationFrame(() => setEntered(true))
@@ -183,16 +221,28 @@ function TreeChildren({ open, children }: { open: boolean; children: ReactNode }
       }
     }
     setEntered(false)
+    // 收起动画中段开始淡出其后行号,220ms 释放 counter(跳变落在透明窗口内)
+    const fadeT = setTimeout(() => fadeLinesAfter(nodeRoot, 300), 120)
     const t = setTimeout(() => setHidden(true), 220)
-    return () => clearTimeout(t)
+    return () => {
+      clearTimeout(fadeT)
+      clearTimeout(t)
+    }
   }, [open])
   return (
     <div
+      ref={wrapRef}
       className="tree-children ml-[7px] pl-3"
       data-open={entered}
       style={hidden ? { display: 'none' } : undefined}
     >
-      <div className="tree-children-inner border-l border-foreground/10 pl-3">{children}</div>
+      <div className="tree-children-inner border-l border-foreground/10 pl-3">
+        {children}
+        <div className={`tree-line ${PUNCT} py-px`}>
+          {closeB}
+          {comma && <Comma />}
+        </div>
+      </div>
     </div>
   )
 }

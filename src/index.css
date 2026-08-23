@@ -82,6 +82,15 @@ body {
 .tree-line:hover::before {
   color: color-mix(in oklab, var(--color-foreground) 55%, transparent);
 }
+/* 行号透明过渡:counter 跳变(折叠释放/展开占用)时,仅折叠点之后的行号淡出再淡入 */
+.tree-line::before {
+  transition: opacity 140ms ease;
+}
+/* 其后兄弟自身为行(叶子)或其内部含行(容器)都命中 */
+.line-jump ~ .tree-line::before,
+.line-jump ~ * .tree-line::before {
+  opacity: 0;
+}
 .tree-children {
   display: grid;
   grid-template-rows: 0fr;
