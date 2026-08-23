@@ -71,6 +71,9 @@ body {
 .tree-line::before {
   content: counter(treeline);
   position: absolute;
+  /* 锚定首行:换行成多行的行,行号始终对齐第一行文本 */
+  top: 0;
+  line-height: 24px;
   left: 8px;
   width: 3ch;
   text-align: right;
