@@ -280,7 +280,12 @@ function TreeChildren({
         style={{ paddingLeft: `${12 + indent * 4}px` }}
       >
         {children}
-        <div className={`tree-line ${PUNCT} py-px`}>
+        {/* 闭合括号:负边距抵消子树缩进,与头部行的开括号列对齐 */}
+        <div
+          className={`tree-line ${PUNCT} flex items-baseline gap-1 py-px`}
+          style={{ marginLeft: `-${43 + indent * 4}px` }}
+        >
+          <span className="w-4 shrink-0" />
           {closeB}
           {comma && <Comma />}
         </div>
