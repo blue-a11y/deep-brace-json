@@ -98,6 +98,12 @@ body {
   height: 0;
   overflow: hidden;
 }
+/* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体) */
+.theme-tabs .tabs__tab {
+  padding: 0 7px !important;
+  min-height: 26px !important;
+  gap: 4px;
+}
 .tree-children {
   display: grid;
   grid-template-rows: 0fr;
