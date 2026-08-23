@@ -7,8 +7,6 @@ import { cmDark, cmLight } from '../lib/cmTheme'
 import { useStore } from '../store/useStore'
 import { Tip } from './Tip'
 
-const iconBtn = 'size-7 min-w-7'
-
 export function EditorPane() {
   const input = useStore(s => s.input)
   const dark = useStore(s => s.dark)
@@ -23,13 +21,15 @@ export function EditorPane() {
         <span className="font-medium">编辑器</span>
         <div className="ml-auto flex items-center gap-0.5">
           <Tip label="格式化 · JSON5 → 标准 JSON">
-            <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={format}>
+            <Button size="sm" variant="ghost" onPress={format}>
               <Braces size={14} />
+              <span className="hidden md:inline">格式化</span>
             </Button>
           </Tip>
           <Tip label="压缩为单行">
-            <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={minify}>
+            <Button size="sm" variant="ghost" onPress={minify}>
               <Minimize2 size={14} />
+              <span className="hidden md:inline">压缩</span>
             </Button>
           </Tip>
         </div>

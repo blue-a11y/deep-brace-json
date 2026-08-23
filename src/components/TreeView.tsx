@@ -288,24 +288,27 @@ export function TreeView() {
         extra={
           <>
             <Tip label={copied ? '已复制' : '复制内容'}>
-              <Button isIconOnly size="sm" variant="ghost" className="size-7 min-w-7" onPress={copy}>
+              <Button size="sm" variant="ghost" onPress={copy}>
                 {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                <span className="hidden md:inline">{copied ? '已复制' : '复制'}</span>
               </Button>
             </Tip>
             <Tip label="清空">
-              <Button isIconOnly size="sm" variant="ghost" className="size-7 min-w-7" onPress={clear}>
+              <Button size="sm" variant="ghost" onPress={clear}>
                 <Trash2 size={14} />
+                <span className="hidden md:inline">清空</span>
               </Button>
             </Tip>
             <Tip label={collapsed.size > 0 ? '展开全部' : '折叠全部'}>
               <Button
-                isIconOnly
                 size="sm"
                 variant="ghost"
-                className="size-7 min-w-7"
                 onPress={collapsed.size > 0 ? onExpandAll : onCollapseAll}
               >
                 {collapsed.size > 0 ? <UnfoldVertical size={14} /> : <FoldVertical size={14} />}
+                <span className="hidden md:inline">
+                  {collapsed.size > 0 ? '展开' : '折叠'}
+                </span>
               </Button>
             </Tip>
           </>
