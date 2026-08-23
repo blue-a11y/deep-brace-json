@@ -71,8 +71,8 @@ export function Toolbar() {
             <Braces size={14} />
             <span className="hidden sm:inline">格式化</span>
           </Button>
-          <ButtonGroup.Separator />
           <Button onPress={minify}>
+            <ButtonGroup.Separator />
             <Minimize2 size={14} />
             <span className="hidden sm:inline">压缩</span>
           </Button>
