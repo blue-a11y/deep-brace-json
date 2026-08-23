@@ -49,6 +49,10 @@ interface JsonLensState {
   collapseAll: () => void
 }
 
+/** 输入防抖自动解析(静默,不弹 toast,避免每次输入打扰) */
+const AUTO_PARSE_DELAY = 300
+let autoParseTimer: ReturnType<typeof setTimeout> | undefined
+
 const applyOk = (r: ParseOk) => ({
   result: r as ParseResult,
   dirty: false,
@@ -86,7 +90,11 @@ export const useStore = create<JsonLensState>()(
         if (input.trim()) get().parse(true)
       },
 
-      editInput: value => set({ input: value, dirty: true }),
+      editInput: value => {
+        set({ input: value, dirty: true })
+        clearTimeout(autoParseTimer)
+        autoParseTimer = setTimeout(() => get().parse(true), AUTO_PARSE_DELAY)
+      },
 
       parse: (quiet = false) => {
         const r = parseInput(get().input)

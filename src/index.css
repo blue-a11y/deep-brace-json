@@ -21,9 +21,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* CodeMirror 撑满面板 */
+/* CodeMirror 撑满面板:约束 theme/editor 高度链(父级 flex 分配高度下
+   height:100% 需两层都显式声明,否则被内容自然高撑破,滚动失效) */
+.cm-theme,
 .cm-editor {
   height: 100%;
+}
+.cm-scroller {
+  overflow: auto;
+}
+.cm-editor {
   font-size: 13px;
 }
 .cm-editor.cm-focused {

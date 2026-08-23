@@ -29,7 +29,7 @@ export function EditorPane() {
             highlightSelectionMatches: false,
           }}
           onChange={editInput}
-          placeholder="粘贴 JSON / JSON5，⌘↵ 解析…"
+          placeholder="粘贴 JSON / JSON5，输入即自动解析…"
         />
       </div>
     </section>

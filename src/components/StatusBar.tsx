@@ -13,14 +13,14 @@ export function StatusBar() {
   let text: string
   let cls: string
   if (!result) {
-    text = '就绪 · ⌘/Ctrl + ↵ 解析'
+    text = '就绪'
     cls = 'text-foreground/50'
   } else if (!result.ok) {
     const pos = result.line ? ` · ${result.line}:${result.column}` : ''
     text = `解析失败${pos} — ${result.message}`
     cls = 'text-red-500'
   } else if (dirty) {
-    text = '内容已修改 · ⌘↵ 重新解析'
+    text = '输入中 · 自动解析'
     cls = 'text-amber-500'
   } else if (result.degraded) {
     const len = (result.data as string).length

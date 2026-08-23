@@ -7,7 +7,6 @@ import {
   Copy,
   Minimize2,
   Moon,
-  Play,
   Sparkles,
   Sun,
   Trash2,
@@ -18,7 +17,6 @@ import { useStore } from '../store/useStore'
 const iconBtn = 'size-7 min-w-7'
 
 export function Toolbar() {
-  const parse = useStore(s => s.parse)
   const format = useStore(s => s.format)
   const minify = useStore(s => s.minify)
   const loadSample = useStore(s => s.loadSample)
@@ -53,11 +51,7 @@ export function Toolbar() {
       </div>
 
       <ButtonGroup size="sm" variant="secondary">
-        <Button variant="primary" onPress={() => parse()}>
-          <Play size={14} />
-          解析
-        </Button>
-        <Button onPress={format}>
+        <Button variant="primary" onPress={format}>
           <Braces size={14} />
           <span className="hidden sm:inline">格式化</span>
         </Button>

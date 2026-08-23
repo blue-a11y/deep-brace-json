@@ -13,7 +13,6 @@ export default function App() {
   const result = useStore(s => s.result)
   const dark = useStore(s => s.dark)
   const bootstrap = useStore(s => s.bootstrap)
-  const parse = useStore(s => s.parse)
 
   // 对 persist 恢复的输入补一次解析
   useEffect(bootstrap, [bootstrap])
@@ -21,17 +20,6 @@ export default function App() {
   // 主题同步到 <html>（切换时 store 已即时应用，这里兜底首帧与恢复）
   useEffect(() => applyTheme(dark), [dark])
 
-  // ⌘/Ctrl + Enter 解析
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault()
-        parse()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [parse])
 
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
@@ -45,9 +33,9 @@ export default function App() {
   const previewPane = (
     <div className={paneClass}>
       {!input.trim() ? (
-        <EmptyPane hint="输入内容后按 ⌘↵ 解析，结果在这里展开成一棵树" />
+        <EmptyPane hint="在左侧输入内容，这里实时展开成树" />
       ) : !result ? (
-        <EmptyPane hint="按 ⌘↵ 开始解析" />
+        <EmptyPane hint="等待输入…" />
       ) : !result.ok ? (
         <ErrorPane message={result.message} line={result.line} column={result.column} />
       ) : (
