@@ -15,7 +15,7 @@
     <script>
       // 首屏同步主题，避免闪烁；从 zustand persist 的存储中读取，默认暗色
       try {
-        var dark = true
+        var dark = false
         var raw = localStorage.getItem('json-lens:store')
         if (raw) {
           var st = JSON.parse(raw)

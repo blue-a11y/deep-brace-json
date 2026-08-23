@@ -86,7 +86,7 @@ export const useStore = create<JsonLensState>()(
       dirty: false,
       collapsed: new Set<string>(),
       touched: new Set<string>(),
-      dark: true,
+      dark: false,
 
       bootstrap: () => {
         const { input, result } = get()
