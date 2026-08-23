@@ -272,7 +272,7 @@ function TreeChildren({
     <div
       ref={wrapRef}
       className="tree-children"
-      style={{ paddingLeft: `${indent * 5}px` }}
+      style={{ marginLeft: '28px', paddingLeft: `${indent * 5}px` }}
       data-open={entered}
     >
       <div
