@@ -5,7 +5,10 @@
 
 ## 1. 现象
 
-使用官方文档的标准用法（`<Toast.Provider />` 自闭合挂载 + 模块级 `toast()` 调用），Toast 功能正常（弹出、堆叠、超时消失、关闭按钮），但 **toast 的进出场没有任何动画**——入场瞬间出现、退场瞬间消失。
+使用官方文档的标准用法（`<Toast.Provider />` 自闭合挂载 + 模块级 `toast()` 调用），Toast 功能正常（弹出、堆叠、超时消失、关闭按钮）。动画表现：
+
+- **入场：无动画**（toast 瞬间出现）——单条、多条均如此
+- **退场：动画正常**（自然超时关闭、手动点击关闭，单条与多条堆叠均正常）——肉眼可见滑出效果
 
 官方源码中定义的平移入退场动画（`@heroui/styles/dist/components/toast.css`）：
 
@@ -21,7 +24,7 @@
 @keyframes toast-slide-bottom-out { to   { translate: 0 100%; opacity: 0 } }
 ```
 
-在线上（https://heroui.com/en/docs/react/components/toast）部分环境下可见，但在下述测试环境中（包括**官方文档站本身**）均未生效。
+注意 `:only-child` 伪类——**平移 keyframes 只在 new/old 伪元素"单独存在"时应用**（即快照中该元素只出现在一侧）。这是理解本问题的关键，见 §5。
 
 ## 2. 环境
 
@@ -34,15 +37,14 @@
 | 浏览器 | Chrome（macOS 14，arm64），`document.startViewTransition` 可用，`prefers-reduced-motion: false` |
 | 已安装依赖 | tw-animate-css、client-only、全部 5 个 peer（react-aria 系） |
 
-## 3. 官方文档站实测（重要）
+## 3. 官方文档站实测
 
-在官方站 https://heroui.com/en/docs/react/components/toast 的 demo 中点击 "Show toast"，用连续帧采样（55ms 间隔）检测：
+在官方站 https://heroui.com/en/docs/react/components/toast 的 demo 中点击 "Show toast"：
 
-- **单条入场**：toast 元素 `getBoundingClientRect().bottom` 与 `computedStyle.opacity` 从第一帧起即为终值（`y=-16, op=1.00`），无任何过渡——**瞬现**
-- **退场（4s 超时）**：静止数帧后元素直接从 DOM 移除——**瞬消**
-- `document.getAnimations()` 中 **view transition 动画数量为 0**
+- **入场**：toast 元素 `getBoundingClientRect().bottom` 与 `computedStyle.opacity` 从第一帧起即为终值（`y=-16, op=1.00`），无任何过渡——**瞬现**（与本项目环境一致）
+- **退场**：元素本体的 rect/opacity 同样静止后移除——**但肉眼可见滑出动画**。原因：退场动画渲染在 VT 的 `::view-transition-old` **伪元素快照层**（元素本体不参与），元素级采样天然看不到。前期调研曾据此误判"退场也无动画"，实际退场正常。
 
-即：**在测试机的 Chrome 上，官方文档站自身的 Toast 也没有动画**。（有其他环境反馈能看到平移动画，疑似与浏览器版本/渲染条件相关，见 §5-6。）
+> 检测方法论：VT 动画不能用元素级 rect/opacity 采样判定，需用 `document.getAnimations()` 枚举 `::view-transition-*` 伪元素动画，或直接肉眼确认。
 
 ## 4. 测试矩阵（全部实验与证据）
 
@@ -66,7 +68,7 @@
 - `document.getAnimations()` 能看到 `::view-transition-group/new/old(toast--xxxx)` 伪元素动画对象被创建，UA 动画名（`-ua-view-transition-fade-in` 等）存在
 - 但 **`getComputedStyle(documentElement, '::view-transition-new(...)')` 的实际 opacity 无渐变**（快照无差异），且连续帧采样 rect/opacity 均为终值——动画对象在跑，画面没在动
 
-## 5. 机制分析（源码级）
+## 5. 机制分析（源码级，含根因链）
 
 HeroUI Toast 动画链路（`@heroui/react/dist/components/toast/`）：
 
@@ -77,16 +79,20 @@ toast() → ToastQueue.add
   → VT 捕获新旧快照 → ::view-transition-* 伪元素动画（CSS keyframes 在 @heroui/styles 的 toast.css）
 ```
 
-- 每条 toast 有唯一 inline `view-transition-name`（toast.tsx 的 `viewTransitionName`），堆叠定位用 inline `translate/scale`，溢出/退场标记 `data-hidden`（opacity: 0）
-- 官方源码大量处理 `"Transition was skipped"` 异常（tail-extending promise chain 串行化 VT），说明该链路对时序高度敏感
+**根因链（为什么只有入场失效）**：
 
-**推测根因**：`flushSync(fn)` 未将 React DOM 更新稳定地落在 VT 的 update 回调窗口内（新快照与旧快照相同 → 伪元素动画无视觉差异）。这与 React 渲染调度的微妙时序相关，可能随 React 补丁版本 / 渲染管线（dev runtime、编译产物）变化，解释了不同环境表现不一致的现象。
+1. `flushSync(fn)` 未能将新 toast 的 DOM 写入稳定限制在 VT update 回调窗口内（React 19 渲染调度在部分环境下与 `startViewTransition` 回调的时序错位）——**实测证据**：入场瞬间 `document.getAnimations()` 中 `::view-transition-new(toast--xxx)` 与 `::view-transition-old(toast--xxx)` **同时出现且都在推进**（Next dev 下曾采样到 5 个伪元素动画对象各 @25ms），说明**旧快照捕获时 DOM 里已经存在新 toast**——新旧快照内容相同。
+2. 官方 CSS 的平移 keyframes 带 `:only-child` 条件（见 §1）：new/old **成对**时不命中 → 入场退到 UA 默认 cross-fade；而 cross-fade 的新旧快照内容相同 → **视觉零变化**（瞬现）。
+3. **退场方向相反**（元素从"有"到"无"）：old 快照必然包含元素、new 快照必然不含（无论 flushSync 时序如何，元素终将被移除且不在新快照）→ `:only-child` 命中 `toast-slide-bottom-out` → 滑出动画正常。
+4. 已排除的假设：非 React 事件上下文调用（evaluate 直调 `toast()`）入场同样无动画 → 不是"事件内 flushSync"专属问题；React 19.2.6 / 19.2.8、React Compiler、Vite/Next、dev/生产均不影响 → 时序错位在更底层的 React DOM 更新调度。
+
+**一句话结论**：入场动画失效 = flushSync 时序错位（新 DOM 提前落入旧快照）× `:only-child` 选择器条件（成对即不应用平移）× 快照相同（cross-fade 无视觉）三者叠加；退场不受影响。
 
 ## 6. 待确认项（建议接手人优先做）
 
-1. 在**能看到动画的浏览器环境**中复现官方站，dump `document.getAnimations()` 与 `::view-transition-new` 的 computed opacity 渐变，确认为 VT 伪元素动画
-2. 对比能看到/不能看到动画的两台机器的 Chrome 版本、GPU 合成状态（`chrome://gpu`）、`--enable-features` 标志
-3. 向 HeroUI 提 issue 附上本报告与最小复现（Vite + 官方示例原样 + 依赖齐全，约 10 行代码）
+1. 在**入场动画可见的环境**中，于 toast 出现瞬间枚举 `document.getAnimations()`：若只出现 `::view-transition-new` 而无 `::view-transition-old`（伪元素单独存在、`:only-child` 命中），则证实 §5 根因链
+2. 对比入场有/无动画的环境的 React DOM 更新时序（可在 `startViewTransition` 回调内打 `MutationObserver` 断点，验证新 toast 节点插入是否发生在回调内）
+3. 向 HeroUI 提 issue 附本报告：建议官方在 `wrapUpdate` 的 update 回调内显式确保 DOM 落位（或去掉 `:only-child` 条件、为 new/old 成对时也提供平移动画）
 
 ## 7. 临时替代方案（已验证，存于本仓库 git 历史）
 
