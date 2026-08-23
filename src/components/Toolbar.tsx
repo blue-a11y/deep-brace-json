@@ -3,7 +3,6 @@ import { Button, Chip, ListBox, Select, Tabs } from '@heroui/react'
 import {
   Check,
   Eye,
-  Indent,
   Moon,
   Sparkles,
   Sun,
@@ -57,13 +56,12 @@ export function Toolbar() {
 
         {/* 全局缩进 */}
         <Select
-          className="indent-select w-[110px]"
+          className="w-[100px]"
           aria-label="缩进"
           selectedKey={String(indent)}
           onSelectionChange={k => setIndent(Number(k))}
         >
           <Select.Trigger>
-            <Indent size={13} className="shrink-0 text-foreground/50" />
             <Select.Value />
             <Select.Indicator />
           </Select.Trigger>

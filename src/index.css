@@ -102,24 +102,6 @@ body {
 .button-group {
   position: relative;
 }
-/* 缩进 Select 小尺寸 + ghost 风格(与周围按钮一致) */
-.indent-select .select__trigger {
-  min-height: 28px !important;
-  height: 28px !important;
-  padding: 0 6px !important;
-  font-size: 12px !important;
-  gap: 4px;
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-.indent-select .select__trigger:hover {
-  background: color-mix(in oklab, var(--color-foreground) 5%, transparent) !important;
-}
-.indent-select .select__indicator svg {
-  width: 12px;
-  height: 12px;
-}
 
 /* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体;item 官方为 h-8,整体缩一档,
    容器高度不强制,自适应 item 避免错位) */
