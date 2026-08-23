@@ -102,12 +102,16 @@ body {
 .button-group {
   position: relative;
 }
-/* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体) */
-.theme-tabs,
-.theme-tabs .tabs__list-container,
+/* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体;item 官方为 h-8,整体缩一档,
+   容器高度不强制,自适应 item 避免错位) */
 .theme-tabs .tabs__list {
-  min-height: 28px !important;
-  height: 28px !important;
+  padding: 2px !important;
+}
+.theme-tabs .tabs__tab {
+  height: 26px !important;
+  min-height: 0 !important;
+  padding: 0 7px !important;
+  line-height: 1 !important;
 }
 .theme-tabs .tabs__tab {
   padding: 0 6px !important;
