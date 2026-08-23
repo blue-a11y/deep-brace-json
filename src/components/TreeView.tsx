@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Button, toast } from '@heroui/react'
-import { Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical } from 'lucide-react'
+import { Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical, WrapText, ArrowLeftRight } from 'lucide-react'
 import { type NodePath, pathKey } from '../lib/parse'
 import { useStore } from '../store/useStore'
 import { Tip } from './Tip'
@@ -267,6 +267,7 @@ export function TreeView() {
   const onExpandAll = useStore(s => s.expandAll)
   const onCollapseAll = useStore(s => s.collapseAll)
   const [copied, setCopied] = useState(false)
+  const [wrap, setWrap] = useState(true)
 
   const copy = async () => {
     try {
@@ -299,6 +300,16 @@ export function TreeView() {
                 <span className="hidden md:inline">清空</span>
               </Button>
             </Tip>
+            <Tip label={wrap ? '不换行(左右滚动)' : '自动换行'}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onPress={() => setWrap(w => !w)}
+              >
+                {wrap ? <WrapText size={14} /> : <ArrowLeftRight size={14} />}
+                <span className="hidden md:inline">{wrap ? '换行' : '不换行'}</span>
+              </Button>
+            </Tip>
             <Tip label={collapsed.size > 0 ? '展开全部' : '折叠全部'}>
               <Button
                 size="sm"
@@ -314,7 +325,9 @@ export function TreeView() {
           </>
         }
       />
-      <div className="tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 py-1.5">
+      <div
+        className={`tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 py-1.5 ${wrap ? 'tree-wrap' : 'tree-nowrap'}`}
+      >
         <TreeNode label={null} value={data} path={[]} collapsed={collapsed} touched={touched} onToggle={onToggle} />
       </div>
     </section>

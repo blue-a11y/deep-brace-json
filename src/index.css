@@ -142,6 +142,19 @@ body {
 .tree-children:not([data-open='true']) .tree-children-inner {
   opacity: 0;
 }
+/* 树形预览换行/不换行模式 */
+.tree-wrap .tree-line {
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+.tree-nowrap {
+  overflow-x: auto;
+}
+.tree-nowrap .tree-line {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
 @media (prefers-reduced-motion: reduce) {
   .tree-children {
     transition: none;
