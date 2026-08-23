@@ -1,10 +1,8 @@
-import { Button, ButtonGroup, Chip, Tabs, Toolbar as HeroToolbar } from '@heroui/react'
+import { Button, Chip, Tabs } from '@heroui/react'
 
 import {
-  Braces,
   Check,
   Eye,
-  Minimize2,
   Moon,
   Sparkles,
   Sun,
@@ -16,8 +14,6 @@ import { useStore } from '../store/useStore'
 const iconBtn = 'size-7 min-w-7'
 
 export function Toolbar() {
-  const format = useStore(s => s.format)
-  const minify = useStore(s => s.minify)
   const loadSample = useStore(s => s.loadSample)
   const toggleTheme = useStore(s => s.toggleTheme)
   const dark = useStore(s => s.dark)
@@ -33,42 +29,27 @@ export function Toolbar() {
         </span>
         {/* 工具特性 */}
         <div className="hidden items-center gap-1.5 lg:flex">
-          <Chip size="sm" color="success" >
+          <Chip size="sm" color="success">
             <Check width={12} />
             <Chip.Label>JSON5</Chip.Label>
           </Chip>
-          <Chip size="sm" color="accent" >
+          <Chip size="sm" color="accent">
             <Zap width={12} />
             <Chip.Label>自动解析</Chip.Label>
           </Chip>
-          <Chip size="sm" color="default" >
+          <Chip size="sm" color="default">
             <Eye width={12} />
             <Chip.Label>树形预览</Chip.Label>
           </Chip>
         </div>
       </div>
 
-      <HeroToolbar aria-label="格式化操作">
-        <ButtonGroup size="sm" variant="secondary">
-          <Button onPress={format}>
-            <Braces size={14} />
-            <span className="hidden sm:inline">格式化</span>
-          </Button>
-          <Button onPress={minify}>
-            <ButtonGroup.Separator />
-            <Minimize2 size={14} />
-            <span className="hidden sm:inline">压缩</span>
-          </Button>
-        </ButtonGroup>
-      </HeroToolbar>
-
       <div className="ml-auto flex items-center gap-2">
-        
-          <Tip label="载入示例">
-            <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={loadSample}>
-              <Sparkles size={15} />
-            </Button>
-          </Tip>
+        <Tip label="载入示例">
+          <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={loadSample}>
+            <Sparkles size={15} />
+          </Button>
+        </Tip>
 
         <Tabs
           className="theme-tabs"

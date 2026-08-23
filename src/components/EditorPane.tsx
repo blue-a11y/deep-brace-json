@@ -1,21 +1,38 @@
 import CodeMirror from '@uiw/react-codemirror'
 import { EditorView } from '@codemirror/view'
 import { json } from '@codemirror/lang-json'
-import { FileJson } from 'lucide-react'
+import { Braces, FileJson, Minimize2 } from 'lucide-react'
+import { Button } from '@heroui/react'
 import { cmDark, cmLight } from '../lib/cmTheme'
 import { useStore } from '../store/useStore'
+import { Tip } from './Tip'
+
+const iconBtn = 'size-7 min-w-7'
 
 export function EditorPane() {
   const input = useStore(s => s.input)
   const dark = useStore(s => s.dark)
   const editInput = useStore(s => s.editInput)
+  const format = useStore(s => s.format)
+  const minify = useStore(s => s.minify)
 
   return (
     <section className="flex h-full min-h-0 flex-col">
       <div className="flex h-11 shrink-0 items-center gap-2 px-4 text-xs text-foreground/55">
         <FileJson size={13} />
         <span className="font-medium">编辑器</span>
-        <span className="ml-auto font-mono text-[11px] text-foreground/40">JSON5 语法</span>
+        <div className="ml-auto flex items-center gap-0.5">
+          <Tip label="格式化 · JSON5 → 标准 JSON">
+            <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={format}>
+              <Braces size={14} />
+            </Button>
+          </Tip>
+          <Tip label="压缩为单行">
+            <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={minify}>
+              <Minimize2 size={14} />
+            </Button>
+          </Tip>
+        </div>
       </div>
       <div className="min-h-0 flex-1">
         <CodeMirror
