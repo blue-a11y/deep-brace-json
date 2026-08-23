@@ -36,6 +36,8 @@ interface JsonLensState {
   /** 曾展开过的容器路径:保留 DOM 以获得折叠动画(未展开过的保持懒渲染) */
   touched: Set<string>
   dark: boolean
+  /** 缩进宽度(空格数),影响格式化输出与树形预览嵌套缩进 */
+  indent: number
 
   /** 挂载时调用：对 persist 恢复的 input 补一次解析（静默） */
   bootstrap: () => void
@@ -46,6 +48,7 @@ interface JsonLensState {
   loadSample: () => void
   clear: () => void
   toggleTheme: () => void
+  setIndent: (n: number) => void
   toggleCollapse: (key: string) => void
   expandAll: () => void
   collapseAll: () => void
@@ -87,6 +90,7 @@ export const useStore = create<JsonLensState>()(
       collapsed: new Set<string>(),
       touched: new Set<string>(),
       dark: false,
+      indent: 2,
 
       bootstrap: () => {
         const { input, result } = get()
@@ -107,7 +111,7 @@ export const useStore = create<JsonLensState>()(
         if (!quiet) notifyResult(r)
       },
 
-      format: () => rewrite(d => JSON.stringify(d, null, 2), '已格式化 · JSON5 → 标准 JSON'),
+      format: () => rewrite(d => JSON.stringify(d, null, get().indent), '已格式化 · JSON5 → 标准 JSON'),
       minify: () => rewrite(d => JSON.stringify(d), '已压缩为单行'),
 
       loadSample: () => {
@@ -126,6 +130,8 @@ export const useStore = create<JsonLensState>()(
         set({ dark })
         applyTheme(dark)
       },
+
+      setIndent: n => set({ indent: n }),
 
       toggleCollapse: key =>
         set(s => {
@@ -156,7 +162,7 @@ export const useStore = create<JsonLensState>()(
       name: LS_KEY,
       storage: createJSONStorage(() => localStorage),
       // 只持久化输入与主题；result/collapsed 由重新解析得到
-      partialize: s => ({ input: s.input, dark: s.dark }),
+      partialize: s => ({ input: s.input, dark: s.dark, indent: s.indent }),
     },
   ),
 )
