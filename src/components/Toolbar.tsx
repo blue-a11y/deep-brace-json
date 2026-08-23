@@ -33,15 +33,15 @@ export function Toolbar() {
         </span>
         {/* 工具特性 */}
         <div className="hidden items-center gap-1.5 lg:flex">
-          <Chip size="sm" color="success" variant="soft">
+          <Chip size="sm" color="success" >
             <Check width={12} />
             <Chip.Label>JSON5</Chip.Label>
           </Chip>
-          <Chip size="sm" color="accent" variant="soft">
+          <Chip size="sm" color="accent" >
             <Zap width={12} />
             <Chip.Label>自动解析</Chip.Label>
           </Chip>
-          <Chip size="sm" color="default" variant="soft">
+          <Chip size="sm" color="default" >
             <Eye width={12} />
             <Chip.Label>树形预览</Chip.Label>
           </Chip>
