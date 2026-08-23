@@ -53,16 +53,17 @@ interface TreeNodeProps {
   value: unknown
   path: NodePath
   collapsed: Set<string>
+  touched: Set<string>
   onToggle: (key: string) => void
 }
 
-export function TreeNode({ label, value, path, collapsed, onToggle }: TreeNodeProps) {
+export function TreeNode({ label, value, path, collapsed, touched, onToggle }: TreeNodeProps) {
   const isArray = Array.isArray(value)
   const isObject = !isArray && value !== null && typeof value === 'object'
 
   if (!isArray && !isObject) {
     return (
-      <div className="flex items-baseline gap-1.5 rounded px-0.5 py-px font-mono text-[13px] leading-6 hover:bg-foreground/5">
+      <div className="tree-line flex items-baseline gap-1.5 rounded px-0.5 py-px font-mono text-[13px] leading-6 hover:bg-foreground/5">
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
@@ -83,7 +84,7 @@ export function TreeNode({ label, value, path, collapsed, onToggle }: TreeNodePr
 
   if (entries.length === 0) {
     return (
-      <div className="flex items-baseline gap-1.5 px-0.5 py-px font-mono text-[13px] leading-6">
+      <div className="tree-line flex items-baseline gap-1.5 px-0.5 py-px font-mono text-[13px] leading-6">
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
@@ -110,7 +111,7 @@ export function TreeNode({ label, value, path, collapsed, onToggle }: TreeNodePr
 
   return (
     <div className="font-mono text-[13px] leading-6">
-      <div className="flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5">
+      <div className="tree-line flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5">
         <button
           type="button"
           onClick={() => onToggle(key)}
@@ -142,19 +143,23 @@ export function TreeNode({ label, value, path, collapsed, onToggle }: TreeNodePr
           </>
         )}
       </div>
-      {open && (
-        <div className="ml-[7px] border-l border-foreground/10 pl-3">
-          {entries.map(([k, v]) => (
-            <TreeNode
-              key={String(k)}
-              label={k}
-              value={v}
-              path={[...path, k]}
-              collapsed={collapsed}
-              onToggle={onToggle}
-            />
-          ))}
-          <div className={`${PUNCT} py-px`}>{closeB}</div>
+      {/* 展开过的子树保留 DOM 由 grid 0fr→1fr 做折叠动画;从未展开的保持懒渲染 */}
+      {(open || touched.has(key)) && (
+        <div className="tree-children ml-[7px] pl-3" data-open={open}>
+          <div className="tree-children-inner border-l border-foreground/10 pl-3">
+            {entries.map(([k, v]) => (
+              <TreeNode
+                key={String(k)}
+                label={k}
+                value={v}
+                path={[...path, k]}
+                collapsed={collapsed}
+                touched={touched}
+                onToggle={onToggle}
+              />
+            ))}
+            <div className={`tree-line ${PUNCT} py-px`}>{closeB}</div>
+          </div>
         </div>
       )}
     </div>
@@ -177,6 +182,7 @@ export function TreeView() {
   const data = useStore(s => s.result?.ok ? s.result.data : null)
   const stats = useStore(s => (s.result?.ok ? s.result.stats : null))
   const collapsed = useStore(s => s.collapsed)
+  const touched = useStore(s => s.touched)
   const onToggle = useStore(s => s.toggleCollapse)
   const onExpandAll = useStore(s => s.expandAll)
   const onCollapseAll = useStore(s => s.collapseAll)
@@ -204,8 +210,8 @@ export function TreeView() {
           </>
         }
       />
-      <div className="tree-scroll min-h-0 flex-1 overflow-auto px-4 py-3">
-        <TreeNode label={null} value={data} path={[]} collapsed={collapsed} onToggle={onToggle} />
+      <div className="tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 py-3">
+        <TreeNode label={null} value={data} path={[]} collapsed={collapsed} touched={touched} onToggle={onToggle} />
       </div>
     </section>
   )

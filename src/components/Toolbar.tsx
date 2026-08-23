@@ -51,7 +51,7 @@ export function Toolbar() {
       </div>
 
       <ButtonGroup size="sm" variant="secondary">
-        <Button variant="primary" onPress={format}>
+        <Button onPress={format}>
           <Braces size={14} />
           <span className="hidden sm:inline">格式化</span>
         </Button>

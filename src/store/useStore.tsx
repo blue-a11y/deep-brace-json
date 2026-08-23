@@ -33,6 +33,8 @@ interface JsonLensState {
   result: ParseResult | null
   dirty: boolean
   collapsed: Set<string>
+  /** 曾展开过的容器路径:保留 DOM 以获得折叠动画(未展开过的保持懒渲染) */
+  touched: Set<string>
   dark: boolean
 
   /** 挂载时调用：对 persist 恢复的 input 补一次解析（静默） */
@@ -57,6 +59,7 @@ const applyOk = (r: ParseOk) => ({
   result: r as ParseResult,
   dirty: false,
   collapsed: collectContainerPaths(r.data, 'deep'),
+  touched: new Set<string>(),
 })
 
 /** 解析成功后把标准 JSON 写回编辑器；失败则只更新错误 */
@@ -82,6 +85,7 @@ export const useStore = create<JsonLensState>()(
       result: null,
       dirty: false,
       collapsed: new Set<string>(),
+      touched: new Set<string>(),
       dark: true,
 
       bootstrap: () => {
@@ -128,14 +132,16 @@ export const useStore = create<JsonLensState>()(
           const collapsed = new Set(s.collapsed)
           if (collapsed.has(key)) collapsed.delete(key)
           else collapsed.add(key)
-          return { collapsed }
+          const touched = new Set(s.touched)
+          touched.add(key)
+          return { collapsed, touched }
         }),
 
       expandAll: () => set({ collapsed: new Set() }),
 
       collapseAll: () => {
         const { result } = get()
-        if (result?.ok) set({ collapsed: collectContainerPaths(result.data, 'all') })
+        if (result?.ok) set({ collapsed: collectContainerPaths(result.data, 'all'), touched: new Set() })
       },
       }
     },
