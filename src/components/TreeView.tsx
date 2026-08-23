@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Button } from '@heroui/react'
-import { ChevronRight, Eye, FoldVertical, OctagonAlert, UnfoldVertical } from 'lucide-react'
+import { Button, toast } from '@heroui/react'
+import { Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical } from 'lucide-react'
 import { type NodePath, pathKey } from '../lib/parse'
 import { useStore } from '../store/useStore'
 import { Tip } from './Tip'
@@ -261,9 +261,24 @@ export function TreeView() {
   const stats = useStore(s => (s.result?.ok ? s.result.stats : null))
   const collapsed = useStore(s => s.collapsed)
   const touched = useStore(s => s.touched)
+  const input = useStore(s => s.input)
+  const clear = useStore(s => s.clear)
   const onToggle = useStore(s => s.toggleCollapse)
   const onExpandAll = useStore(s => s.expandAll)
   const onCollapseAll = useStore(s => s.collapseAll)
+  const [copied, setCopied] = useState(false)
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(input)
+      setCopied(true)
+      toast.success('已复制到剪贴板')
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* 剪贴板不可用时静默 */
+    }
+  }
+
   if (!data || !stats) return null
 
   return (
@@ -272,14 +287,25 @@ export function TreeView() {
         title="树形预览"
         extra={
           <>
-            <Tip label="展开全部">
-              <Button isIconOnly size="sm" variant="ghost" className="size-7 min-w-7" onPress={onExpandAll}>
-                <UnfoldVertical size={14} />
+            <Tip label={copied ? '已复制' : '复制内容'}>
+              <Button isIconOnly size="sm" variant="ghost" className="size-7 min-w-7" onPress={copy}>
+                {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
               </Button>
             </Tip>
-            <Tip label="折叠全部">
-              <Button isIconOnly size="sm" variant="ghost" className="size-7 min-w-7" onPress={onCollapseAll}>
-                <FoldVertical size={14} />
+            <Tip label="清空">
+              <Button isIconOnly size="sm" variant="ghost" className="size-7 min-w-7" onPress={clear}>
+                <Trash2 size={14} />
+              </Button>
+            </Tip>
+            <Tip label={collapsed.size > 0 ? '展开全部' : '折叠全部'}>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="ghost"
+                className="size-7 min-w-7"
+                onPress={collapsed.size > 0 ? onExpandAll : onCollapseAll}
+              >
+                {collapsed.size > 0 ? <UnfoldVertical size={14} /> : <FoldVertical size={14} />}
               </Button>
             </Tip>
           </>

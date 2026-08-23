@@ -1,16 +1,13 @@
-import { useState } from 'react'
-import { Button, ButtonGroup, Chip, Tabs, Toolbar as HeroToolbar, toast } from '@heroui/react'
+import { Button, ButtonGroup, Chip, Tabs, Toolbar as HeroToolbar } from '@heroui/react'
 
 import {
   Braces,
   Check,
-  Copy,
   Eye,
   Minimize2,
   Moon,
   Sparkles,
   Sun,
-  Trash2,
   Zap,
 } from 'lucide-react'
 import { Tip } from './Tip'
@@ -22,22 +19,8 @@ export function Toolbar() {
   const format = useStore(s => s.format)
   const minify = useStore(s => s.minify)
   const loadSample = useStore(s => s.loadSample)
-  const clear = useStore(s => s.clear)
   const toggleTheme = useStore(s => s.toggleTheme)
   const dark = useStore(s => s.dark)
-  const input = useStore(s => s.input)
-  const [copied, setCopied] = useState(false)
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(input)
-      setCopied(true)
-      toast.success('已复制到剪贴板')
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* 剪贴板不可用时静默 */
-    }
-  }
 
   return (
     <header className="flex shrink-0 items-center gap-2 px-1 py-1.5 md:px-2">
@@ -80,23 +63,12 @@ export function Toolbar() {
       </HeroToolbar>
 
       <div className="ml-auto flex items-center gap-2">
-        <ButtonGroup size="sm" aria-label="编辑操作">
+        
           <Tip label="载入示例">
             <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={loadSample}>
               <Sparkles size={15} />
             </Button>
           </Tip>
-          <Tip label={copied ? '已复制' : '复制内容'}>
-            <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={copy}>
-              {copied ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
-            </Button>
-          </Tip>
-          <Tip label="清空">
-            <Button isIconOnly size="sm" variant="ghost" className={iconBtn} onPress={clear}>
-              <Trash2 size={15} />
-            </Button>
-          </Tip>
-        </ButtonGroup>
 
         <Tabs
           className="theme-tabs"
