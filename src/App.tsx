@@ -70,7 +70,7 @@ export default function App() {
       <StatusBar />
 
       {/* HeroUI Toast 官方用法：自闭合挂载展示区，toast() 任意处直接调用 */}
-      <Toast.Provider placement="top end" />
+      <Toast.Provider placement="bottom start" />
     </div>
   )
 }
