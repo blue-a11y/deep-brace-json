@@ -1,33 +1,25 @@
-'use client'
-
 import { useEffect } from 'react'
-import { ToastRegion } from '../components/toast'
+import { Toast } from '@heroui/react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-import { Toolbar } from '../components/Toolbar'
-import { EditorPane } from '../components/EditorPane'
-import { EmptyPane, ErrorPane, TreeView } from '../components/TreeView'
-import { StatusBar } from '../components/StatusBar'
-import { useMediaQuery } from '../lib/useMediaQuery'
-import { useStore } from '../store/useStore'
+import { Toolbar } from './components/Toolbar'
+import { EditorPane } from './components/EditorPane'
+import { EmptyPane, ErrorPane, TreeView } from './components/TreeView'
+import { StatusBar } from './components/StatusBar'
+import { useMediaQuery } from './lib/useMediaQuery'
+import { applyTheme, useStore } from './store/useStore'
 
-export default function Home() {
+export default function App() {
   const input = useStore(s => s.input)
   const result = useStore(s => s.result)
   const dark = useStore(s => s.dark)
   const bootstrap = useStore(s => s.bootstrap)
   const parse = useStore(s => s.parse)
 
-  // persist 跳过 SSR 水合，客户端手动恢复后再补一次解析
-  useEffect(() => {
-    const rehydrate = useStore.persist.rehydrate()
-    Promise.resolve(rehydrate).then(() => useStore.getState().bootstrap())
-  }, [bootstrap])
+  // 对 persist 恢复的输入补一次解析
+  useEffect(bootstrap, [bootstrap])
 
   // 主题同步到 <html>（切换时 store 已即时应用，这里兜底首帧与恢复）
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-  }, [dark])
+  useEffect(() => applyTheme(dark), [dark])
 
   // ⌘/Ctrl + Enter 解析
   useEffect(() => {
@@ -65,7 +57,7 @@ export default function Home() {
   )
 
   return (
-    <div className="flex h-screen flex-col gap-3 bg-background p-3">
+    <div className="flex h-full flex-col gap-3 bg-background p-3">
       <Toolbar />
 
       {isDesktop ? (
@@ -89,8 +81,8 @@ export default function Home() {
 
       <StatusBar />
 
-      {/* 复刻版 Toast：对照官方源码实现，挂载一次 */}
-      <ToastRegion />
+      {/* HeroUI Toast 官方用法：自闭合挂载展示区，toast() 任意处直接调用 */}
+      <Toast.Provider />
     </div>
   )
 }

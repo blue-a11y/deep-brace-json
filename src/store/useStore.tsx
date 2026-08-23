@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { toast } from '../components/toast'
+import { toast } from '@heroui/react'
 import {
   type ParseOk,
   type ParseResult,
@@ -136,8 +136,6 @@ export const useStore = create<JsonLensState>()(
       storage: createJSONStorage(() => localStorage),
       // 只持久化输入与主题；result/collapsed 由重新解析得到
       partialize: s => ({ input: s.input, dark: s.dark }),
-      // 跳过 SSR 水合（客户端由 page 的 rehydrate() 手动恢复，避免 hydration mismatch）
-      skipHydration: true,
     },
   ),
 )

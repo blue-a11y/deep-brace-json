@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="json-lens — JSON / JSON5 解析、格式化、压缩与树形预览" />
+    <title>json-lens · JSON/JSON5 解析工具</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // 首屏同步主题，避免闪烁；从 zustand persist 的存储中读取，默认暗色
+      try {
+        var dark = true
+        var raw = localStorage.getItem('json-lens:store')
+        if (raw) {
+          var st = JSON.parse(raw)
+          if (st && st.state && typeof st.state.dark === 'boolean') dark = st.state.dark
+        }
+        if (dark) {
+          document.documentElement.classList.add('dark')
+          document.documentElement.setAttribute('data-theme', 'dark')
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

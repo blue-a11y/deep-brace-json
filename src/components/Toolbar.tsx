@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Button, ButtonGroup, Chip } from '@heroui/react'
-import { toast } from './toast'
+import { Button, ButtonGroup, Chip, toast } from '@heroui/react'
 
 import {
   Braces,
