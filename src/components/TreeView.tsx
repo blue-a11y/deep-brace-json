@@ -266,9 +266,8 @@ function TreeChildren({
     setEntered(false)
   }, [open])
   // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
-  const indent = useStore(s => s.indent)
   // 竖线挂在开括号列右侧(行内距 29.3 + chevron 16 + gap 4 + 括号 ~8 + 右距 12 ≈ 59),
-  // 即"开括号 ←—竖线—→ 子内容"的连线位
+  // 即"开括号 ←—竖线—→ 子内容"的连线位;树形预览使用固定几何,不随缩进设置变化
   const LINE_OFFSET = 59
   return (
     <div
@@ -277,10 +276,7 @@ function TreeChildren({
       style={{ marginLeft: `${LINE_OFFSET}px` }}
       data-open={entered}
     >
-      <div
-        className="tree-children-inner"
-        style={{ paddingLeft: `${12 + indent * 4}px` }}
-      >
+      <div className="tree-children-inner" style={{ paddingLeft: '12px' }}>
         {children}
       </div>
     </div>
