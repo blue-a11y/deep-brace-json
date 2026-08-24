@@ -202,23 +202,20 @@ export function TreeNode({
       )}
       {/* 展开过的子树保留 DOM 由 grid 0fr→1fr 做折叠动画;从未展开的保持懒渲染 */}
       {(open || touched.has(key)) && (
-        <>
-          <TreeChildren open={open}>
-            {entries.map(([k, v], i) => (
-              <TreeNode
-                key={String(k)}
-                label={isArray ? null : String(k)}
-                value={v}
-                path={[...path, k]}
-                collapsed={collapsed}
-                touched={touched}
-                comma={i < entries.length - 1}
-                onToggle={onToggle}
-              />
-            ))}
-          </TreeChildren>
-          <CloseLine open={open} closeB={closeB} comma={comma} />
-        </>
+        <TreeChildren open={open} comma={comma} closeB={closeB}>
+          {entries.map(([k, v], i) => (
+            <TreeNode
+              key={String(k)}
+              label={isArray ? null : String(k)}
+              value={v}
+              path={[...path, k]}
+              collapsed={collapsed}
+              touched={touched}
+              comma={i < entries.length - 1}
+              onToggle={onToggle}
+            />
+          ))}
+        </TreeChildren>
       )}
     </div>
   )
@@ -242,9 +239,13 @@ function countLines(v: unknown): number {
 
 function TreeChildren({
   open,
+  comma,
+  closeB,
   children,
 }: {
   open: boolean
+  comma?: boolean
+  closeB: string
   children: ReactNode
 }) {
   // entered: 首次渲染从 0fr 起始,双 rAF 后切 1fr 获得展开动画
@@ -265,46 +266,19 @@ function TreeChildren({
     setEntered(false)
   }, [open])
   // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
-  // 竖线挂在开括号列右侧(行内距 29.3 + chevron 16 + gap 4 + 括号 ~8 + 右距 12 ≈ 59),
-  // 即"开括号 ←—竖线—→ 子内容"的连线位;树形预览使用固定几何,不随缩进设置变化
-  const LINE_OFFSET = 59
   return (
     <div
       ref={wrapRef}
-      className="tree-children"
-      style={{ marginLeft: `${LINE_OFFSET}px` }}
+      className="tree-children ml-[7px] pl-3"
       data-open={entered}
     >
-      <div className="tree-children-inner" style={{ paddingLeft: '12px' }}>
+      <div className="tree-children-inner border-l border-foreground/10 pl-3">
         {children}
+        <div className={`tree-line ${PUNCT} py-px`}>
+          {closeB}
+          {comma && <Comma />}
+        </div>
       </div>
-    </div>
-  )
-}
-
-/* ---------- 闭合括号行(节点层渲染,天然对齐开括号列) ---------- */
-
-function CloseLine({ open, closeB, comma }: { open: boolean; closeB: string; comma?: boolean }) {
-  // 收起动画后卸载(与子树 220ms 收拢同步)
-  const [hidden, setHidden] = useState(false)
-  useEffect(() => {
-    if (open) {
-      setHidden(false)
-      return
-    }
-    const t = setTimeout(() => setHidden(true), 220)
-    return () => clearTimeout(t)
-  }, [open])
-  if (hidden) return null
-  return (
-    <div
-      className={`tree-line ${PUNCT} flex items-baseline gap-1 overflow-hidden py-px transition-all duration-200 ${
-        open ? 'max-h-6 opacity-100' : 'max-h-0 border-t-0 opacity-0'
-      }`}
-    >
-      <span className="w-4 shrink-0" />
-      {closeB}
-      {comma && <Comma />}
     </div>
   )
 }

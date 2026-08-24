@@ -124,22 +124,7 @@ body {
 .tree-children {
   display: grid;
   grid-template-rows: 0fr;
-  position: relative;
   transition: grid-template-rows 200ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
-}
-/* 竖线两端延伸半行高,接住开/闭括号字形中心 */
-.tree-children::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: -12px;
-  bottom: -12px;
-  border-left: 1px solid color-mix(in oklab, var(--color-foreground) 10%, transparent);
-  pointer-events: none;
-  transition: opacity 200ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
-}
-.tree-children:not([data-open='true'])::before {
-  opacity: 0;
 }
 .tree-children[data-open='true'] {
   grid-template-rows: 1fr;
