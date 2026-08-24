@@ -77,6 +77,27 @@ type ITreeNodeProps = {
   /** 本条目之后还有兄弟条目时显示尾逗号 */
   comma?: boolean
   onToggle: (key: string) => void
+  /** 嵌套深度(根 = 0),用于行盒外扩为整行 */
+  depth?: number
+  /** 每层内容缩进像素值,与 tree-body 的 --tree-indent-size 同源 */
+  indent?: number
+}
+
+/** 行盒外扩为整行:负 margin 抵消 depth 层缩进、padding 原位补回内容位置,hover 背景即整行。
+    每层缩进 = ml7 + pl12 + 竖线边框1 + 内容缩进;
+    闭合括号行位于 tree-children-inner 内、未穿过内容缩进,比内容行少补一个 indent。
+    像素值在 JS 侧算好,内联样式只保留最简 calc,避免跨内核兼容差异。 */
+const fullRowStyle = (
+  depth: number,
+  indentPx: number,
+  closeRow = false,
+): CSSProperties | undefined => {
+  if (depth === 0) return undefined
+  const shift = depth * (20 + indentPx) - (closeRow ? indentPx : 0)
+  return {
+    marginLeft: `${-shift}px`,
+    paddingLeft: `calc(3.5ch + ${shift}px)`,
+  }
 }
 
 export function TreeNode({
@@ -87,6 +108,8 @@ export function TreeNode({
   touched,
   comma,
   onToggle,
+  depth = 0,
+  indent = 4,
 }: ITreeNodeProps) {
   const isArray = Array.isArray(value)
   const isObject = !isArray && value !== null && typeof value === 'object'
@@ -97,7 +120,10 @@ export function TreeNode({
     )
     const canParse = typeof value === 'string' && isStrictJson(value)
     return (
-      <div className="tree-line group flex items-baseline gap-1.5 rounded px-0.5 py-px font-mono text-[13px] leading-6 hover:bg-foreground/5">
+      <div
+        style={fullRowStyle(depth, indent)}
+        className="tree-line group flex items-baseline gap-1.5 rounded px-0.5 font-mono text-[13px] leading-6 hover:bg-foreground/5"
+      >
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
@@ -121,7 +147,10 @@ export function TreeNode({
 
   if (entries.length === 0) {
     return (
-      <div className="tree-line flex items-baseline gap-1.5 px-0.5 py-px font-mono text-[13px] leading-6">
+      <div
+        style={fullRowStyle(depth, indent)}
+        className="tree-line flex items-baseline gap-1.5 px-0.5 font-mono text-[13px] leading-6"
+      >
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
@@ -157,15 +186,18 @@ export function TreeNode({
   return (
     <div className="font-mono text-[13px] leading-6">
       <div
-        className="tree-line tree-line--toggle group flex items-baseline gap-1 rounded px-0.5 hover:bg-foreground/5"
+        style={fullRowStyle(depth, indent)}
+        className="tree-line tree-line--toggle group flex items-baseline gap-1.5 rounded px-0.5 hover:bg-foreground/5"
         onClick={toggleRow}
       >
-        <span className="grid size-4 shrink-0 self-center place-items-center text-foreground/40">
+        {/* 箭头绝对定位固定在根节点箭头列(不随缩进漂移),行内 w-4 占位维持内容对齐 */}
+        <span className="tree-chevron grid size-4 self-center place-items-center text-foreground/40">
           <ChevronRight
             size={12}
             className={`transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
           />
         </span>
+        <span className="w-4 shrink-0" />
         {label !== null && (
           <>
             <KeyLabel label={label} />
@@ -191,7 +223,7 @@ export function TreeNode({
       )}
       {/* 展开过的子树保留 DOM 由 grid 0fr→1fr 做折叠动画;从未展开的保持懒渲染 */}
       {(open || touched.has(key)) && (
-        <TreeChildren open={open} comma={comma} closeB={closeB}>
+        <TreeChildren open={open} comma={comma} closeB={closeB} depth={depth + 1} indent={indent}>
           {entries.map(([k, v], i) => (
             <TreeNode
               key={String(k)}
@@ -202,6 +234,8 @@ export function TreeNode({
               touched={touched}
               comma={i < entries.length - 1}
               onToggle={onToggle}
+              depth={depth + 1}
+              indent={indent}
             />
           ))}
         </TreeChildren>
@@ -230,11 +264,15 @@ function TreeChildren({
   open,
   comma,
   closeB,
+  depth,
+  indent,
   children,
 }: {
   open: boolean
   comma?: boolean
   closeB: string
+  depth: number
+  indent: number
   children: ReactNode
 }) {
   // entered: 首次渲染从 0fr 起始,双 rAF 后切 1fr 获得展开动画
@@ -263,7 +301,10 @@ function TreeChildren({
     >
       <div className="tree-children-inner border-l border-transparent">
         <div className="tree-children-content">{children}</div>
-        <div className={`tree-line ${PUNCT} py-px`}>
+        <div
+          style={fullRowStyle(depth, indent, true)}
+          className={`tree-line ${PUNCT} rounded px-0.5 hover:bg-foreground/5`}
+        >
           {closeB}
           {comma && <Comma />}
         </div>
@@ -276,7 +317,7 @@ function TreeChildren({
 
 function PaneHeader({ title, extra }: { title: string; extra?: ReactNode }) {
   return (
-    <div className="flex h-11 shrink-0 items-center gap-2 px-4 text-xs text-foreground/55">
+    <div className="flex shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
       <Eye size={13} />
       <span className="font-medium">{title}</span>
       <div className="ml-auto flex items-center gap-0.5">{extra}</div>
@@ -395,11 +436,19 @@ export function TreeView() {
       />
       <div
         ref={treeScrollRef}
-        className={`tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 py-1.5 ${wrap ? 'tree-wrap' : 'tree-nowrap'}`}
+        className={`tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 ${wrap ? 'tree-wrap' : 'tree-nowrap'}`}
         data-tree-theme={treeTheme}
         style={treeStyle}
       >
-        <TreeNode label={null} value={data} path={[]} collapsed={collapsed} touched={touched} onToggle={onToggle} />
+        <TreeNode
+          label={null}
+          value={data}
+          path={[]}
+          collapsed={collapsed}
+          touched={touched}
+          onToggle={onToggle}
+          indent={indentSize * TREE_INDENT_PIXEL_RATIO}
+        />
       </div>
     </section>
   )

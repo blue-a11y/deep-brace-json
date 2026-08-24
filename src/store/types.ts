@@ -29,8 +29,11 @@ export type JsonTabsSlice = {
   restoreTab: (tab: JsonTab, target: JsonTabRestoreTarget) => void
   editInput: (value: string) => void
   parse: (quiet?: boolean) => void
-  format: () => void
-  minify: () => void
+  /** 以下变换类 action 返回是否成功（用于触发图标反馈动画） */
+  format: () => boolean
+  minify: () => boolean
+  escape: () => boolean
+  unescape: () => boolean
   loadSample: () => void
   clear: () => void
   toggleWrap: () => void

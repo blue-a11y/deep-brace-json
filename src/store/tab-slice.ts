@@ -1,5 +1,11 @@
 import type { StateCreator } from 'zustand'
-import { collectContainerPaths, parseInput, type ParseResult } from '../lib/parse'
+import {
+  collectContainerPaths,
+  escapeText,
+  parseInput,
+  unescapeText,
+  type ParseResult,
+} from '../lib/parse'
 import { SAMPLE } from '../lib/sample'
 import { captureActiveTabScrollPositions } from '../lib/tab-scroll'
 import { toast } from '../lib/toast'
@@ -53,11 +59,21 @@ export const createTabSlice: StateCreator<JsonLensState, [], [], JsonTabsSlice> 
     if (!result.ok) {
       patchTab(tab.id, current => ({ ...current, result, dirty: false }))
       notifyResult(result)
-      return
+      return false
     }
     patchTab(tab.id, current =>
       applyParseResult({ ...current, input: transform(result.data) }, result),
     )
+    toast.success(successMessage)
+    return true
+  }
+
+  /** 直接把编辑器内容替换为给定文本并立即解析 */
+  const rewriteInput = (nextInput: string, successMessage: string) => {
+    const tab = getActiveTab(get())
+    cancelAutoParse(tab.id)
+    const result = parseInput(nextInput)
+    patchTab(tab.id, current => applyParseResult({ ...current, input: nextInput }, result))
     toast.success(successMessage)
   }
 
@@ -156,6 +172,25 @@ export const createTabSlice: StateCreator<JsonLensState, [], [], JsonTabsSlice> 
     parse: (quiet = false) => parseTab(get().activeTabId, quiet),
     format: () => rewrite(data => JSON.stringify(data, null, 2), '已格式化 · JSON5 → 标准 JSON'),
     minify: () => rewrite(data => JSON.stringify(data), '已压缩为单行'),
+
+    escape: () => {
+      rewriteInput(
+        escapeText(getActiveTab(get()).input),
+        '已转义 · 包成字符串字面量',
+      )
+      return true
+    },
+    unescape: () => {
+      const nextInput = unescapeText(getActiveTab(get()).input)
+      if (nextInput == null) {
+        toast.warning('没有可反转义的内容', {
+          description: '需要 JSON 字符串字面量，或保留转义的裸容器文本',
+        })
+        return false
+      }
+      rewriteInput(nextInput, '已反转义 · 剥开一层')
+      return true
+    },
 
     loadSample: () => {
       const id = get().activeTabId

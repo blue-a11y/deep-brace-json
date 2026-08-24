@@ -108,24 +108,34 @@ const parseEscapedContainer = (text: string, parser: ContainerParser): JsonConta
   return decoded ? parseContainer(decoded, parser) : null
 }
 
-/** 解析 JSON5 输入；普通文本自动降级为字符串字面量，坏 JSON 仍报错（带行列号） */
+/** 转义：把输入原文包成 JSON 字符串字面量（换行、缩进保留为 \n 等转义），可反复点击层层叠加 */
+export const escapeText = (text: string): string => JSON.stringify(text)
+
+/**
+ * 反转义：剥开一层——
+ * 1. JSON 字符串字面量（可含转义）→ 返回其内容
+ * 2. 缺少外层引号但保留转义的裸容器文本，如 `{\"a\":1}` → 返回解码结果
+ * 其余（普通容器 JSON、无转义纯文本等）返回 null
+ */
+export const unescapeText = (text: string): string | null => {
+  try {
+    const data: unknown = JSON5.parse(text)
+    if (typeof data === 'string') return data
+  } catch {
+    // 落入裸转义兜底
+  }
+  return decodeEscapedContainerText(text)
+}
+
+/** 解析 JSON5 输入；普通文本自动降级为字符串字面量，坏 JSON 仍报错（带行列号）。转义输入需显式点「反转义」 */
 export function parseInput(text: string): ParseResult {
   if (!text.trim()) {
     return { ok: false, message: '输入为空' }
   }
   try {
     const data = JSON5.parse(text)
-    const nestedData = typeof data === 'string'
-      ? parseContainer(data, value => JSON5.parse(value))
-      : null
-    const resolvedData = nestedData ?? data
-    return { ok: true, data: resolvedData, stats: statsOf(resolvedData) }
+    return { ok: true, data, stats: statsOf(data) }
   } catch (err) {
-    const escapedData = parseEscapedContainer(text, value => JSON5.parse(value))
-    if (escapedData) {
-      return { ok: true, data: escapedData, stats: statsOf(escapedData) }
-    }
-
     const message = err instanceof Error ? err.message : String(err)
     if (!intendsJson(text)) {
       // 纯文本：作为不带引号的字符串字面量处理

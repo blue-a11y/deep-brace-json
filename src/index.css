@@ -43,7 +43,30 @@ body {
 }
 .cm-scroller {
   font-family: var(--font-mono) !important;
-  line-height: 1.65 !important;
+  /* 13px 字号 × 24px 行高,与树形预览每行 24px 对齐 */
+  line-height: 24px !important;
+}
+/* 内容区上下内边距归零,与树形预览侧对齐 */
+.cm-content {
+  padding: 0 !important;
+}
+/* 折叠标记:SVG chevron 在 24px 行内垂直居中(默认 ⌄/› 字形墨迹偏行底) */
+.cm-foldGutter .cm-fold-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  width: 12px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  color: color-mix(in oklab, var(--color-foreground) 45%, transparent);
+}
+.cm-foldGutter .cm-fold-marker:hover {
+  color: var(--color-foreground);
+}
+.cm-foldGutter .cm-fold-marker svg {
+  display: block;
 }
 
 /* 树形预览的滚动条保持细窄 */
@@ -51,6 +74,16 @@ body {
 .cm-scroller::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+}
+
+/*
+ * 折叠箭头固定列:绝对定位锚到 tree-body(与行号同模式),
+ * 所有层级箭头与根节点箭头同一列;行内由 w-4 占位补回原有缩进。
+ * 列位置 = tree-body 内边距(16px) + 行号占位(3.5ch)
+ */
+.tree-chevron {
+  position: absolute;
+  left: calc(3.5ch + 16px);
 }
 .tree-scroll::-webkit-scrollbar-thumb,
 .cm-scroller::-webkit-scrollbar-thumb {
@@ -198,7 +231,9 @@ body {
   grid-template-rows: 1fr;
 }
 .tree-children-inner {
-  overflow: hidden;
+  /* 纵向 clip 供折叠动画裁剪内容;横向放开(visible/clip 组合不产生滚动容器),
+     行盒负 margin 外扩的整行 hover 背景才不会被祖先裁掉 */
+  overflow: visible clip;
   min-height: 0;
   background-image: linear-gradient(
     color-mix(in oklab, var(--color-foreground) 10%, transparent),
@@ -238,8 +273,55 @@ body {
   overflow-wrap: normal;
   word-break: normal;
 }
+/*
+ * 转义/反转义按钮图标的一次性反馈动画(操作成功后重挂载触发):
+ * wrap = 收拢封装感,unwrap = 弹开拆封感
+ */
+@keyframes icon-feedback-wrap {
+  0% { transform: scale(1) rotate(0deg); }
+  35% { transform: scale(0.75) rotate(-12deg); }
+  70% { transform: scale(1.1) rotate(0deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes icon-feedback-unwrap {
+  0% { transform: scale(1) rotate(0deg); }
+  35% { transform: scale(1.2) rotate(12deg); }
+  70% { transform: scale(0.94) rotate(0deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+/* 格式化:横向铺开感;压缩:收拢感 */
+@keyframes icon-feedback-format {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.12) scaleX(1.28); }
+  70% { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+@keyframes icon-feedback-minify {
+  0% { transform: scale(1); }
+  35% { transform: scale(0.78); }
+  70% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.icon-feedback-wrap {
+  animation: icon-feedback-wrap 380ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.icon-feedback-unwrap {
+  animation: icon-feedback-unwrap 380ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.icon-feedback-format {
+  animation: icon-feedback-format 380ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.icon-feedback-minify {
+  animation: icon-feedback-minify 380ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
+}
 @media (prefers-reduced-motion: reduce) {
   .tree-children {
     transition: none;
+  }
+  .icon-feedback-wrap,
+  .icon-feedback-unwrap,
+  .icon-feedback-format,
+  .icon-feedback-minify {
+    animation: none;
   }
 }
