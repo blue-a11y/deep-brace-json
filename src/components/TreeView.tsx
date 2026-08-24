@@ -278,7 +278,7 @@ function TreeChildren({
       data-open={entered}
     >
       <div
-        className="tree-children-inner border-l border-foreground/10"
+        className="tree-children-inner"
         style={{ paddingLeft: `${12 + indent * 4}px` }}
       >
         {children}
