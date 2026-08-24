@@ -1,4 +1,4 @@
-import { Button, Chip, ListBox, Select, Tabs } from '@heroui/react'
+import { Button, Chip, Tabs } from '@heroui/react'
 
 import {
   Check,
@@ -11,14 +11,10 @@ import {
 import { Tip } from './Tip'
 import { useStore } from '../store/useStore'
 
-const INDENT_OPTIONS = [2, 4, 8]
-
 export function Toolbar() {
   const loadSample = useStore(s => s.loadSample)
   const toggleTheme = useStore(s => s.toggleTheme)
   const dark = useStore(s => s.dark)
-  const indent = useStore(s => s.indent)
-  const setIndent = useStore(s => s.setIndent)
 
   return (
     <header className="flex shrink-0 items-center gap-2 px-1 py-1.5 md:px-2">
@@ -53,29 +49,6 @@ export function Toolbar() {
             <span className="hidden md:inline">示例</span>
           </Button>
         </Tip>
-
-        {/* 全局缩进 */}
-        <Select
-          className="w-[100px]"
-          aria-label="缩进"
-          selectedKey={String(indent)}
-          onSelectionChange={k => setIndent(Number(k))}
-        >
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox aria-label="缩进宽度">
-              {INDENT_OPTIONS.map(n => (
-                <ListBox.Item key={String(n)} id={String(n)} textValue={`${n} 空格`}>
-                  {n} 空格
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
 
         <Tabs
           className="theme-tabs"

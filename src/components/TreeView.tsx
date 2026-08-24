@@ -49,11 +49,10 @@ const Comma = () => <span className={PUNCT}>,</span>
 
 function CopyValueButton({ value }: { value: unknown }) {
   const [copied, setCopied] = useState(false)
-  const indent = useStore(s => s.indent)
   const copy = async (e: React.MouseEvent) => {
     e.stopPropagation()
     try {
-      const text = typeof value === 'string' ? value : JSON.stringify(value, null, indent)
+      const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
       await navigator.clipboard.writeText(text)
       setCopied(true)
       toast.success(typeof value === 'string' ? '已复制值' : '已复制节点')
