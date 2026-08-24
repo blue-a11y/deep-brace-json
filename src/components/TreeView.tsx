@@ -268,11 +268,14 @@ function TreeChildren({
   }, [open])
   // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
   const indent = useStore(s => s.indent)
+  // 竖线挂在开括号列右侧(行内距 29.3 + chevron 16 + gap 4 + 括号 ~8 + 右距 12 ≈ 59),
+  // 即"开括号 ←—竖线—→ 子内容"的连线位;闭合括号负边距联动抵消
+  const LINE_OFFSET = 59
   return (
     <div
       ref={wrapRef}
       className="tree-children"
-      style={{ marginLeft: '31px' }}
+      style={{ marginLeft: `${LINE_OFFSET}px` }}
       data-open={entered}
     >
       <div
@@ -280,10 +283,10 @@ function TreeChildren({
         style={{ paddingLeft: `${12 + indent * 4}px` }}
       >
         {children}
-        {/* 闭合括号:负边距抵消子树缩进,与头部行的开括号列对齐 */}
+        {/* 闭合括号:负边距抵消竖线偏移+子树缩进,与头部行的开括号列对齐 */}
         <div
           className={`tree-line ${PUNCT} flex items-baseline gap-1 py-px`}
-          style={{ marginLeft: `-${43 + indent * 4}px` }}
+          style={{ marginLeft: `-${LINE_OFFSET + 12 + indent * 4}px` }}
         >
           <span className="w-4 shrink-0" />
           {closeB}
