@@ -14,6 +14,8 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
   - 折叠标记定制：默认 `⌄`/`›` 字形在 JetBrains Mono 中墨迹偏行底（视觉不齐），改为与 TreeView 同款 SVG chevron（`markerDOM`），24px 行内 flex 垂直居中，标记中心与行中心实测差 0px；新增 `@codemirror/language` 显式依赖
   - TreeView 配色主题同步应用到编辑器，默认 / Dracula / Monokai 均提供亮暗两套 token 色
   - **转义 / 反转义两个独立按钮**（编辑器头部，Package / PackageOpen 图标，不做方向互斥、不按内容禁用）：转义 = 把输入原文包成 JSON 字符串字面量（保留原格式，换行转 `\n`），可反复点击层层叠加；反转义 = 剥开一层（字符串字面量 → 内容，或日志里复制的裸转义文本 `{\"a\":1}` → 解码），可反复点击逐层剥开；无内容可剥时 toast 提示且内容不变
+  - 视觉基线统一：编辑器 `.cm-scroller` 行高改 24px 与树 `leading-6` 一致；两侧内容区 padding-y 归零（`.cm-content` 覆盖 CodeMirror 默认 4px）；树行删 `py-px`（叶子行原比容器行高 2px）；面板头部去掉固定 `h-11`，改为内容自适应 + `py-1`（实测 40px，两侧等高）
+  - 闭合括号行补齐 hover 整行背景（`rounded px-0.5 hover:bg-foreground/5`），与叶子/容器行一致；空容器单行 `{}` 保持无 hover（无交互不暗示可点）
   - 转义/反转义图标反馈动画：操作成功后播放一次性 keyframe（wrap 收拢封装 / unwrap 弹开拆封，380ms），通过 icon `key` 重挂载重放、连点每次都触发；action 返回布尔值做成功门控，失败不播；`prefers-reduced-motion` 下禁用
   - 格式化/压缩图标同样接入反馈动画（format 横向铺开 / minify 收拢），成功门控与重放机制同上
   - 叶子行与容器行对齐修复：容器行（带折叠箭头）间隔由 `gap-1` 改为 `gap-1.5`，与叶子行的 16px 前缀 + 6px 间隔一致，兄弟节点 key 起始位置完全对齐（此前容器行偏左 2px）
@@ -48,8 +50,8 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 ### 当前状态
 
 - HeroUI Toast 的原始入场问题已改由自定义 `ToastQueue` 在队列更新边界统一衔接 View Transition，没有补充一套 CSS 动画；历史环境实验与根因链仍保留在 `docs/HEROUI-TOAST-ISSUE.md`
-- 本轮代码已通过 `pnpm lint`、`pnpm exec tsc -b` 与 `git diff --check`，并完成 TreeView 复制按钮、多行对齐、标签切换与滚动恢复的浏览器交互检查
-- 功能提交：`75272af feat: enhance JSON parsing workspace`，已推送到 `origin/main`
+- 本轮（2026-08-25）通过 `tsc -b`、`oxlint`，并完成转义/反转义往返、图标动画、折叠箭头对齐/固定列、整行 hover（绘制层面验证）的浏览器交互检查
+- 功能提交：`cd9b6f2 feat: escape/unescape buttons and tree interaction polish`，已推送到 `origin/main`
 
 ## 排查实录（关键结论存档）
 
@@ -65,4 +67,4 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 
 ---
 
-*2026-08-24 更新；详细提交历史见 git log。*
+*2026-08-25 更新；详细提交历史见 git log。*
