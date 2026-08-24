@@ -1,18 +1,34 @@
+import { useEffect, useRef } from 'react'
 import CodeMirror from '@uiw/react-codemirror'
 import { EditorView } from '@codemirror/view'
 import { json } from '@codemirror/lang-json'
 import { Braces, FileJson, Minimize2 } from 'lucide-react'
 import { Button } from '@heroui/react'
-import { cmDark, cmLight } from '../lib/cmTheme'
-import { useStore } from '../store/useStore'
+import { getCodeMirrorTheme } from '../lib/cmTheme'
+import { bindTabScrollPosition } from '../lib/tab-scroll'
+import { selectActiveTab, useStore } from '../store/useStore'
 import { Tip } from './Tip'
 
-export function EditorPane() {
-  const input = useStore(s => s.input)
+export const EditorPane = () => {
+  const activeTab = useStore(selectActiveTab)
+  const input = activeTab.input
   const dark = useStore(s => s.dark)
+  const treeTheme = useStore(s => s.treeTheme)
   const editInput = useStore(s => s.editInput)
   const format = useStore(s => s.format)
   const minify = useStore(s => s.minify)
+  const editorScrollCleanupRef = useRef<(() => void) | null>(null)
+
+  const handleCreateEditor = (view: EditorView) => {
+    editorScrollCleanupRef.current?.()
+    editorScrollCleanupRef.current = bindTabScrollPosition(
+      activeTab.id,
+      'editor',
+      view.scrollDOM,
+    )
+  }
+
+  useEffect(() => () => editorScrollCleanupRef.current?.(), [])
 
   return (
     <section className="flex h-full min-h-0 flex-col">
@@ -36,15 +52,17 @@ export function EditorPane() {
       </div>
       <div className="min-h-0 flex-1">
         <CodeMirror
+          key={activeTab.id}
           value={input}
           height="100%"
-          theme={dark ? cmDark : cmLight}
+          theme={getCodeMirrorTheme(dark, treeTheme)}
           extensions={[json(), EditorView.lineWrapping]}
           basicSetup={{
             foldGutter: true,
             autocompletion: false,
             highlightSelectionMatches: false,
           }}
+          onCreateEditor={handleCreateEditor}
           onChange={editInput}
           placeholder="粘贴 JSON / JSON5，输入即自动解析…"
         />

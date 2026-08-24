@@ -1,6 +1,7 @@
 import { Button, Chip, Tabs } from '@heroui/react'
 
 import {
+  Braces,
   Check,
   Eye,
   Moon,
@@ -8,6 +9,8 @@ import {
   Sun,
   Zap,
 } from 'lucide-react'
+import { IndentSelect } from './indent-select'
+import { TreeThemeSelect } from './tree-theme-select'
 import { Tip } from './Tip'
 import { useStore } from '../store/useStore'
 
@@ -15,6 +18,10 @@ export function Toolbar() {
   const loadSample = useStore(s => s.loadSample)
   const toggleTheme = useStore(s => s.toggleTheme)
   const dark = useStore(s => s.dark)
+  const indentSize = useStore(s => s.indentSize)
+  const setIndentSize = useStore(s => s.setIndentSize)
+  const treeTheme = useStore(s => s.treeTheme)
+  const setTreeTheme = useStore(s => s.setTreeTheme)
 
   return (
     <header className="flex shrink-0 items-center gap-2 px-1 py-1.5 md:px-2">
@@ -39,6 +46,10 @@ export function Toolbar() {
             <Eye width={12} />
             <Chip.Label>树形预览</Chip.Label>
           </Chip>
+          <Chip size="sm" color="accent">
+            <Braces width={12} />
+            <Chip.Label>一键解析子节点</Chip.Label>
+          </Chip>
         </div>
       </div>
 
@@ -49,6 +60,9 @@ export function Toolbar() {
             <span className="hidden md:inline">示例</span>
           </Button>
         </Tip>
+
+        <IndentSelect value={indentSize} onChange={setIndentSize} />
+        <TreeThemeSelect value={treeTheme} onChange={setTreeTheme} />
 
         <Tabs
           className="theme-tabs"

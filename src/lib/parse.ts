@@ -64,6 +64,50 @@ function intendsJson(text: string): boolean {
   return !!first && /[{["\-+.\d]/.test(first)
 }
 
+type JsonContainer = unknown[] | Record<string, unknown>
+type ContainerParser = (value: string) => unknown
+
+const FIRST_PRINTABLE_CHARACTER_CODE = 0x20
+
+const isJsonContainer = (value: unknown): value is JsonContainer =>
+  value !== null && typeof value === 'object'
+
+const escapeControlCharacters = (text: string): string =>
+  Array.from(text, character =>
+    character.charCodeAt(0) < FIRST_PRINTABLE_CHARACTER_CODE
+      ? `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`
+      : character,
+  ).join('')
+
+/** 解开缺少外层引号的 JSON 字符串转义，仅接受解码后以对象或数组开头的输入 */
+const decodeEscapedContainerText = (text: string): string | null => {
+  if (!text.includes('\\')) return null
+
+  try {
+    const escapedControlCharacters = escapeControlCharacters(text)
+    const decoded: unknown = JSON.parse(`"${escapedControlCharacters}"`)
+    if (typeof decoded !== 'string' || decoded === text) return null
+    const firstCharacter = decoded.trimStart()[0]
+    return firstCharacter === '{' || firstCharacter === '[' ? decoded : null
+  } catch {
+    return null
+  }
+}
+
+const parseContainer = (text: string, parser: ContainerParser): JsonContainer | null => {
+  try {
+    const data = parser(text)
+    return isJsonContainer(data) ? data : null
+  } catch {
+    return null
+  }
+}
+
+const parseEscapedContainer = (text: string, parser: ContainerParser): JsonContainer | null => {
+  const decoded = decodeEscapedContainerText(text)
+  return decoded ? parseContainer(decoded, parser) : null
+}
+
 /** 解析 JSON5 输入；普通文本自动降级为字符串字面量，坏 JSON 仍报错（带行列号） */
 export function parseInput(text: string): ParseResult {
   if (!text.trim()) {
@@ -71,8 +115,17 @@ export function parseInput(text: string): ParseResult {
   }
   try {
     const data = JSON5.parse(text)
-    return { ok: true, data, stats: statsOf(data) }
+    const nestedData = typeof data === 'string'
+      ? parseContainer(data, value => JSON5.parse(value))
+      : null
+    const resolvedData = nestedData ?? data
+    return { ok: true, data: resolvedData, stats: statsOf(resolvedData) }
   } catch (err) {
+    const escapedData = parseEscapedContainer(text, value => JSON5.parse(value))
+    if (escapedData) {
+      return { ok: true, data: escapedData, stats: statsOf(escapedData) }
+    }
+
     const message = err instanceof Error ? err.message : String(err)
     if (!intendsJson(text)) {
       // 纯文本：作为不带引号的字符串字面量处理
@@ -86,6 +139,18 @@ export function parseInput(text: string): ParseResult {
       line: m ? Number(m[1]) : undefined,
       column: m ? Number(m[2]) : undefined,
     }
+  }
+}
+
+/** string value 只有能被原生 JSON 严格解析为对象或数组时才允许打开为新标签 */
+export const isStrictJson = (text: string): boolean => {
+  try {
+    const value: unknown = JSON.parse(text)
+    return isJsonContainer(value) || (
+      typeof value === 'string' && parseContainer(value, item => JSON.parse(item)) !== null
+    )
+  } catch {
+    return parseEscapedContainer(text, value => JSON.parse(value)) !== null
   }
 }
 

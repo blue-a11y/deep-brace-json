@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
 import { byteLength, formatBytes } from '../lib/parse'
-import { useStore } from '../store/useStore'
+import { selectActiveTab, useStore } from '../store/useStore'
 
 export function StatusBar() {
-  const input = useStore(s => s.input)
-  const result = useStore(s => s.result)
-  const dirty = useStore(s => s.dirty)
+  const { input, result, dirty } = useStore(selectActiveTab)
 
   const lines = useMemo(() => (input ? input.split('\n').length : 0), [input])
   const bytes = useMemo(() => byteLength(input), [input])

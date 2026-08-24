@@ -1,59 +1,122 @@
 import { createTheme } from '@uiw/codemirror-themes'
 import { tags as t } from '@lezer/highlight'
+import type { TreeTheme } from './tree-theme'
 
-/**
- * 编辑器配色与右侧树形预览的语义色保持一致：
- * key=sky string=emerald number=amber boolean=violet null=灰
- */
+type EditorThemeMode = 'dark' | 'light'
 
-export const cmDark = createTheme({
-  theme: 'dark',
-  settings: {
-    background: 'transparent',
-    foreground: '#d4d4d8',
-    caret: '#7dd3fc',
-    selection: '#7dd3fc22',
-    selectionMatch: '#7dd3fc33',
-    lineHighlight: '#ffffff08',
-    gutterBackground: 'transparent',
-    gutterForeground: '#52525b',
-    gutterBorder: 'transparent',
+type SyntaxColors = {
+  key: string
+  string: string
+  number: string
+  boolean: string
+  null: string
+  punctuation: string
+}
+
+const TOKEN_COLORS: Record<TreeTheme, Record<EditorThemeMode, SyntaxColors>> = {
+  default: {
+    light: {
+      key: '#0369a1',
+      string: '#059669',
+      number: '#d97706',
+      boolean: '#7c3aed',
+      null: '#71717a',
+      punctuation: '#52525b',
+    },
+    dark: {
+      key: '#7dd3fc',
+      string: '#6ee7b7',
+      number: '#fcd34d',
+      boolean: '#c4b5fd',
+      null: '#a1a1aa',
+      punctuation: '#71717a',
+    },
   },
-  styles: [
-    { tag: t.comment, color: '#52525b' },
-    { tag: t.propertyName, color: '#7dd3fc' },
-    { tag: t.string, color: '#6ee7b7' },
-    { tag: t.number, color: '#fcd34d' },
-    { tag: t.bool, color: '#c4b5fd' },
-    { tag: t.null, color: '#a1a1aa' },
-    { tag: t.bracket, color: '#71717a' },
-    { tag: t.operator, color: '#71717a' },
-    { tag: t.invalid, color: '#f87171' },
-  ],
-})
-
-export const cmLight = createTheme({
-  theme: 'light',
-  settings: {
-    background: 'transparent',
-    foreground: '#27272a',
-    caret: '#0369a1',
-    selection: '#0369a122',
-    selectionMatch: '#0369a133',
-    lineHighlight: '#00000006',
-    gutterBackground: 'transparent',
-    gutterForeground: '#a1a1aa',
-    gutterBorder: 'transparent',
+  dracula: {
+    light: {
+      key: '#7c3aed',
+      string: '#15803d',
+      number: '#c2410c',
+      boolean: '#be185d',
+      null: '#6b7280',
+      punctuation: 'rgb(75 85 99 / 55%)',
+    },
+    dark: {
+      key: '#bd93f9',
+      string: '#50fa7b',
+      number: '#f1fa8c',
+      boolean: '#ff79c6',
+      null: '#6272a4',
+      punctuation: 'rgb(248 248 242 / 48%)',
+    },
   },
-  styles: [
-    { tag: t.comment, color: '#a1a1aa' },
-    { tag: t.propertyName, color: '#0369a1' },
-    { tag: t.string, color: '#059669' },
-    { tag: t.number, color: '#d97706' },
-    { tag: t.bool, color: '#7c3aed' },
-    { tag: t.null, color: '#71717a' },
-    { tag: t.bracket, color: '#52525b' },
-    { tag: t.operator, color: '#52525b' },
-    { tag: t.invalid, color: '#dc2626' },
-  ],
-})
+  monokai: {
+    light: {
+      key: '#c026d3',
+      string: '#15803d',
+      number: '#b45309',
+      boolean: '#dc2626',
+      null: '#6b7280',
+      punctuation: 'rgb(63 63 70 / 55%)',
+    },
+    dark: {
+      key: '#f92672',
+      string: '#a6e22e',
+      number: '#ae81ff',
+      boolean: '#66d9ef',
+      null: '#75715e',
+      punctuation: 'rgb(248 248 242 / 48%)',
+    },
+  },
+}
+
+const createEditorTheme = (theme: EditorThemeMode, colors: SyntaxColors) => {
+  const dark = theme === 'dark'
+
+  return createTheme({
+    theme,
+    settings: {
+      background: 'transparent',
+      foreground: dark ? '#d4d4d8' : '#27272a',
+      caret: colors.key,
+      selection: dark ? '#7dd3fc22' : '#0369a122',
+      selectionMatch: dark ? '#7dd3fc33' : '#0369a133',
+      lineHighlight: dark ? '#ffffff08' : '#00000006',
+      gutterBackground: 'transparent',
+      gutterForeground: dark ? '#52525b' : '#a1a1aa',
+      gutterBorder: 'transparent',
+    },
+    styles: [
+      { tag: t.comment, color: dark ? '#52525b' : '#a1a1aa' },
+      { tag: t.propertyName, color: colors.key },
+      { tag: t.string, color: colors.string },
+      { tag: t.number, color: colors.number },
+      { tag: t.bool, color: colors.boolean },
+      { tag: t.null, color: colors.null },
+      { tag: t.bracket, color: colors.punctuation },
+      { tag: t.operator, color: colors.punctuation },
+      { tag: t.invalid, color: dark ? '#f87171' : '#dc2626' },
+    ],
+  })
+}
+
+const CODE_MIRROR_THEMES = {
+  default: {
+    light: createEditorTheme('light', TOKEN_COLORS.default.light),
+    dark: createEditorTheme('dark', TOKEN_COLORS.default.dark),
+  },
+  dracula: {
+    light: createEditorTheme('light', TOKEN_COLORS.dracula.light),
+    dark: createEditorTheme('dark', TOKEN_COLORS.dracula.dark),
+  },
+  monokai: {
+    light: createEditorTheme('light', TOKEN_COLORS.monokai.light),
+    dark: createEditorTheme('dark', TOKEN_COLORS.monokai.dark),
+  },
+}
+
+export const getCodeMirrorTheme = (dark: boolean, treeTheme: TreeTheme) => {
+  const theme = dark ? 'dark' : 'light'
+
+  return CODE_MIRROR_THEMES[treeTheme][theme]
+}

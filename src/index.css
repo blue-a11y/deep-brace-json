@@ -21,6 +21,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 单行关闭通知包含更高的操作按钮，三列统一按垂直中心对齐。 */
+.toast:has(.tab-close-toast-action) {
+  align-items: center;
+}
+
 /* CodeMirror 撑满面板:约束 theme/editor 高度链(父级 flex 分配高度下
    height:100% 需两层都显式声明,否则被内容自然高撑破,滚动失效) */
 .cm-theme,
@@ -59,6 +64,69 @@ body {
 .tree-body {
   position: relative;
   counter-reset: treeline;
+  --tree-token-key: var(--color-sky-700);
+  --tree-token-string: var(--color-emerald-700);
+  --tree-token-number: var(--color-amber-700);
+  --tree-token-boolean: var(--color-violet-700);
+  --tree-token-null: var(--color-zinc-500);
+  --tree-token-punctuation: color-mix(in oklab, var(--color-foreground) 40%, transparent);
+}
+.dark .tree-body {
+  --tree-token-key: var(--color-sky-300);
+  --tree-token-string: var(--color-emerald-300);
+  --tree-token-number: var(--color-amber-300);
+  --tree-token-boolean: var(--color-violet-300);
+  --tree-token-null: var(--color-zinc-400);
+}
+.tree-body[data-tree-theme='dracula'] {
+  --tree-token-key: #7c3aed;
+  --tree-token-string: #15803d;
+  --tree-token-number: #c2410c;
+  --tree-token-boolean: #be185d;
+  --tree-token-null: #6b7280;
+  --tree-token-punctuation: rgb(75 85 99 / 55%);
+}
+.dark .tree-body[data-tree-theme='dracula'] {
+  --tree-token-key: #bd93f9;
+  --tree-token-string: #50fa7b;
+  --tree-token-number: #f1fa8c;
+  --tree-token-boolean: #ff79c6;
+  --tree-token-null: #6272a4;
+  --tree-token-punctuation: rgb(248 248 242 / 48%);
+}
+.tree-body[data-tree-theme='monokai'] {
+  --tree-token-key: #c026d3;
+  --tree-token-string: #15803d;
+  --tree-token-number: #b45309;
+  --tree-token-boolean: #dc2626;
+  --tree-token-null: #6b7280;
+  --tree-token-punctuation: rgb(63 63 70 / 55%);
+}
+.dark .tree-body[data-tree-theme='monokai'] {
+  --tree-token-key: #f92672;
+  --tree-token-string: #a6e22e;
+  --tree-token-number: #ae81ff;
+  --tree-token-boolean: #66d9ef;
+  --tree-token-null: #75715e;
+  --tree-token-punctuation: rgb(248 248 242 / 48%);
+}
+.tree-token-key {
+  color: var(--tree-token-key);
+}
+.tree-token-string {
+  color: var(--tree-token-string);
+}
+.tree-token-number {
+  color: var(--tree-token-number);
+}
+.tree-token-boolean {
+  color: var(--tree-token-boolean);
+}
+.tree-token-null {
+  color: var(--tree-token-null);
+}
+.tree-token-punctuation {
+  color: var(--tree-token-punctuation);
 }
 .tree-line {
   counter-increment: treeline;
@@ -132,7 +200,17 @@ body {
 .tree-children-inner {
   overflow: hidden;
   min-height: 0;
+  background-image: linear-gradient(
+    color-mix(in oklab, var(--color-foreground) 10%, transparent),
+    color-mix(in oklab, var(--color-foreground) 10%, transparent)
+  );
+  background-position: calc(3.5ch + 3px) 0;
+  background-repeat: no-repeat;
+  background-size: 1px calc(100% - 1.5rem - 2px);
   transition: opacity 160ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.tree-children-content {
+  padding-left: var(--tree-indent-size, 4px);
 }
 /* 收起子树的行号隐藏:行号 ::before 绝对定位相对 tree-body,
    inner 的 overflow 裁剪不到它,须显式透明(随收起动画淡出) */

@@ -1,17 +1,22 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Button, toast } from '@heroui/react'
-import { Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical, WrapText, ArrowLeftRight } from 'lucide-react'
-import { type NodePath, pathKey } from '../lib/parse'
-import { useStore } from '../store/useStore'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Button } from '@heroui/react'
+import { ArrowLeftRight, Braces, Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical, WrapText } from 'lucide-react'
+import { serializeForCopy, TREE_INDENT_PIXEL_RATIO } from '../lib/indent'
+import { isStrictJson, type NodePath, pathKey } from '../lib/parse'
+import { bindTabScrollPosition } from '../lib/tab-scroll'
+import { toast } from '../lib/toast'
+import { selectActiveTab, useStore } from '../store/useStore'
 import { Tip } from './Tip'
+import { TreeActionButton } from './tree-action-button'
+import { TreeCopyButton } from './tree-copy-button'
 
-const PUNCT = 'text-foreground/40'
+const PUNCT = 'tree-token-punctuation'
 
 /* ---------- 叶子值：类型语义色 ---------- */
 
 function LeafValue({ value }: { value: unknown }) {
   if (value === null) {
-    return <span className="italic text-zinc-500 dark:text-zinc-400">null</span>
+    return <span className="tree-token-null italic">null</span>
   }
   switch (typeof value) {
     case 'string': {
@@ -20,7 +25,7 @@ function LeafValue({ value }: { value: unknown }) {
       const escaped = JSON.stringify(s).slice(1, -1)
       const display = escaped.length > 120 ? `${escaped.slice(0, 120)}…` : escaped
       const body = (
-        <span className="break-all text-emerald-700 dark:text-emerald-300">"{display}"</span>
+        <span className="tree-token-string break-all">"{display}"</span>
       )
       if (escaped.length <= 120) return body
       return (
@@ -28,9 +33,9 @@ function LeafValue({ value }: { value: unknown }) {
       )
     }
     case 'number':
-      return <span className="text-amber-700 dark:text-amber-300">{String(value)}</span>
+      return <span className="tree-token-number">{String(value)}</span>
     case 'boolean':
-      return <span className="text-violet-700 dark:text-violet-300">{String(value)}</span>
+      return <span className="tree-token-boolean">{String(value)}</span>
     default:
       return <span className="text-foreground/60">{String(value)}</span>
   }
@@ -39,52 +44,31 @@ function LeafValue({ value }: { value: unknown }) {
 /* ---------- key 标签：属性名 / 数组索引 ---------- */
 
 function KeyLabel({ label }: { label: string }) {
-  return <span className="shrink-0 text-sky-700 dark:text-sky-300">"{label}"</span>
+  return <span className="tree-token-key shrink-0">"{label}"</span>
 }
 
 /** 尾逗号(非末位条目),呈现 JSON 文本形态 */
 const Comma = () => <span className={PUNCT}>,</span>
 
-/* ---------- 行内复制按钮(hover 显示) ---------- */
+type IParseStringButtonProps = {
+  value: string
+  title: string
+}
 
-function CopyValueButton({ value }: { value: unknown }) {
-  const [copied, setCopied] = useState(false)
-  const copy = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    try {
-      const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      toast.success(typeof value === 'string' ? '已复制值' : '已复制节点')
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* 剪贴板不可用时静默 */
-    }
-  }
+const ParseStringButton = ({ value, title }: IParseStringButtonProps) => {
+  const handleParse = () => useStore.getState().openTab(value, title)
+
   return (
-    <button
-      type="button"
-      aria-label="复制"
-      className="ml-1.5 inline-grid size-5 shrink-0 translate-y-[3px] cursor-pointer place-items-center rounded text-foreground/35 opacity-0 transition-all hover:text-foreground group-hover:opacity-100"
-      onClick={copy}
-    >
-      <span className="relative col-start-1 row-start-1 inline-grid place-items-center">
-        <Copy
-          size={11}
-          className={`col-start-1 row-start-1 transition-all duration-200 ${!copied ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}
-        />
-        <Check
-          size={11}
-          className={`col-start-1 row-start-1 text-emerald-500 transition-all duration-200 ${copied ? 'scale-100 rotate-0 opacity-100' : 'scale-50 -rotate-90 opacity-0'}`}
-        />
-      </span>
-    </button>
+    <TreeActionButton onClick={handleParse}>
+      Parse
+      <Braces size={10} />
+    </TreeActionButton>
   )
 }
 
 /* ---------- 树节点（递归） ---------- */
 
-interface TreeNodeProps {
+type ITreeNodeProps = {
   label: string | null
   value: unknown
   path: NodePath
@@ -103,11 +87,15 @@ export function TreeNode({
   touched,
   comma,
   onToggle,
-}: TreeNodeProps) {
+}: ITreeNodeProps) {
   const isArray = Array.isArray(value)
   const isObject = !isArray && value !== null && typeof value === 'object'
 
   if (!isArray && !isObject) {
+    const embeddedJsonTitle = label ?? (
+      typeof path.at(-1) === 'number' ? `数组项 ${Number(path.at(-1)) + 1}` : '嵌套 JSON'
+    )
+    const canParse = typeof value === 'string' && isStrictJson(value)
     return (
       <div className="tree-line group flex items-baseline gap-1.5 rounded px-0.5 py-px font-mono text-[13px] leading-6 hover:bg-foreground/5">
         <span className="w-4 shrink-0" />
@@ -117,9 +105,10 @@ export function TreeNode({
             <span className={`shrink-0 ${PUNCT}`}>:</span>
           </>
         )}
+        {canParse && <ParseStringButton value={value} title={embeddedJsonTitle} />}
         <LeafValue value={value} />
         {comma && <Comma />}
-        <CopyValueButton value={value} />
+        <TreeCopyButton value={value} />
       </div>
     )
   }
@@ -191,7 +180,7 @@ export function TreeNode({
             {comma && <Comma />}
           </>
         )}
-        <CopyValueButton value={value} />
+        <TreeCopyButton value={value} />
       </div>
       {/* 未挂载的折叠子树:counter 占位补足行数,保证其后行号与展开时一致 */}
       {!open && !touched.has(key) && (
@@ -272,10 +261,9 @@ function TreeChildren({
       className="tree-children ml-[7px] pl-3"
       data-open={entered}
     >
-      <div className="tree-children-inner border-l border-foreground/10 pl-3">
-        {children}
-        {/* 闭合括号对齐头部行开括号列:实测补偿 15px 对齐开括号列 */}
-        <div className={`tree-line ${PUNCT} py-px`} style={{ paddingLeft: '15.5px' }}>
+      <div className="tree-children-inner border-l border-transparent">
+        <div className="tree-children-content">{children}</div>
+        <div className={`tree-line ${PUNCT} py-px`}>
           {closeB}
           {comma && <Comma />}
         </div>
@@ -297,21 +285,34 @@ function PaneHeader({ title, extra }: { title: string; extra?: ReactNode }) {
 }
 
 export function TreeView() {
-  const data = useStore(s => s.result?.ok ? s.result.data : null)
-  const stats = useStore(s => (s.result?.ok ? s.result.stats : null))
-  const collapsed = useStore(s => s.collapsed)
-  const touched = useStore(s => s.touched)
-  const input = useStore(s => s.input)
+  const activeTab = useStore(selectActiveTab)
+  const result = activeTab.result
+  const data = result?.ok ? result.data : null
+  const stats = result?.ok ? result.stats : null
+  const { collapsed, touched, wrap } = activeTab
+  const indentSize = useStore(s => s.indentSize)
+  const treeTheme = useStore(s => s.treeTheme)
   const clear = useStore(s => s.clear)
+  const toggleWrap = useStore(s => s.toggleWrap)
   const onToggle = useStore(s => s.toggleCollapse)
   const onExpandAll = useStore(s => s.expandAll)
   const onCollapseAll = useStore(s => s.collapseAll)
   const [copied, setCopied] = useState(false)
-  const [wrap, setWrap] = useState(true)
+  const treeScrollRef = useRef<HTMLDivElement>(null)
+  const treeStyle = {
+    '--tree-indent-size': `${indentSize * TREE_INDENT_PIXEL_RATIO}px`,
+  } as CSSProperties
+
+  useLayoutEffect(() => {
+    const element = treeScrollRef.current
+    return element
+      ? bindTabScrollPosition(activeTab.id, 'tree', element)
+      : undefined
+  }, [activeTab.id])
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(input)
+      await navigator.clipboard.writeText(serializeForCopy(data, indentSize))
       setCopied(true)
       toast.success('已复制到剪贴板')
       setTimeout(() => setCopied(false), 1500)
@@ -320,7 +321,7 @@ export function TreeView() {
     }
   }
 
-  if (!data || !stats) return null
+  if (!result?.ok || !stats) return null
 
   return (
     <section className="flex h-full min-h-0 flex-col">
@@ -353,7 +354,7 @@ export function TreeView() {
               <Button
                 size="sm"
                 variant="ghost"
-                onPress={() => setWrap(w => !w)}
+                onPress={toggleWrap}
               >
                 <span className="relative inline-grid place-items-center">
                   <WrapText
@@ -393,7 +394,10 @@ export function TreeView() {
         }
       />
       <div
+        ref={treeScrollRef}
         className={`tree-body tree-scroll min-h-0 flex-1 overflow-auto px-4 py-1.5 ${wrap ? 'tree-wrap' : 'tree-nowrap'}`}
+        data-tree-theme={treeTheme}
+        style={treeStyle}
       >
         <TreeNode label={null} value={data} path={[]} collapsed={collapsed} touched={touched} onToggle={onToggle} />
       </div>
