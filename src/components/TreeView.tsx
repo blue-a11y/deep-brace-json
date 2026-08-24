@@ -274,7 +274,8 @@ function TreeChildren({
     >
       <div className="tree-children-inner border-l border-foreground/10 pl-3">
         {children}
-        <div className={`tree-line ${PUNCT} py-px`}>
+        {/* 闭合括号对齐头部行开括号列:实测补偿 15px 对齐开括号列 */}
+        <div className={`tree-line ${PUNCT} py-px`} style={{ paddingLeft: '15.5px' }}>
           {closeB}
           {comma && <Comma />}
         </div>
