@@ -50,6 +50,12 @@ body {
 .select-ghost .select__value {
   font-weight: 500;
 }
+/* 箭头图标与按钮图标一致:2px 描边 + 前景色(默认 1px + muted);
+   .select__indicator 本身就是 svg 元素 */
+.select-ghost .select__indicator {
+  color: var(--color-foreground);
+  stroke-width: 2;
+}
 .select-ghost .select__trigger:hover,
 .select-ghost .select__trigger[data-hovered='true'] {
   background-color: var(--select-trigger-bg-hover);
