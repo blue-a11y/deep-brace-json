@@ -1,6 +1,6 @@
 # HeroUI v3 Toast 动画失效问题调研报告
 
-> 日期：2026-08-23 · 项目：json-lens（Vite + React 19 + HeroUI v3）
+> 日期：2026-08-23 · 项目：DeepBrace JSON（Vite + React 19 + HeroUI v3）
 > 本文档自包含，可直接转交 HeroUI 团队或接手人。
 
 ## 1. 现象

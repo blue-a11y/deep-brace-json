@@ -13,7 +13,7 @@ type IJsonTabItemProps = {
   onClose: (tab: JsonTab, index: number) => void
 }
 
-const getTabDisplayTitle = (index: number) => `Lens ${index + 1}`
+const getTabDisplayTitle = (index: number) => `Brace ${index + 1}`
 
 const JsonTabItem = ({ tab, index, closeDisabled, onClose }: IJsonTabItemProps) => {
   const displayTitle = getTabDisplayTitle(index)
@@ -88,7 +88,7 @@ export const JsonTabs = () => {
   const tabCollectionKey = tabs.map(tab => tab.id).join(':')
 
   return (
-    <nav aria-label="JSON 标签" className="flex min-w-0 items-center gap-1 px-1">
+    <nav aria-label="JSON 标签" className="-mt-1 mb-1 flex min-w-0 items-center gap-1 px-1">
       <Tabs
         key={tabCollectionKey}
         variant="secondary"

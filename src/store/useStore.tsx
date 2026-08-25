@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { DEFAULT_INDENT_SIZE, INDENT_OPTIONS, type IndentSize } from '../lib/indent'
 import { SAMPLE } from '../lib/sample'
+import { STORAGE_KEYS } from '../lib/storage'
 import {
   DEFAULT_TREE_THEME,
   TREE_THEME_OPTIONS,
@@ -14,9 +15,7 @@ import {
   prepareTabForStorage,
   restoreJsonTab,
 } from './tab-state'
-import type { JsonLensState } from './types'
-
-const LS_KEY = 'json-lens:store'
+import type { DeepBraceState } from './types'
 
 export const applyTheme = (dark: boolean) => {
   document.documentElement.classList.toggle('dark', dark)
@@ -29,9 +28,9 @@ const isIndentSize = (value: unknown): value is IndentSize =>
 const isTreeTheme = (value: unknown): value is TreeTheme =>
   TREE_THEME_OPTIONS.some(option => option.value === value)
 
-const mergePersistedState = (persistedState: unknown, currentState: JsonLensState) => {
+const mergePersistedState = (persistedState: unknown, currentState: DeepBraceState) => {
   const persisted = persistedState && typeof persistedState === 'object'
-    ? persistedState as Partial<JsonLensState> & { input?: unknown }
+    ? persistedState as Partial<DeepBraceState> & { input?: unknown }
     : {}
   const legacyInput = typeof persisted.input === 'string' ? persisted.input : SAMPLE
   const tabs = Array.isArray(persisted.tabs) && persisted.tabs.length > 0
@@ -56,7 +55,7 @@ const mergePersistedState = (persistedState: unknown, currentState: JsonLensStat
   }
 }
 
-export const useStore = create<JsonLensState>()(
+export const useStore = create<DeepBraceState>()(
   persist(
     (set, get, store) => ({
       ...createTabSlice(set, get, store),
@@ -72,7 +71,7 @@ export const useStore = create<JsonLensState>()(
       setTreeTheme: treeTheme => set({ treeTheme }),
     }),
     {
-      name: LS_KEY,
+      name: STORAGE_KEYS.store,
       storage: createJSONStorage(() => localStorage),
       merge: mergePersistedState,
       partialize: state => ({
@@ -86,6 +85,6 @@ export const useStore = create<JsonLensState>()(
   ),
 )
 
-export const selectActiveTab = (state: JsonLensState) => getActiveTab(state)
+export const selectActiveTab = (state: DeepBraceState) => getActiveTab(state)
 
-export type { JsonLensState, JsonTab } from './types'
+export type { DeepBraceState, JsonTab } from './types'

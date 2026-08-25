@@ -63,7 +63,7 @@ export const toastQueue = new ToastQueue<ToastContentValue>({
 const queueKeys = new Map<string, string>()
 
 const notify = (title: ReactNode, variant: ToastVariant, options?: IToastOptions) => {
-  const key = `json-lens-toast-${++toastSequence}`
+  const key = `deep-brace-json-toast-${++toastSequence}`
   scheduleQueueTransition(() => {
     const queueKey = toastQueue.add(
       {

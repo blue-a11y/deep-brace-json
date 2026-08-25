@@ -6,11 +6,10 @@ import { EditorPane } from './components/EditorPane'
 import { JsonTabs } from './components/json-tabs'
 import { EmptyPane, ErrorPane, TreeView } from './components/TreeView'
 import { StatusBar } from './components/StatusBar'
+import { STORAGE_KEYS } from './lib/storage'
 import { toastQueue } from './lib/toast'
 import { useMediaQuery } from './lib/useMediaQuery'
 import { applyTheme, selectActiveTab, useStore } from './store/useStore'
-
-const SPLIT_LAYOUT_STORAGE_ID = 'json-lens-split'
 
 export default function App() {
   const activeTab = useStore(selectActiveTab)
@@ -57,7 +56,7 @@ export default function App() {
           <PanelGroup
             direction="horizontal"
             className="min-h-0 flex-1"
-            autoSaveId={SPLIT_LAYOUT_STORAGE_ID}
+            autoSaveId={STORAGE_KEYS.splitLayout}
           >
             <Panel defaultSize={50} minSize={20} className="p-1">
               {editorPane}

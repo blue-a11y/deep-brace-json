@@ -1,8 +1,8 @@
-# json-lens 进展记录
+# DeepBrace JSON 进展记录
 
 ## 背景
 
-blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器输入、右侧树形预览，支持解析、压缩、格式化，解析结果可折叠展开。市面工具大多只支持标准 JSON，JSON5（注释、无引号 key、单引号、尾逗号、十六进制）场景缺失，且纯文本预览不方便核对深层结构——因此自建一个"给 JSON 配放大镜"的小工具，定名 json-lens。
+blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器输入、右侧树形预览，支持解析、压缩、格式化，解析结果可折叠展开。市面工具大多只支持标准 JSON，JSON5（注释、无引号 key、单引号、尾逗号、十六进制）场景缺失，且纯文本预览不方便核对深层结构——因此自建一个能够深入解析每一层结构的工具，定名 **DeepBrace JSON**。
 
 **技术选型**（2026-08-23 启动）：Vite + React 19 + HeroUI v3 + Tailwind CSS v4 + zustand（persist 持久化）+ CodeMirror 6。UI 走 Soft UI 风格（圆角卡片、无边框、填充式按钮）。
 
@@ -31,11 +31,11 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
   - 折叠箭头固定列：`.tree-chevron` 绝对定位锚到 tree-body（与行号同模式），所有层级的箭头与根节点箭头同列、不随缩进漂移；行内以 `w-4` 占位补回缩进，key 位置不变（`self-center` 参与绝对定位静态位置计算保持垂直居中）
   - 整行 hover：`fullRowStyle(depth)` 按嵌套深度给行盒做负 margin 外扩 + padding 原位补回（内容行每层 20px+indent；闭合括号行在 tree-children-inner 内少一层内容缩进，少补一个 indent），所有层级行的 hover 背景与根行同为整行；缩进量在 JS 侧算好（避免复杂 calc 跨内核差异）。**关键坑**：`.tree-children-inner` 的 `overflow: hidden`（折叠动画需要）会把外扩的行背景在横向裁掉——`getBoundingClientRect` 只能量到布局盒、量不到绘制裁剪，曾据此误判已修复；改为 `overflow: visible clip`（规范允许的组合、不产生滚动容器），纵向裁剪保留给折叠动画、横向放开。CSS 变量自引用累计（`--x: calc(var(--x)+…)`)在 Chrome 判循环无效，故 depth 由 React 递归传递
 - **多标签工作区**：
-  - Header 下方使用 HeroUI secondary Tabs，标签以 `Lens x` 展示，支持新建、切换、关闭与撤销关闭
+  - Header 下方使用 HeroUI secondary Tabs，标签以 `Brace x` 展示，支持新建、切换、关闭与撤销关闭
   - 除 Header 全局偏好外，输入、解析结果、折叠状态、换行状态均按标签隔离
   - 编辑器与 TreeView 分别记忆每个标签的横纵滚动位置；左右面板比例使用同一份全局持久化配置
   - 示例数据补充对象、数组与普通文本三类 JSON string，用于验证一键解析子节点
-- **工具栏**：logo + 特性 Chip 组（JSON5/自动解析/树形预览/一键解析子节点）+ 示例按钮 + 全局缩进 Select + TreeView 配色 Select + 浅/深主题 Tabs
+- **工具栏**：`DeepBrace JSON` 字标使用 Silkscreen 像素字体；logo + 统一 success 配色的能力 Chip 组（JSON5 支持 / 嵌套解析 / 多标签工作区 / 数据持久化）+ 示例按钮 + 全局缩进 Select + TreeView 配色 Select + 浅/深主题 Tabs；数据持久化在宽屏展示，避免中等桌面宽度挤压操作区
 - **全局缩进**：2 / 4 / 8 空格，按 `1 空格 = 2px` 同步作用于树内容缩进、格式化与复制输出
 - **Toast**：基于 HeroUI `ToastQueue` 的统一封装，队列更新与 View Transition 同步；覆盖格式化、压缩、转义/反转义、复制、示例、清空、新建标签和关闭标签，关闭标签提供撤销操作；自动解析保持静默
 - **纯文本降级**：解析失败且非 JSON 意图时，整段输入按字符串字面量处理

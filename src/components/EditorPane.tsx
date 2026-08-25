@@ -6,7 +6,7 @@ import { json } from '@codemirror/lang-json'
 import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react'
 import { Button } from '@heroui/react'
 import { getCodeMirrorTheme } from '../lib/cmTheme'
-import { bindTabScrollPosition } from '../lib/tab-scroll'
+import { bindEditorTabScrollPosition } from '../lib/tab-scroll'
 import { selectActiveTab, useStore } from '../store/useStore'
 import { Tip } from './Tip'
 
@@ -44,17 +44,13 @@ export const EditorPane = () => {
 
   const handleCreateEditor = (view: EditorView) => {
     editorScrollCleanupRef.current?.()
-    editorScrollCleanupRef.current = bindTabScrollPosition(
-      activeTab.id,
-      'editor',
-      view.scrollDOM,
-    )
+    editorScrollCleanupRef.current = bindEditorTabScrollPosition(activeTab.id, view)
   }
 
   useEffect(() => () => editorScrollCleanupRef.current?.(), [])
 
   return (
-    <section className="flex h-full min-h-0 flex-col">
+    <section className="pane-responsive-actions flex h-full min-h-0 flex-col">
       <div className="flex shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
         <FileJson size={13} />
         <span className="font-medium">编辑器</span>
@@ -72,7 +68,7 @@ export const EditorPane = () => {
                 key={formatPulse}
                 className={formatPulse > 0 ? 'icon-feedback-format' : undefined}
               />
-              <span className="hidden md:inline">格式化</span>
+              <span className="pane-action-label">格式化</span>
             </Button>
           </Tip>
           <Tip label="压缩为单行">
@@ -88,7 +84,7 @@ export const EditorPane = () => {
                 key={minifyPulse}
                 className={minifyPulse > 0 ? 'icon-feedback-minify' : undefined}
               />
-              <span className="hidden md:inline">压缩</span>
+              <span className="pane-action-label">压缩</span>
             </Button>
           </Tip>
           <Tip label="转义 · 包成 JSON 字符串字面量，可反复叠加">
@@ -104,7 +100,7 @@ export const EditorPane = () => {
                 key={escapePulse}
                 className={escapePulse > 0 ? 'icon-feedback-wrap' : undefined}
               />
-              <span className="hidden md:inline">转义</span>
+              <span className="pane-action-label">转义</span>
             </Button>
           </Tip>
           <Tip label="反转义 · 剥开一层转义，可反复点击">
@@ -120,7 +116,7 @@ export const EditorPane = () => {
                 key={unescapePulse}
                 className={unescapePulse > 0 ? 'icon-feedback-unwrap' : undefined}
               />
-              <span className="hidden md:inline">反转义</span>
+              <span className="pane-action-label">反转义</span>
             </Button>
           </Tip>
         </div>

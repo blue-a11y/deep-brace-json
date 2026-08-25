@@ -18,7 +18,7 @@ import {
   getNextTabTitle,
   updateJsonTab,
 } from './tab-state'
-import type { JsonLensState, JsonTabsSlice } from './types'
+import type { DeepBraceState, JsonTabsSlice } from './types'
 
 const AUTO_PARSE_DELAY = 300
 const autoParseTimers = new Map<string, ReturnType<typeof setTimeout>>()
@@ -35,7 +35,7 @@ const notifyResult = (result: ParseResult) => {
   }
 }
 
-export const createTabSlice: StateCreator<JsonLensState, [], [], JsonTabsSlice> = (set, get) => {
+export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice> = (set, get) => {
   const cancelAutoParse = (id: string) => {
     clearTimeout(autoParseTimers.get(id))
     autoParseTimers.delete(id)

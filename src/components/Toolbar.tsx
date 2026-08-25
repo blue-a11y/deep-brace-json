@@ -1,18 +1,12 @@
+import { CircleFill } from '@gravity-ui/icons'
 import { Button, Chip, Tabs } from '@heroui/react'
-
-import {
-  Braces,
-  Check,
-  Eye,
-  Moon,
-  Sparkles,
-  Sun,
-  Zap,
-} from 'lucide-react'
+import { Moon, Sparkles, Sun } from 'lucide-react'
 import { IndentSelect } from './indent-select'
 import { TreeThemeSelect } from './tree-theme-select'
 import { Tip } from './Tip'
 import { useStore } from '../store/useStore'
+
+const CHIP_DOT_SIZE = 4
 
 export function Toolbar() {
   const loadSample = useStore(s => s.loadSample)
@@ -25,30 +19,30 @@ export function Toolbar() {
 
   return (
     <header className="flex shrink-0 items-center gap-2 px-1 py-1.5 md:px-2">
-      <div className="mr-1 flex items-center gap-2.5 md:mr-3">
-        <div className="grid size-7 shrink-0 place-items-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
+      <div className="mr-1 flex items-baseline gap-2.5 md:mr-3">
+        <div className="grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
           {'{ }'}
         </div>
-        <span className="hidden font-mono text-[15px] font-bold tracking-tight sm:inline">
-          json-lens
+        <span className="hidden whitespace-nowrap font-logo text-[20px] tracking-tight sm:inline">
+          DeepBrace JSON
         </span>
         {/* 工具特性 */}
-        <div className="hidden items-center gap-1.5 lg:flex">
-          <Chip size="sm" color="success">
-            <Check width={12} />
-            <Chip.Label>JSON5</Chip.Label>
+        <div className="hidden translate-y-0.5 items-center gap-1 font-sans tracking-normal lg:flex">
+          <Chip color="success" size="sm">
+            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
+            <Chip.Label>JSON5 支持</Chip.Label>
           </Chip>
-          <Chip size="sm" color="accent">
-            <Zap width={12} />
-            <Chip.Label>自动解析</Chip.Label>
+          <Chip color="success" size="sm">
+            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
+            <Chip.Label>嵌套解析</Chip.Label>
           </Chip>
-          <Chip size="sm" color="default">
-            <Eye width={12} />
-            <Chip.Label>树形预览</Chip.Label>
+          <Chip color="success" size="sm">
+            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
+            <Chip.Label>多标签工作区</Chip.Label>
           </Chip>
-          <Chip size="sm" color="accent">
-            <Braces width={12} />
-            <Chip.Label>一键解析子节点</Chip.Label>
+          <Chip color="success" size="sm" className="hidden xl:inline-flex">
+            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
+            <Chip.Label>数据持久化</Chip.Label>
           </Chip>
         </div>
       </div>
@@ -65,7 +59,6 @@ export function Toolbar() {
         <TreeThemeSelect value={treeTheme} onChange={setTreeTheme} />
 
         <Tabs
-          className="theme-tabs"
           aria-label="主题"
           selectedKey={dark ? 'dark' : 'light'}
           onSelectionChange={k => {
@@ -73,14 +66,22 @@ export function Toolbar() {
           }}
         >
           <Tabs.ListContainer>
-            <Tabs.List aria-label="主题">
-              <Tabs.Tab id="light" aria-label="浅色">
-                <Sun size={14} />
-                <Tabs.Indicator />
+            <Tabs.List aria-label="主题" className="h-9 p-0.5">
+              <Tabs.Tab
+                id="light"
+                aria-label="浅色"
+                className="h-8 min-h-8 w-[45px] min-w-[45px] rounded-full p-0"
+              >
+                <Sun size={16} strokeWidth={2.5} />
+                <Tabs.Indicator className="rounded-full" />
               </Tabs.Tab>
-              <Tabs.Tab id="dark" aria-label="深色">
-                <Moon size={14} />
-                <Tabs.Indicator />
+              <Tabs.Tab
+                id="dark"
+                aria-label="深色"
+                className="h-8 min-h-8 w-[45px] min-w-[45px] rounded-full p-0"
+              >
+                <Moon size={16} strokeWidth={2.5} />
+                <Tabs.Indicator className="rounded-full" />
               </Tabs.Tab>
             </Tabs.List>
           </Tabs.ListContainer>

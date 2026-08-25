@@ -3,7 +3,7 @@ import { Button } from '@heroui/react'
 import { ArrowLeftRight, Braces, Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical, WrapText } from 'lucide-react'
 import { serializeForCopy, TREE_INDENT_PIXEL_RATIO } from '../lib/indent'
 import { isStrictJson, type NodePath, pathKey } from '../lib/parse'
-import { bindTabScrollPosition } from '../lib/tab-scroll'
+import { bindTreeTabScrollPosition } from '../lib/tab-scroll'
 import { toast } from '../lib/toast'
 import { selectActiveTab, useStore } from '../store/useStore'
 import { Tip } from './Tip'
@@ -275,28 +275,22 @@ function TreeChildren({
   indent: number
   children: ReactNode
 }) {
-  // entered: 首次渲染从 0fr 起始,双 rAF 后切 1fr 获得展开动画
-  const [entered, setEntered] = useState(false)
-  const wrapRef = useRef<HTMLDivElement | null>(null)
+  // 首次挂载直接呈现最终状态；保留 DOM 后的开闭变化继续使用 grid 过渡。
+  const [entered, setEntered] = useState(open)
+  const mountedRef = useRef(false)
   useEffect(() => {
-    if (open) {
-      // 稳定编号下展开不产生行号跳变(占位与真实行号数一致),无需遮罩
-      let raf2 = 0
-      const raf1 = requestAnimationFrame(() => {
-        raf2 = requestAnimationFrame(() => setEntered(true))
-      })
-      return () => {
-        cancelAnimationFrame(raf1)
-        cancelAnimationFrame(raf2)
-      }
+    if (!mountedRef.current) {
+      mountedRef.current = true
+      return
     }
-    setEntered(false)
+    const frame = requestAnimationFrame(() => setEntered(open))
+    return () => cancelAnimationFrame(frame)
   }, [open])
   // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
   return (
     <div
-      ref={wrapRef}
       className="tree-children ml-[7px] pl-3"
+      data-expanded={open}
       data-open={entered}
     >
       <div className="tree-children-inner border-l border-transparent">
@@ -317,7 +311,7 @@ function TreeChildren({
 
 function PaneHeader({ title, extra }: { title: string; extra?: ReactNode }) {
   return (
-    <div className="flex shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
+    <div className="flex min-h-10 shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
       <Eye size={13} />
       <span className="font-medium">{title}</span>
       <div className="ml-auto flex items-center gap-0.5">{extra}</div>
@@ -347,7 +341,7 @@ export function TreeView() {
   useLayoutEffect(() => {
     const element = treeScrollRef.current
     return element
-      ? bindTabScrollPosition(activeTab.id, 'tree', element)
+      ? bindTreeTabScrollPosition(activeTab.id, element)
       : undefined
   }, [activeTab.id])
 
@@ -365,7 +359,7 @@ export function TreeView() {
   if (!result?.ok || !stats) return null
 
   return (
-    <section className="flex h-full min-h-0 flex-col">
+    <section className="pane-responsive-actions flex h-full min-h-0 flex-col">
       <PaneHeader
         title="树形预览"
         extra={
@@ -382,13 +376,13 @@ export function TreeView() {
                     className={`col-start-1 row-start-1 text-emerald-500 transition-all duration-200 ${copied ? 'scale-100 rotate-0 opacity-100' : 'scale-50 -rotate-90 opacity-0'}`}
                   />
                 </span>
-                <span className="hidden md:inline">{copied ? '已复制' : '复制'}</span>
+                <span className="pane-action-label">{copied ? '已复制' : '复制'}</span>
               </Button>
             </Tip>
             <Tip label="清空">
               <Button size="sm" variant="ghost" onPress={clear}>
                 <Trash2 size={14} />
-                <span className="hidden md:inline">清空</span>
+                <span className="pane-action-label">清空</span>
               </Button>
             </Tip>
             <Tip label={wrap ? '不换行(左右滚动)' : '自动换行'}>
@@ -407,7 +401,7 @@ export function TreeView() {
                     className={`col-start-1 row-start-1 transition-all duration-200 ${!wrap ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`}
                   />
                 </span>
-                <span className="hidden md:inline">{wrap ? '换行' : '不换行'}</span>
+                <span className="pane-action-label">{wrap ? '换行' : '不换行'}</span>
               </Button>
             </Tip>
             <Tip label={collapsed.size > 0 ? '展开全部' : '折叠全部'}>
@@ -426,7 +420,7 @@ export function TreeView() {
                     className={`col-start-1 row-start-1 transition-all duration-200 ${collapsed.size === 0 ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'}`}
                   />
                 </span>
-                <span className="hidden md:inline">
+                <span className="pane-action-label">
                   {collapsed.size > 0 ? '展开' : '折叠'}
                 </span>
               </Button>

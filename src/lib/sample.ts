@@ -1,7 +1,7 @@
 /** 展示 JSON5 特性及可二次解析的 JSON 字符串 */
 export const SAMPLE = `{
   // 一段 JSON5 —— key 可以不带引号
-  name: 'json-lens',
+  name: 'deep-brace-json',
   version: '1.0.0',
   keywords: ['json', 'json5', 'parser', 'tree'],
   config: {

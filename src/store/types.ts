@@ -51,4 +51,4 @@ export type PreferencesSlice = {
   setTreeTheme: (value: TreeTheme) => void
 }
 
-export type JsonLensState = JsonTabsSlice & PreferencesSlice
+export type DeepBraceState = JsonTabsSlice & PreferencesSlice

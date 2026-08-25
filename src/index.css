@@ -4,6 +4,7 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-logo: "Silkscreen", ui-monospace, monospace;
 }
 
 html,
@@ -204,24 +205,16 @@ body {
   position: relative;
 }
 
-/* 主题切换 Tabs 小尺寸(官方 Tabs 无 size 变体;item 官方为 h-8,整体缩一档,
-   容器高度不强制,自适应 item 避免错位) */
-.theme-tabs .tabs__list {
-  padding: 2px !important;
+.pane-responsive-actions {
+  container-type: inline-size;
 }
-.theme-tabs .tabs__tab {
-  height: 26px !important;
-  min-height: 0 !important;
-  padding: 0 7px !important;
-  line-height: 1 !important;
+
+@container (max-width: 520px) {
+  .pane-action-label {
+    display: none;
+  }
 }
-.theme-tabs .tabs__tab {
-  padding: 0 6px !important;
-  height: 26px !important;
-  min-height: 26px !important;
-  line-height: 1 !important;
-  gap: 4px;
-}
+
 .tree-children {
   display: grid;
   grid-template-rows: 0fr;
