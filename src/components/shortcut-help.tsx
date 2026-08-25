@@ -15,7 +15,7 @@ export const ShortcutHelp = () => (
       <Keyboard size={15} />
       <span className="hidden xl:inline">快捷键</span>
     </Button>
-    <Modal.Backdrop variant="blur">
+    <Modal.Backdrop>
       <Modal.Container placement="center" size="lg">
         <Modal.Dialog className="sm:max-w-2xl">
           <Modal.CloseTrigger />
@@ -50,9 +50,6 @@ export const ShortcutHelp = () => (
               </section>
             ))}
           </Modal.Body>
-          <Modal.Footer>
-            <Button slot="close" variant="secondary">完成</Button>
-          </Modal.Footer>
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>

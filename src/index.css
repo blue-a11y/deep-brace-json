@@ -27,6 +27,13 @@ body {
   align-items: center;
 }
 
+/* 面板头操作按钮图标收小一档:HeroUI Button 以 `.button svg { size-4 }` 强制 16px,
+   此处仅覆盖编辑器/树形预览头部为 14px(主工具栏保持 16px) */
+.panel-header-actions button svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* CodeMirror 撑满面板:约束 theme/editor 高度链(父级 flex 分配高度下
    height:100% 需两层都显式声明,否则被内容自然高撑破,滚动失效) */
 .cm-theme,

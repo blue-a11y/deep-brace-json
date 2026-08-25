@@ -316,7 +316,7 @@ function PaneHeader({ title, extra }: { title: string; extra?: ReactNode }) {
     <div className="flex min-h-10 shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
       <Eye size={13} />
       <span className="font-medium">{title}</span>
-      <div className="ml-auto flex items-center gap-0.5">{extra}</div>
+      <div className="panel-header-actions ml-auto flex items-center gap-0.5">{extra}</div>
     </div>
   )
 }

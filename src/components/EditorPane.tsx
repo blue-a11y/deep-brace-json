@@ -56,7 +56,7 @@ export const EditorPane = () => {
       <div className="flex shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
         <FileJson size={13} />
         <span className="font-medium">编辑器</span>
-        <div className="ml-auto flex items-center gap-0.5">
+        <div className="panel-header-actions ml-auto flex items-center gap-0.5">
           <Tip
             ariaKeyShortcuts={getAriaShortcut('format')}
             label={
