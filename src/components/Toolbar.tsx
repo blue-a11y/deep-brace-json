@@ -42,6 +42,7 @@ export function Toolbar() {
           loopDelay={5}
           delay={1}
           duration={0.65}
+          stagger={0.05}
           textAlign="left"
           className="hidden whitespace-nowrap font-logo text-[20px] tracking-tight sm:inline"
         />
