@@ -5,6 +5,7 @@ import { IndentSelect } from './indent-select'
 import { ShortcutHelp } from './shortcut-help'
 import { TreeThemeSelect } from './tree-theme-select'
 import { Tip } from './Tip'
+import AnimatedContent from './react-bits/AnimatedContent'
 import Shuffle from './react-bits/Shuffle'
 import { useStore } from '../store/useStore'
 
@@ -22,9 +23,17 @@ export function Toolbar() {
   return (
     <header className="flex shrink-0 items-center gap-2 px-1 py-1.5">
       <div className="mr-1 flex items-baseline gap-2.5 md:mr-3">
-        <div className="grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
-          {'{ }'}
-        </div>
+        <AnimatedContent
+          distance={0}
+          scale={0}
+          duration={0.65}
+          ease="back.out(2)"
+          className="flex self-center"
+        >
+          <div className="grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
+            {'{ }'}
+          </div>
+        </AnimatedContent>
         <Shuffle
           text="DeepBrace JSON"
           tag="span"
