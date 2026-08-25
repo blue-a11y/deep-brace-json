@@ -5,6 +5,7 @@ import { IndentSelect } from './indent-select'
 import { ShortcutHelp } from './shortcut-help'
 import { TreeThemeSelect } from './tree-theme-select'
 import { Tip } from './Tip'
+import AnimatedContent from './react-bits/AnimatedContent'
 import { useStore } from '../store/useStore'
 
 const FEATURE_DOT_SIZE = 4
@@ -21,12 +22,14 @@ export function Toolbar() {
   return (
     <header className="flex shrink-0 items-center gap-2 px-1 py-1.5">
       <div className="mr-1 flex items-baseline gap-2.5 md:mr-3">
-        <div className="grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
-          {'{ }'}
-        </div>
-        <span className="hidden whitespace-nowrap font-logo text-[20px] tracking-tight sm:inline">
-          DeepBrace JSON
-        </span>
+        <AnimatedContent distance={16} duration={0.7} delay={0.1} className="flex items-baseline gap-2.5">
+          <div className="grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
+            {'{ }'}
+          </div>
+          <span className="hidden whitespace-nowrap font-logo text-[20px] tracking-tight sm:inline">
+            DeepBrace JSON
+          </span>
+        </AnimatedContent>
         {/* 工具特性 */}
         <div className="hidden -translate-y-0.5 items-center gap-1 font-sans tracking-normal lg:flex">
           <span className="inline-flex h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500">
@@ -79,11 +82,11 @@ export function Toolbar() {
           }}
         >
           <Tabs.ListContainer>
-            <Tabs.List aria-label="主题" className="h-9 p-0.5">
+            <Tabs.List aria-label="主题" className="h-8 p-0.5">
               <Tabs.Tab
                 id="light"
                 aria-label="浅色"
-                className="h-8 min-h-8 w-[45px] min-w-[45px] rounded-full p-0"
+                className="h-7 min-h-7 w-[45px] min-w-[45px] rounded-full p-0"
               >
                 <Sun size={16} strokeWidth={2.5} />
                 <Tabs.Indicator className="rounded-full" />
@@ -91,7 +94,7 @@ export function Toolbar() {
               <Tabs.Tab
                 id="dark"
                 aria-label="深色"
-                className="h-8 min-h-8 w-[45px] min-w-[45px] rounded-full p-0"
+                className="h-7 min-h-7 w-[45px] min-w-[45px] rounded-full p-0"
               >
                 <Moon size={16} strokeWidth={2.5} />
                 <Tabs.Indicator className="rounded-full" />
@@ -104,7 +107,7 @@ export function Toolbar() {
           <Button
             isIconOnly
             aria-label="打开 GitHub 仓库"
-            size="md"
+            size="sm"
             variant="tertiary"
             onPress={() =>
               window.open(
