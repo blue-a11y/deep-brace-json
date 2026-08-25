@@ -30,6 +30,8 @@ export interface ShuffleProps {
   animationMode?: 'random' | 'evenodd';
   loop?: boolean;
   loopDelay?: number;
+  /** 首次播放前的延迟(不影响循环间隔) */
+  delay?: number;
   stagger?: number;
   scrambleCharset?: string;
   colorFrom?: string;
@@ -56,6 +58,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
   animationMode = 'evenodd',
   loop = false,
   loopDelay = 0,
+  delay = 0,
   stagger = 0.03,
   scrambleCharset = '',
   colorFrom,
@@ -278,6 +281,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
 
         const tl = gsap.timeline({
           smoothChildTiming: true,
+          delay,
           repeat: loop ? -1 : 0,
           repeatDelay: loop ? loopDelay : 0,
           onRepeat: () => {
@@ -396,6 +400,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
         animationMode,
         loop,
         loopDelay,
+        delay,
         stagger,
         scrambleCharset,
         colorFrom,
