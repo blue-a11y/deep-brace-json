@@ -7,12 +7,13 @@ import { ShortcutKbd } from './shortcut-hint'
 export const ShortcutHelp = () => (
   <Modal>
     <Button
-      isIconOnly
       size="sm"
       variant="ghost"
       aria-label="查看快捷键"
+      className="w-9 px-0 md:w-8 xl:w-fit xl:px-3"
     >
       <Keyboard size={15} />
+      <span className="hidden xl:inline">快捷键</span>
     </Button>
     <Modal.Backdrop variant="blur">
       <Modal.Container placement="center" size="lg">

@@ -1,4 +1,4 @@
-import { CircleFill } from '@gravity-ui/icons'
+import { CircleFill, LogoGithub } from '@gravity-ui/icons'
 import { Button, Tabs } from '@heroui/react'
 import { Moon, Sparkles, Sun } from 'lucide-react'
 import { IndentSelect } from './indent-select'
@@ -99,6 +99,24 @@ export function Toolbar() {
             </Tabs.List>
           </Tabs.ListContainer>
         </Tabs>
+
+        <Tip label="查看 GitHub 仓库">
+          <Button
+            isIconOnly
+            aria-label="打开 GitHub 仓库"
+            size="md"
+            variant="tertiary"
+            onPress={() =>
+              window.open(
+                'https://github.com/blue-a11y/deep-brace-json',
+                '_blank',
+                'noopener,noreferrer',
+              )
+            }
+          >
+            <LogoGithub width={16} />
+          </Button>
+        </Tip>
       </div>
     </header>
   )
