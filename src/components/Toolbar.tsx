@@ -40,7 +40,7 @@ export function Toolbar() {
           triggerOnHover={false}
           loop
           loopDelay={5}
-          delay={1}
+          delay={1.5}
           duration={0.6}
           stagger={0.05}
           textAlign="left"
