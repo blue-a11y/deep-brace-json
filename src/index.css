@@ -49,6 +49,9 @@ body {
 }
 .select-ghost .select__value {
   font-weight: 500;
+  /* 值文本在拉伸满高的 value 盒中垂直居中(默认顶对齐,与按钮文字差 6px) */
+  display: flex;
+  align-items: center;
 }
 /* 箭头图标与按钮图标一致:2px 描边 + 前景色(默认 1px + muted);
    .select__indicator 本身就是 svg 元素 */
