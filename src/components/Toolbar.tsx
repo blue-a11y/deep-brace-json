@@ -30,7 +30,7 @@ export function Toolbar() {
           tag="span"
           triggerOnHover={false}
           loop
-          loopDelay={1.4}
+          loopDelay={5}
           duration={0.65}
           textAlign="left"
           className="hidden whitespace-nowrap font-logo text-[20px] tracking-tight sm:inline"
