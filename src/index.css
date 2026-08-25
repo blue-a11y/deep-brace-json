@@ -43,6 +43,12 @@ body {
   --select-trigger-bg-hover: var(--default);
   --select-trigger-bg-focus: transparent;
   border-color: transparent;
+  /* 与左侧 sm 按钮对齐:高度 32、字重 500(基线 min-h-9/36px、字重 400) */
+  min-height: 32px;
+  padding-block: 0;
+}
+.select-ghost .select__value {
+  font-weight: 500;
 }
 .select-ghost .select__trigger:hover,
 .select-ghost .select__trigger[data-hovered='true'] {
