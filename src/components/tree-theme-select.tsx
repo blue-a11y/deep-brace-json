@@ -17,20 +17,25 @@ export const TreeThemeSelect = ({ value, onChange }: ITreeThemeSelectProps) => {
   return (
     <Select
       aria-label="TreeView 主题"
-      className="w-28"
+      className="w-fit shrink-0"
       placeholder="TreeView 主题"
       value={value}
       variant="secondary"
       onChange={handleChange}
     >
-      <Select.Trigger>
-        <Select.Value />
+      <Select.Trigger className="whitespace-nowrap">
+        <Select.Value className="whitespace-nowrap" />
         <Select.Indicator />
       </Select.Trigger>
-      <Select.Popover>
+      <Select.Popover className="w-max">
         <ListBox>
           {TREE_THEME_OPTIONS.map(option => (
-            <ListBox.Item key={option.value} id={option.value} textValue={option.label}>
+            <ListBox.Item
+              key={option.value}
+              id={option.value}
+              className="whitespace-nowrap pr-8"
+              textValue={option.label}
+            >
               {option.label}
               <ListBox.ItemIndicator />
             </ListBox.Item>

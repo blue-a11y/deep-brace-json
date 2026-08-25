@@ -12,7 +12,7 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 
 - **编辑器**：CodeMirror 6 + JSON 语法高亮；行号、折叠槽；输入 **300ms 防抖自动解析**（无手动按钮）
   - 折叠标记定制：默认 `⌄`/`›` 字形在 JetBrains Mono 中墨迹偏行底（视觉不齐），改为与 TreeView 同款 SVG chevron（`markerDOM`），24px 行内 flex 垂直居中，标记中心与行中心实测差 0px；新增 `@codemirror/language` 显式依赖
-  - TreeView 配色主题同步应用到编辑器，默认 / Dracula / Monokai 均提供亮暗两套 token 色
+  - TreeView 配色主题同步应用到编辑器，默认 / Dracula / Monokai / One Dark / Nord / Solarized / Tokyo Night 均提供亮暗两套 token 色
   - **转义 / 反转义两个独立按钮**（编辑器头部，Package / PackageOpen 图标，不做方向互斥、不按内容禁用）：转义 = 把输入原文包成 JSON 字符串字面量（保留原格式，换行转 `\n`），可反复点击层层叠加；反转义 = 剥开一层（字符串字面量 → 内容，或日志里复制的裸转义文本 `{\"a\":1}` → 解码），可反复点击逐层剥开；无内容可剥时 toast 提示且内容不变
   - 视觉基线统一：编辑器 `.cm-scroller` 行高改 24px 与树 `leading-6` 一致；两侧内容区 padding-y 归零（`.cm-content` 覆盖 CodeMirror 默认 4px）；树行删 `py-px`（叶子行原比容器行高 2px）；面板头部去掉固定 `h-11`，改为内容自适应 + `py-1`（实测 40px，两侧等高）
   - 闭合括号行补齐 hover 整行背景（`rounded px-0.5 hover:bg-foreground/5`），与叶子/容器行一致；空容器单行 `{}` 保持无 hover（无交互不暗示可点）
@@ -38,6 +38,7 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 - **工具栏**：`DeepBrace JSON` 字标使用 Silkscreen 像素字体；logo + 统一 success 配色的能力 Chip 组（JSON5 支持 / 嵌套解析 / 多标签工作区 / 数据持久化）+ 示例按钮 + 全局缩进 Select + TreeView 配色 Select + 浅/深主题 Tabs；数据持久化在宽屏展示，避免中等桌面宽度挤压操作区
 - **全局缩进**：2 / 4 / 8 空格，按 `1 空格 = 2px` 同步作用于树内容缩进、格式化与复制输出
 - **Toast**：基于 HeroUI `ToastQueue` 的统一封装，队列更新与 View Transition 同步；覆盖格式化、压缩、转义/反转义、复制、示例、清空、新建标签和关闭标签，关闭标签提供撤销操作；自动解析保持静默
+- **快捷键**：统一 `Shift+Alt` 组合覆盖格式化、压缩、转义/反转义、新建/关闭标签、前后切换标签、换行和折叠/展开；全局监听使用捕获阶段保证 CodeMirror 焦点内可用，并跳过 Select、Modal 等弹层；按钮 Tooltip 与 `aria-keyshortcuts` 同步展示；Header 键盘按钮可打开 HeroUI Modal，组合键统一使用 HeroUI `Kbd` 组件；弹窗采用宽屏双列、窄屏单列的响应式分组布局
 - **纯文本降级**：解析失败且非 JSON 意图时，整段输入按字符串字面量处理
 - **其他**：根容器使用 `px-3 py-2` / `gap-2`；面板拖拽分栏（比例持久化）、⌘/Ctrl+Enter 历史遗留已随自动解析移除、编辑器滚动修复（cm-theme 高度链）、默认浅色主题、状态栏统计
 

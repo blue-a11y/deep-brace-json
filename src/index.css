@@ -144,6 +144,70 @@ body {
   --tree-token-null: #75715e;
   --tree-token-punctuation: rgb(248 248 242 / 48%);
 }
+.tree-body[data-tree-theme='one-dark'] {
+  --tree-token-key: #a626a4;
+  --tree-token-string: #50a14f;
+  --tree-token-number: #986801;
+  --tree-token-boolean: #0184bc;
+  --tree-token-null: #c18401;
+  --tree-token-punctuation: rgb(56 58 66 / 55%);
+}
+.dark .tree-body[data-tree-theme='one-dark'] {
+  --tree-token-key: #c678dd;
+  --tree-token-string: #98c379;
+  --tree-token-number: #d19a66;
+  --tree-token-boolean: #56b6c2;
+  --tree-token-null: #e06c75;
+  --tree-token-punctuation: rgb(171 178 191 / 48%);
+}
+.tree-body[data-tree-theme='nord'] {
+  --tree-token-key: #5e81ac;
+  --tree-token-string: #2e7d32;
+  --tree-token-number: #b48ead;
+  --tree-token-boolean: #d08770;
+  --tree-token-null: #4c566a;
+  --tree-token-punctuation: rgb(76 86 106 / 55%);
+}
+.dark .tree-body[data-tree-theme='nord'] {
+  --tree-token-key: #81a1c1;
+  --tree-token-string: #a3be8c;
+  --tree-token-number: #b48ead;
+  --tree-token-boolean: #d08770;
+  --tree-token-null: #616e88;
+  --tree-token-punctuation: rgb(216 222 233 / 48%);
+}
+.tree-body[data-tree-theme='solarized'] {
+  --tree-token-key: #268bd2;
+  --tree-token-string: #859900;
+  --tree-token-number: #b58900;
+  --tree-token-boolean: #6c71c4;
+  --tree-token-null: #93a1a1;
+  --tree-token-punctuation: rgb(88 110 117 / 55%);
+}
+.dark .tree-body[data-tree-theme='solarized'] {
+  --tree-token-key: #268bd2;
+  --tree-token-string: #859900;
+  --tree-token-number: #b58900;
+  --tree-token-boolean: #6c71c4;
+  --tree-token-null: #657b83;
+  --tree-token-punctuation: rgb(131 148 150 / 55%);
+}
+.tree-body[data-tree-theme='tokyo-night'] {
+  --tree-token-key: #34548a;
+  --tree-token-string: #485e30;
+  --tree-token-number: #965027;
+  --tree-token-boolean: #5a4a78;
+  --tree-token-null: #6c6e75;
+  --tree-token-punctuation: rgb(52 59 88 / 55%);
+}
+.dark .tree-body[data-tree-theme='tokyo-night'] {
+  --tree-token-key: #7aa2f7;
+  --tree-token-string: #9ece6a;
+  --tree-token-number: #ff9e64;
+  --tree-token-boolean: #bb9af7;
+  --tree-token-null: #565f89;
+  --tree-token-punctuation: rgb(169 177 214 / 50%);
+}
 .tree-token-key {
   color: var(--tree-token-key);
 }

@@ -1,12 +1,13 @@
 import { CircleFill } from '@gravity-ui/icons'
-import { Button, Chip, Tabs } from '@heroui/react'
+import { Button, Tabs } from '@heroui/react'
 import { Moon, Sparkles, Sun } from 'lucide-react'
 import { IndentSelect } from './indent-select'
+import { ShortcutHelp } from './shortcut-help'
 import { TreeThemeSelect } from './tree-theme-select'
 import { Tip } from './Tip'
 import { useStore } from '../store/useStore'
 
-const CHIP_DOT_SIZE = 4
+const FEATURE_DOT_SIZE = 4
 
 export function Toolbar() {
   const loadSample = useStore(s => s.loadSample)
@@ -18,7 +19,7 @@ export function Toolbar() {
   const setTreeTheme = useStore(s => s.setTreeTheme)
 
   return (
-    <header className="flex shrink-0 items-center gap-2 px-1 py-1.5 md:px-2">
+    <header className="flex shrink-0 items-center gap-2 px-1 py-1.5">
       <div className="mr-1 flex items-baseline gap-2.5 md:mr-3">
         <div className="grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
           {'{ }'}
@@ -27,27 +28,39 @@ export function Toolbar() {
           DeepBrace JSON
         </span>
         {/* 工具特性 */}
-        <div className="hidden translate-y-0.5 items-center gap-1 font-sans tracking-normal lg:flex">
-          <Chip color="success" size="sm">
-            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
-            <Chip.Label>JSON5 支持</Chip.Label>
-          </Chip>
-          <Chip color="success" size="sm">
-            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
-            <Chip.Label>嵌套解析</Chip.Label>
-          </Chip>
-          <Chip color="success" size="sm">
-            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
-            <Chip.Label>多标签工作区</Chip.Label>
-          </Chip>
-          <Chip color="success" size="sm" className="hidden xl:inline-flex">
-            <CircleFill className="opacity-40" width={CHIP_DOT_SIZE} />
-            <Chip.Label>数据持久化</Chip.Label>
-          </Chip>
+        <div className="hidden -translate-y-0.5 items-center gap-1 font-sans tracking-normal lg:flex">
+          <span className="inline-flex h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500">
+            嵌套解析
+          </span>
+          <CircleFill
+            aria-hidden="true"
+            className="shrink-0 opacity-40"
+            width={FEATURE_DOT_SIZE}
+          />
+          <span className="inline-flex h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500">
+            数据持久化
+          </span>
+          <CircleFill
+            aria-hidden="true"
+            className="shrink-0 opacity-40"
+            width={FEATURE_DOT_SIZE}
+          />
+          <span className="inline-flex h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500">
+            多标签工作区
+          </span>
+          <CircleFill
+            aria-hidden="true"
+            className="hidden shrink-0 opacity-40 xl:block"
+            width={FEATURE_DOT_SIZE}
+          />
+          <span className="hidden h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500 xl:inline-flex">
+            JSON5 支持
+          </span>
         </div>
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <ShortcutHelp />
         <Tip label="载入示例">
           <Button size="sm" variant="ghost" onPress={loadSample}>
             <Sparkles size={15} />

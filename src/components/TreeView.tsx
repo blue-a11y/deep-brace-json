@@ -3,10 +3,12 @@ import { Button } from '@heroui/react'
 import { ArrowLeftRight, Braces, Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical, WrapText } from 'lucide-react'
 import { serializeForCopy, TREE_INDENT_PIXEL_RATIO } from '../lib/indent'
 import { isStrictJson, type NodePath, pathKey } from '../lib/parse'
+import { getAriaShortcut } from '../lib/shortcuts'
 import { bindTreeTabScrollPosition } from '../lib/tab-scroll'
 import { toast } from '../lib/toast'
 import { selectActiveTab, useStore } from '../store/useStore'
 import { Tip } from './Tip'
+import { ShortcutHint } from './shortcut-hint'
 import { TreeActionButton } from './tree-action-button'
 import { TreeCopyButton } from './tree-copy-button'
 
@@ -385,10 +387,18 @@ export function TreeView() {
                 <span className="pane-action-label">清空</span>
               </Button>
             </Tip>
-            <Tip label={wrap ? '不换行(左右滚动)' : '自动换行'}>
+            <Tip
+              ariaKeyShortcuts={getAriaShortcut('toggleWrap')}
+              label={
+                <ShortcutHint shortcut="toggleWrap">
+                  {wrap ? '不换行(左右滚动)' : '自动换行'}
+                </ShortcutHint>
+              }
+            >
               <Button
                 size="sm"
                 variant="ghost"
+                aria-keyshortcuts={getAriaShortcut('toggleWrap')}
                 onPress={toggleWrap}
               >
                 <span className="relative inline-grid place-items-center">
@@ -404,10 +414,18 @@ export function TreeView() {
                 <span className="pane-action-label">{wrap ? '换行' : '不换行'}</span>
               </Button>
             </Tip>
-            <Tip label={collapsed.size > 0 ? '展开全部' : '折叠全部'}>
+            <Tip
+              ariaKeyShortcuts={getAriaShortcut('toggleCollapse')}
+              label={
+                <ShortcutHint shortcut="toggleCollapse">
+                  {collapsed.size > 0 ? '展开全部' : '折叠全部'}
+                </ShortcutHint>
+              }
+            >
               <Button
                 size="sm"
                 variant="ghost"
+                aria-keyshortcuts={getAriaShortcut('toggleCollapse')}
                 onPress={collapsed.size > 0 ? onExpandAll : onCollapseAll}
               >
                 <span className="relative inline-grid place-items-center">

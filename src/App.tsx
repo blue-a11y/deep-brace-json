@@ -4,6 +4,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { Toolbar } from './components/Toolbar'
 import { EditorPane } from './components/EditorPane'
 import { JsonTabs } from './components/json-tabs'
+import { ShortcutManager } from './components/shortcut-manager'
 import { EmptyPane, ErrorPane, TreeView } from './components/TreeView'
 import { StatusBar } from './components/StatusBar'
 import { STORAGE_KEYS } from './lib/storage'
@@ -49,6 +50,7 @@ export default function App() {
 
   return (
     <div className="flex h-full flex-col gap-2 bg-background px-3 py-2">
+      <ShortcutManager />
       <Toolbar />
       <JsonTabs />
       <div className="flex min-h-0 flex-1 flex-col">

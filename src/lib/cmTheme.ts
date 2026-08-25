@@ -1,6 +1,6 @@
 import { createTheme } from '@uiw/codemirror-themes'
 import { tags as t } from '@lezer/highlight'
-import type { TreeTheme } from './tree-theme'
+import { TREE_THEME_OPTIONS, type TreeTheme } from './tree-theme'
 
 type EditorThemeMode = 'dark' | 'light'
 
@@ -68,6 +68,78 @@ const TOKEN_COLORS: Record<TreeTheme, Record<EditorThemeMode, SyntaxColors>> = {
       punctuation: 'rgb(248 248 242 / 48%)',
     },
   },
+  'one-dark': {
+    light: {
+      key: '#a626a4',
+      string: '#50a14f',
+      number: '#986801',
+      boolean: '#0184bc',
+      null: '#c18401',
+      punctuation: 'rgb(56 58 66 / 55%)',
+    },
+    dark: {
+      key: '#c678dd',
+      string: '#98c379',
+      number: '#d19a66',
+      boolean: '#56b6c2',
+      null: '#e06c75',
+      punctuation: 'rgb(171 178 191 / 48%)',
+    },
+  },
+  nord: {
+    light: {
+      key: '#5e81ac',
+      string: '#2e7d32',
+      number: '#b48ead',
+      boolean: '#d08770',
+      null: '#4c566a',
+      punctuation: 'rgb(76 86 106 / 55%)',
+    },
+    dark: {
+      key: '#81a1c1',
+      string: '#a3be8c',
+      number: '#b48ead',
+      boolean: '#d08770',
+      null: '#616e88',
+      punctuation: 'rgb(216 222 233 / 48%)',
+    },
+  },
+  solarized: {
+    light: {
+      key: '#268bd2',
+      string: '#859900',
+      number: '#b58900',
+      boolean: '#6c71c4',
+      null: '#93a1a1',
+      punctuation: 'rgb(88 110 117 / 55%)',
+    },
+    dark: {
+      key: '#268bd2',
+      string: '#859900',
+      number: '#b58900',
+      boolean: '#6c71c4',
+      null: '#657b83',
+      punctuation: 'rgb(131 148 150 / 55%)',
+    },
+  },
+  'tokyo-night': {
+    light: {
+      key: '#34548a',
+      string: '#485e30',
+      number: '#965027',
+      boolean: '#5a4a78',
+      null: '#6c6e75',
+      punctuation: 'rgb(52 59 88 / 55%)',
+    },
+    dark: {
+      key: '#7aa2f7',
+      string: '#9ece6a',
+      number: '#ff9e64',
+      boolean: '#bb9af7',
+      null: '#565f89',
+      punctuation: 'rgb(169 177 214 / 50%)',
+    },
+  },
 }
 
 const createEditorTheme = (theme: EditorThemeMode, colors: SyntaxColors) => {
@@ -100,20 +172,20 @@ const createEditorTheme = (theme: EditorThemeMode, colors: SyntaxColors) => {
   })
 }
 
-const CODE_MIRROR_THEMES = {
-  default: {
-    light: createEditorTheme('light', TOKEN_COLORS.default.light),
-    dark: createEditorTheme('dark', TOKEN_COLORS.default.dark),
-  },
-  dracula: {
-    light: createEditorTheme('light', TOKEN_COLORS.dracula.light),
-    dark: createEditorTheme('dark', TOKEN_COLORS.dracula.dark),
-  },
-  monokai: {
-    light: createEditorTheme('light', TOKEN_COLORS.monokai.light),
-    dark: createEditorTheme('dark', TOKEN_COLORS.monokai.dark),
-  },
-}
+type CodeMirrorTheme = ReturnType<typeof createEditorTheme>
+
+const CODE_MIRROR_THEMES = Object.fromEntries(
+  TREE_THEME_OPTIONS.map(({ value }) => {
+    const colors = TOKEN_COLORS[value]
+    return [
+      value,
+      {
+        light: createEditorTheme('light', colors.light),
+        dark: createEditorTheme('dark', colors.dark),
+      },
+    ]
+  }),
+) as Record<TreeTheme, Record<EditorThemeMode, CodeMirrorTheme>>
 
 export const getCodeMirrorTheme = (dark: boolean, treeTheme: TreeTheme) => {
   const theme = dark ? 'dark' : 'light'

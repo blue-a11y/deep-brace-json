@@ -1,10 +1,12 @@
 import type { Key, MouseEvent, PointerEvent } from 'react'
-import { flushSync } from 'react-dom'
 import { Button, Tabs } from '@heroui/react'
 import { Braces, Plus, X } from 'lucide-react'
 
-import { toast } from '../lib/toast'
+import { getAriaShortcut, getShortcutLabel } from '../lib/shortcuts'
+import { closeTabWithUndo, getTabDisplayTitle, openNewTab } from '../lib/tab-actions'
 import { useStore, type JsonTab } from '../store/useStore'
+import { ShortcutHint } from './shortcut-hint'
+import { Tip } from './Tip'
 
 type IJsonTabItemProps = {
   tab: JsonTab
@@ -12,8 +14,6 @@ type IJsonTabItemProps = {
   closeDisabled: boolean
   onClose: (tab: JsonTab, index: number) => void
 }
-
-const getTabDisplayTitle = (index: number) => `Brace ${index + 1}`
 
 const JsonTabItem = ({ tab, index, closeDisabled, onClose }: IJsonTabItemProps) => {
   const displayTitle = getTabDisplayTitle(index)
@@ -38,7 +38,9 @@ const JsonTabItem = ({ tab, index, closeDisabled, onClose }: IJsonTabItemProps) 
       <button
         type="button"
         aria-label={`关闭 ${displayTitle}`}
+        aria-keyshortcuts={getAriaShortcut('closeTab')}
         disabled={closeDisabled}
+        title={`关闭 ${displayTitle} · ${getShortcutLabel('closeTab')}`}
         className="grid size-6 shrink-0 place-items-center rounded-full text-foreground/45 outline-none transition-colors hover:bg-foreground/10 hover:text-foreground disabled:cursor-default disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-foreground/45"
         onPointerDown={handlePointerDown}
         onClick={handleClose}
@@ -54,37 +56,8 @@ export const JsonTabs = () => {
   const tabs = useStore(state => state.tabs)
   const activeTabId = useStore(state => state.activeTabId)
   const setActiveTab = useStore(state => state.setActiveTab)
-  const openTab = useStore(state => state.openTab)
-  const closeTab = useStore(state => state.closeTab)
-  const restoreTab = useStore(state => state.restoreTab)
-  const handleNewTab = () => {
-    openTab()
-    toast.info('已新建标签')
-  }
   const handleSelectionChange = (key: Key) => setActiveTab(String(key))
-  const handleCloseTab = (tab: JsonTab, index: number) => {
-    const target = {
-      index,
-      previousTabId: tabs[index - 1]?.id,
-      nextTabId: tabs[index + 1]?.id,
-    }
-    // 先完成面板切换，避免 Toast 的 View Transition 捕获整页重绘。
-    flushSync(() => closeTab(tab.id))
-    let toastKey = ''
-    const handleUndo = () => {
-      flushSync(() => restoreTab(tab, target))
-      toast.close(toastKey)
-    }
-    toastKey = toast(`已关闭 ${getTabDisplayTitle(index)}`, {
-      actionProps: {
-        children: '撤销',
-        className: 'tab-close-toast-action h-7 rounded-lg px-3 text-xs',
-        onPress: handleUndo,
-        size: 'sm',
-        variant: 'tertiary',
-      },
-    })
-  }
+  const handleCloseTab = (tab: JsonTab) => closeTabWithUndo(tab.id)
   const tabCollectionKey = tabs.map(tab => tab.id).join(':')
 
   return (
@@ -110,15 +83,21 @@ export const JsonTabs = () => {
           </Tabs.List>
         </Tabs.ListContainer>
       </Tabs>
-      <Button
-        isIconOnly
-        size="sm"
-        aria-label="新建标签"
-        className="shrink-0"
-        onPress={handleNewTab}
+      <Tip
+        ariaKeyShortcuts={getAriaShortcut('newTab')}
+        label={<ShortcutHint shortcut="newTab">新建标签</ShortcutHint>}
       >
-        <Plus size={14} />
-      </Button>
+        <Button
+          isIconOnly
+          size="sm"
+          aria-label="新建标签"
+          aria-keyshortcuts={getAriaShortcut('newTab')}
+          className="shrink-0"
+          onPress={openNewTab}
+        >
+          <Plus size={14} />
+        </Button>
+      </Tip>
     </nav>
   )
 }

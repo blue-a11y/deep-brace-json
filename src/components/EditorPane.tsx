@@ -6,8 +6,10 @@ import { json } from '@codemirror/lang-json'
 import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react'
 import { Button } from '@heroui/react'
 import { getCodeMirrorTheme } from '../lib/cmTheme'
+import { getAriaShortcut } from '../lib/shortcuts'
 import { bindEditorTabScrollPosition } from '../lib/tab-scroll'
 import { selectActiveTab, useStore } from '../store/useStore'
+import { ShortcutHint } from './shortcut-hint'
 import { Tip } from './Tip'
 
 /** 与 TreeView 同款 chevron:默认 ⌄/› 字形墨迹偏行底,换 SVG 在 24px 行内精确居中 */
@@ -55,10 +57,16 @@ export const EditorPane = () => {
         <FileJson size={13} />
         <span className="font-medium">编辑器</span>
         <div className="ml-auto flex items-center gap-0.5">
-          <Tip label="格式化 · JSON5 → 标准 JSON">
+          <Tip
+            ariaKeyShortcuts={getAriaShortcut('format')}
+            label={
+              <ShortcutHint shortcut="format">格式化 · JSON5 → 标准 JSON</ShortcutHint>
+            }
+          >
             <Button
               size="sm"
               variant="ghost"
+              aria-keyshortcuts={getAriaShortcut('format')}
               onPress={() => {
                 if (format()) setFormatPulse(pulse => pulse + 1)
               }}
@@ -71,10 +79,14 @@ export const EditorPane = () => {
               <span className="pane-action-label">格式化</span>
             </Button>
           </Tip>
-          <Tip label="压缩为单行">
+          <Tip
+            ariaKeyShortcuts={getAriaShortcut('minify')}
+            label={<ShortcutHint shortcut="minify">压缩为单行</ShortcutHint>}
+          >
             <Button
               size="sm"
               variant="ghost"
+              aria-keyshortcuts={getAriaShortcut('minify')}
               onPress={() => {
                 if (minify()) setMinifyPulse(pulse => pulse + 1)
               }}
@@ -87,10 +99,18 @@ export const EditorPane = () => {
               <span className="pane-action-label">压缩</span>
             </Button>
           </Tip>
-          <Tip label="转义 · 包成 JSON 字符串字面量，可反复叠加">
+          <Tip
+            ariaKeyShortcuts={getAriaShortcut('escape')}
+            label={
+              <ShortcutHint shortcut="escape">
+                转义 · 包成 JSON 字符串字面量，可反复叠加
+              </ShortcutHint>
+            }
+          >
             <Button
               size="sm"
               variant="ghost"
+              aria-keyshortcuts={getAriaShortcut('escape')}
               onPress={() => {
                 if (escape()) setEscapePulse(pulse => pulse + 1)
               }}
@@ -103,10 +123,18 @@ export const EditorPane = () => {
               <span className="pane-action-label">转义</span>
             </Button>
           </Tip>
-          <Tip label="反转义 · 剥开一层转义，可反复点击">
+          <Tip
+            ariaKeyShortcuts={getAriaShortcut('unescape')}
+            label={
+              <ShortcutHint shortcut="unescape">
+                反转义 · 剥开一层转义，可反复点击
+              </ShortcutHint>
+            }
+          >
             <Button
               size="sm"
               variant="ghost"
+              aria-keyshortcuts={getAriaShortcut('unescape')}
               onPress={() => {
                 if (unescape()) setUnescapePulse(pulse => pulse + 1)
               }}
