@@ -1,40 +1,51 @@
 # DeepBrace JSON
 
-深入解析每一层 JSON。
+**English** | [简体中文](README.zh-CN.md)
 
-DeepBrace JSON 是一个本地运行的 JSON / JSON5 解析工作台：左侧编辑和转换原始内容，右侧以可折叠树形结构实时预览。遇到值中嵌套的 JSON 对象或数组时，可以一键解析到独立标签继续查看。
+A JSON / JSON5 workbench that dives into every layer of your data — edit and transform on the left, explore a live collapsible tree on the right.
 
-## 核心能力
+**Live at:** [json.blueblog.me](https://json.blueblog.me/)
 
-- JSON / JSON5 自动解析与语法高亮
-- 格式化、压缩、转义与反转义
-- 可折叠 TreeView、7 套同步语法配色和自定义缩进
-- 嵌套 JSON 子节点一键解析
-- 多标签隔离与滚动位置持久化
-- 完全在浏览器本地处理输入内容
+## Why DeepBrace JSON
 
-## 快捷键
+Most JSON viewers stop at the surface. When a value itself contains a nested JSON object or array — common in logs, API responses and stringified payloads — DeepBrace JSON lets you parse it into its own tab and keep digging.
 
-可以通过 Header 右侧的键盘按钮随时查看完整快捷键；所有组合键均使用 HeroUI `Kbd` 展示。
+## Features
 
-| 操作 | 快捷键 |
+- **JSON / JSON5 parsing** with syntax highlighting — comments, unquoted keys, single quotes, trailing commas and hex numbers all work
+- **Transform**: format, minify, escape and unescape (repeatable — stack or peel escape layers one at a time)
+- **Collapsible tree preview** with outline-style stable line numbers, full-row hover, per-line copy
+- **Nested JSON extraction**: string values that parse as objects/arrays get a one-click `Parse` button to open in a new tab
+- **Multi-tab workspace** with per-tab scroll position and state persistence
+- **7 synced syntax themes** (Default, Dracula, Monokai, One Dark, Nord, Solarized, Tokyo Night) with light & dark variants
+- **100% client-side** — your data never leaves the browser
+
+## Keyboard Shortcuts
+
+Press the keyboard button in the header to view all shortcuts at any time.
+
+| Action | Shortcut |
 | --- | --- |
-| 格式化 / 压缩 | `Shift+Alt+F` / `Shift+Alt+M` |
-| 转义 / 反转义 | `Shift+Alt+E` / `Shift+Alt+U` |
-| 新建 / 关闭标签 | `Shift+Alt+N` / `Shift+Alt+W` |
-| 上一个 / 下一个标签 | `Shift+Alt+[` / `Shift+Alt+]` |
-| 切换换行 / 折叠展开 | `Shift+Alt+L` / `Shift+Alt+X` |
+| Format / Minify | `Shift+Alt+F` / `Shift+Alt+M` |
+| Escape / Unescape | `Shift+Alt+E` / `Shift+Alt+U` |
+| New / Close tab | `Shift+Alt+N` / `Shift+Alt+W` |
+| Previous / Next tab | `Shift+Alt+[` / `Shift+Alt+]` |
+| Toggle wrap / Fold all | `Shift+Alt+L` / `Shift+Alt+X` |
 
-## 本地启动
+## Getting Started
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-生产构建与代码检查：
+Build and lint:
 
 ```bash
 pnpm build
 pnpm lint
 ```
+
+## Tech Stack
+
+React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6
