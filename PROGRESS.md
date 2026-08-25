@@ -51,8 +51,9 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 ### 当前状态
 
 - HeroUI Toast 的原始入场问题已改由自定义 `ToastQueue` 在队列更新边界统一衔接 View Transition，没有补充一套 CSS 动画；历史环境实验与根因链仍保留在 `docs/HEROUI-TOAST-ISSUE.md`
-- 本轮（2026-08-25）通过 `tsc -b`、`oxlint`，并完成转义/反转义往返、图标动画、折叠箭头对齐/固定列、整行 hover（绘制层面验证）的浏览器交互检查
-- 功能提交：`cd9b6f2 feat: escape/unescape buttons and tree interaction polish`，已推送到 `origin/main`
+- 2026-08-25 会话批次（`cd9b6f2`）：转义/反转义独立按钮、四按钮图标动画、折叠箭头 SVG 化与固定列、整行 hover（overflow 绘制裁剪修复）、24px 行高基线统一；均通过浏览器交互验证
+- 2026-08-25 远端批次（`fe0e3ea..76daa98`）：品牌重塑 DeepBrace JSON、快捷键系统、四套新语法主题、工作区持久化、GitHub 导航与 Vercel 部署配置；本地已 `pnpm install` 同步依赖（新增 `@gravity-ui/icons`）并跑通 dev server
+- 最新提交：`76daa98 docs(meta): refine page description`，已推送 `origin/main`（部署域名 json.blueblog.me）
 
 ## 排查实录（关键结论存档）
 
