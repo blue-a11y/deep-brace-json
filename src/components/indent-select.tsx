@@ -30,7 +30,12 @@ export const IndentSelect = ({ value, onChange }: IIndentSelectProps) => {
       <Select.Popover>
         <ListBox>
           {INDENT_OPTIONS.map(option => (
-            <ListBox.Item key={option} id={option} textValue={`${option} 空格`}>
+            <ListBox.Item
+              key={option}
+              id={option}
+              className="whitespace-nowrap pr-8"
+              textValue={`${option} 空格`}
+            >
               {option} 空格
               <ListBox.ItemIndicator />
             </ListBox.Item>
