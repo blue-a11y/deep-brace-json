@@ -1,0 +1,36 @@
+/*
+ * react-bits Shuffle 样式
+ * 来源:https://reactbits.dev · https://github.com/DavidHDev/react-bits
+ * src/ts-default/TextAnimations/Shuffle/Shuffle.css
+ * 注:去掉官方演示默认值(4rem / 'Press Start 2P' / uppercase / line-height:1),
+ *     字体字号由使用处的 className 继承
+ */
+.shuffle-parent {
+  display: inline-block;
+  white-space: normal;
+  word-wrap: break-word;
+  will-change: transform;
+  visibility: hidden;
+}
+
+.shuffle-parent.is-ready {
+  visibility: visible;
+}
+
+.shuffle-char-wrapper {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: baseline;
+  position: relative;
+}
+
+.shuffle-char-wrapper > span {
+  display: inline-flex;
+  will-change: transform;
+}
+
+.shuffle-char {
+  line-height: 1;
+  display: inline-block;
+  text-align: center;
+}
