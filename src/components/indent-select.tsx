@@ -17,7 +17,7 @@ export const IndentSelect = ({ value, onChange }: IIndentSelectProps) => {
   return (
     <Select
       aria-label="缩进"
-      className="w-24"
+      className="select-ghost w-fit shrink-0"
       placeholder="缩进"
       value={value}
       variant="secondary"

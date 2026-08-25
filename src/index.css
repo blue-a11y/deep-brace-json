@@ -34,6 +34,21 @@ body {
   height: 14px;
 }
 
+/* 工具栏 Select 触发器无背景:静止透明、hover 才出现。
+   注意:HeroUI 样式在 @layer components 内,本文件无层规则会无条件压过层内规则
+   (包括其 hover),故 hover 态需在此显式声明 */
+.select-ghost .select__trigger {
+  background-color: var(--select-trigger-bg);
+  --select-trigger-bg: transparent;
+  --select-trigger-bg-hover: var(--default);
+  --select-trigger-bg-focus: transparent;
+  border-color: transparent;
+}
+.select-ghost .select__trigger:hover,
+.select-ghost .select__trigger[data-hovered='true'] {
+  background-color: var(--select-trigger-bg-hover);
+}
+
 /* CodeMirror 撑满面板:约束 theme/editor 高度链(父级 flex 分配高度下
    height:100% 需两层都显式声明,否则被内容自然高撑破,滚动失效) */
 .cm-theme,

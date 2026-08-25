@@ -17,7 +17,7 @@ export const TreeThemeSelect = ({ value, onChange }: ITreeThemeSelectProps) => {
   return (
     <Select
       aria-label="TreeView 主题"
-      className="w-fit shrink-0"
+      className="select-ghost w-fit shrink-0"
       placeholder="TreeView 主题"
       value={value}
       variant="secondary"
