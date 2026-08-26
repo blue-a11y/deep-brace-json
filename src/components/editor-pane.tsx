@@ -1,71 +1,71 @@
-import { useEffect, useRef, useState } from 'react'
-import CodeMirror from '@uiw/react-codemirror'
-import { EditorView } from '@codemirror/view'
-import { foldGutter } from '@codemirror/language'
-import { json } from '@codemirror/lang-json'
-import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react'
-import { Button } from '@heroui/react'
-import { getCodeMirrorTheme } from '../lib/cm-theme'
-import { getAriaShortcut } from '../lib/shortcuts'
-import { bindEditorTabScrollPosition } from '../lib/tab-scroll'
-import { selectActiveTab, useStore } from '../store/use-store'
-import { ShortcutHint } from './shortcut-hint'
-import { Tip } from './tip'
+import { useEffect, useRef, useState } from 'react';
+import { json } from '@codemirror/lang-json';
+import { foldGutter } from '@codemirror/language';
+import { EditorView } from '@codemirror/view';
+import { Button } from '@heroui/react';
+import CodeMirror from '@uiw/react-codemirror';
+import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react';
+import { getCodeMirrorTheme } from '../lib/cm-theme';
+import { getAriaShortcut } from '../lib/shortcuts';
+import { bindEditorTabScrollPosition } from '../lib/tab-scroll';
+import { selectActiveTab, useStore } from '../store/use-store';
+import { ShortcutHint } from './shortcut-hint';
+import { Tip } from './tip';
 
 /** 与 TreeView 同款 chevron:默认 ⌄/› 字形墨迹偏行底,换 SVG 在 24px 行内精确居中 */
 const FOLD_MARKER_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{d}"/></svg>'
-const CHEVRON_DOWN_SVG = FOLD_MARKER_SVG.replace('{d}', 'm6 9 6 6 6-6')
-const CHEVRON_RIGHT_SVG = FOLD_MARKER_SVG.replace('{d}', 'm9 18 6-6-6-6')
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{d}"/></svg>';
+const CHEVRON_DOWN_SVG = FOLD_MARKER_SVG.replace('{d}', 'm6 9 6 6 6-6');
+const CHEVRON_RIGHT_SVG = FOLD_MARKER_SVG.replace('{d}', 'm9 18 6-6-6-6');
 
 const JSON_FOLD_GUTTER = foldGutter({
   markerDOM: isOpen => {
-    const marker = document.createElement('span')
-    marker.className = 'cm-fold-marker'
-    marker.title = isOpen ? '折叠' : '展开'
-    marker.innerHTML = isOpen ? CHEVRON_DOWN_SVG : CHEVRON_RIGHT_SVG
-    return marker
+    const marker = document.createElement('span');
+    marker.className = 'cm-fold-marker';
+    marker.title = isOpen ? '折叠' : '展开';
+    marker.innerHTML = isOpen ? CHEVRON_DOWN_SVG : CHEVRON_RIGHT_SVG;
+    return marker;
   },
-})
+});
 
 export const EditorPane = () => {
-  const activeTab = useStore(selectActiveTab)
-  const input = activeTab.input
-  const isDark = useStore(state => state.isDark)
-  const treeTheme = useStore(state => state.treeTheme)
-  const handleInputChange = useStore(state => state.editInput)
-  const format = useStore(state => state.format)
-  const minify = useStore(state => state.minify)
-  const escape = useStore(state => state.escape)
-  const unescape = useStore(state => state.unescape)
-  const [formatPulse, setFormatPulse] = useState(0)
-  const [minifyPulse, setMinifyPulse] = useState(0)
-  const [escapePulse, setEscapePulse] = useState(0)
-  const [unescapePulse, setUnescapePulse] = useState(0)
-  const editorScrollCleanupRef = useRef<(() => void) | null>(null)
+  const activeTab = useStore(selectActiveTab);
+  const input = activeTab.input;
+  const isDark = useStore(state => state.isDark);
+  const treeTheme = useStore(state => state.treeTheme);
+  const handleInputChange = useStore(state => state.editInput);
+  const format = useStore(state => state.format);
+  const minify = useStore(state => state.minify);
+  const escape = useStore(state => state.escape);
+  const unescape = useStore(state => state.unescape);
+  const [formatPulse, setFormatPulse] = useState(0);
+  const [minifyPulse, setMinifyPulse] = useState(0);
+  const [escapePulse, setEscapePulse] = useState(0);
+  const [unescapePulse, setUnescapePulse] = useState(0);
+  const editorScrollCleanupRef = useRef<(() => void) | null>(null);
 
   const handleCreateEditor = (view: EditorView) => {
-    editorScrollCleanupRef.current?.()
-    editorScrollCleanupRef.current = bindEditorTabScrollPosition(activeTab.id, view)
-  }
+    editorScrollCleanupRef.current?.();
+    editorScrollCleanupRef.current = bindEditorTabScrollPosition(activeTab.id, view);
+  };
 
   const handleFormat = () => {
-    if (format()) setFormatPulse(pulse => pulse + 1)
-  }
+    if (format()) setFormatPulse(pulse => pulse + 1);
+  };
 
   const handleMinify = () => {
-    if (minify()) setMinifyPulse(pulse => pulse + 1)
-  }
+    if (minify()) setMinifyPulse(pulse => pulse + 1);
+  };
 
   const handleEscape = () => {
-    if (escape()) setEscapePulse(pulse => pulse + 1)
-  }
+    if (escape()) setEscapePulse(pulse => pulse + 1);
+  };
 
   const handleUnescape = () => {
-    if (unescape()) setUnescapePulse(pulse => pulse + 1)
-  }
+    if (unescape()) setUnescapePulse(pulse => pulse + 1);
+  };
 
-  useEffect(() => () => editorScrollCleanupRef.current?.(), [])
+  useEffect(() => () => editorScrollCleanupRef.current?.(), []);
 
   return (
     <section className="pane-responsive-actions flex h-full min-h-0 flex-col">
@@ -75,9 +75,7 @@ export const EditorPane = () => {
         <div className="panel-header-actions ml-auto flex items-center gap-0.5">
           <Tip
             ariaKeyShortcuts={getAriaShortcut('format')}
-            label={
-              <ShortcutHint shortcut="format">格式化 · JSON5 → 标准 JSON</ShortcutHint>
-            }
+            label={<ShortcutHint shortcut="format">格式化 · JSON5 → 标准 JSON</ShortcutHint>}
           >
             <Button
               size="sm"
@@ -136,9 +134,7 @@ export const EditorPane = () => {
           <Tip
             ariaKeyShortcuts={getAriaShortcut('unescape')}
             label={
-              <ShortcutHint shortcut="unescape">
-                反转义 · 剥开一层转义，可反复点击
-              </ShortcutHint>
+              <ShortcutHint shortcut="unescape">反转义 · 剥开一层转义，可反复点击</ShortcutHint>
             }
           >
             <Button
@@ -175,5 +171,5 @@ export const EditorPane = () => {
         />
       </div>
     </section>
-  )
-}
+  );
+};

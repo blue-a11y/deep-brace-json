@@ -20,22 +20,32 @@
   animation: toast-slide-bottom-out 350ms;
   animation-fill-mode: forwards;
 }
-@keyframes toast-slide-bottom-in  { from { translate: 0 100%; opacity: 0 } }
-@keyframes toast-slide-bottom-out { to   { translate: 0 100%; opacity: 0 } }
+@keyframes toast-slide-bottom-in {
+  from {
+    translate: 0 100%;
+    opacity: 0;
+  }
+}
+@keyframes toast-slide-bottom-out {
+  to {
+    translate: 0 100%;
+    opacity: 0;
+  }
+}
 ```
 
 注意 `:only-child` 伪类——**平移 keyframes 只在 new/old 伪元素"单独存在"时应用**（即快照中该元素只出现在一侧）。这是理解本问题的关键，见 §5。
 
 ## 2. 环境
 
-| 项 | 版本 |
-|---|---|
-| @heroui/react / @heroui/styles | 3.2.4（npm latest） |
-| react / react-dom | 19.2.8 与 19.2.6 均测试 |
-| react-aria-components | 1.20.0（peer 要求 ^1.20.0） |
-| 构建工具 | Vite 7 / Vite 8（rolldown）、Next.js 16.3（dev 与生产构建） |
-| 浏览器 | Chrome（macOS 14，arm64），`document.startViewTransition` 可用，`prefers-reduced-motion: false` |
-| 已安装依赖 | tw-animate-css、client-only、全部 5 个 peer（react-aria 系） |
+| 项                             | 版本                                                                                            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| @heroui/react / @heroui/styles | 3.2.4（npm latest）                                                                             |
+| react / react-dom              | 19.2.8 与 19.2.6 均测试                                                                         |
+| react-aria-components          | 1.20.0（peer 要求 ^1.20.0）                                                                     |
+| 构建工具                       | Vite 7 / Vite 8（rolldown）、Next.js 16.3（dev 与生产构建）                                     |
+| 浏览器                         | Chrome（macOS 14，arm64），`document.startViewTransition` 可用，`prefers-reduced-motion: false` |
+| 已安装依赖                     | tw-animate-css、client-only、全部 5 个 peer（react-aria 系）                                    |
 
 ## 3. 官方文档站实测
 
@@ -50,18 +60,18 @@
 
 以下每种组合均验证"官方用法 + 依赖齐全"，动画均未出现：
 
-| # | 组合 | 结果 |
-|---|---|---|
-| 1 | Vite 8 dev，React 19.2.8 | 无动画 |
-| 2 | Vite 8 生产构建（vite preview） | 无动画 |
-| 3 | Vite 7（esbuild），React 19.2.8 | 无动画 |
-| 4 | 最小复现项目（Vite + 官方示例原样，零多余依赖） | 无动画 |
-| 5 | #4 + babel-plugin-react-compiler | 无动画 |
-| 6 | Next.js 16.3 dev，React 19.2.8 | 无动画 |
-| 7 | Next.js 16.3 dev，React **19.2.6**（对齐官方站版本） | 无动画 |
-| 8 | #7 + reactCompiler: true | 无动画 |
-| 9 | **Next.js 16.3 生产构建**（next start） | 无动画 |
-| 10 | 官方文档站线上 demo | 无动画（本机） |
+| #   | 组合                                                 | 结果           |
+| --- | ---------------------------------------------------- | -------------- |
+| 1   | Vite 8 dev，React 19.2.8                             | 无动画         |
+| 2   | Vite 8 生产构建（vite preview）                      | 无动画         |
+| 3   | Vite 7（esbuild），React 19.2.8                      | 无动画         |
+| 4   | 最小复现项目（Vite + 官方示例原样，零多余依赖）      | 无动画         |
+| 5   | #4 + babel-plugin-react-compiler                     | 无动画         |
+| 6   | Next.js 16.3 dev，React 19.2.8                       | 无动画         |
+| 7   | Next.js 16.3 dev，React **19.2.6**（对齐官方站版本） | 无动画         |
+| 8   | #7 + reactCompiler: true                             | 无动画         |
+| 9   | **Next.js 16.3 生产构建**（next start）              | 无动画         |
+| 10  | 官方文档站线上 demo                                  | 无动画（本机） |
 
 关键中间证据（Next dev 下，最接近"几乎工作"的组合）：
 

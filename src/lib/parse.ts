@@ -1,115 +1,115 @@
-import JSON5 from 'json5'
+import JSON5 from 'json5';
 
-export type RootType = 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null'
+export type RootType = 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
 
 export interface TreeStats {
-  nodes: number
-  maxDepth: number
-  rootType: RootType
+  nodes: number;
+  maxDepth: number;
+  rootType: RootType;
 }
 
 export interface ParseOk {
-  ok: true
-  data: unknown
-  stats: TreeStats
+  ok: true;
+  data: unknown;
+  stats: TreeStats;
   /** 解析失败后降级为纯文本字符串时为 true */
-  isDegraded?: boolean
+  isDegraded?: boolean;
 }
 
 export interface ParseError {
-  ok: false
-  message: string
-  line?: number
-  column?: number
+  ok: false;
+  message: string;
+  line?: number;
+  column?: number;
 }
 
-export type ParseResult = ParseOk | ParseError
+export type ParseResult = ParseOk | ParseError;
 
 export function rootTypeOf(value: unknown): RootType {
-  if (value === null) return 'null'
-  if (Array.isArray(value)) return 'array'
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
   switch (typeof value) {
     case 'object':
-      return 'object'
+      return 'object';
     case 'string':
-      return 'string'
+      return 'string';
     case 'number':
-      return 'number'
+      return 'number';
     case 'boolean':
-      return 'boolean'
+      return 'boolean';
     default:
-      return 'null'
+      return 'null';
   }
 }
 
 function statsOf(data: unknown): TreeStats {
-  let nodes = 0
-  let maxDepth = 0
+  let nodes = 0;
+  let maxDepth = 0;
   const walk = (value: unknown, depth: number) => {
-    nodes += 1
-    if (depth > maxDepth) maxDepth = depth
+    nodes += 1;
+    if (depth > maxDepth) maxDepth = depth;
     if (Array.isArray(value)) {
-      for (const item of value) walk(item, depth + 1)
+      for (const item of value) walk(item, depth + 1);
     } else if (value && typeof value === 'object') {
-      for (const item of Object.values(value)) walk(item, depth + 1)
+      for (const item of Object.values(value)) walk(item, depth + 1);
     }
-  }
-  walk(data, 1)
-  return { nodes, maxDepth, rootType: rootTypeOf(data) }
+  };
+  walk(data, 1);
+  return { nodes, maxDepth, rootType: rootTypeOf(data) };
 }
 
 /** 首个非空字符像 JSON 的结构/数字开头时，视为「意图输入 JSON」，失败应报错而非降级 */
 function intendsJson(text: string): boolean {
-  const first = text.trimStart()[0]
-  return !!first && /[{["\-+.\d]/.test(first)
+  const first = text.trimStart()[0];
+  return !!first && /[{["\-+.\d]/.test(first);
 }
 
-type JsonContainer = unknown[] | Record<string, unknown>
-type ContainerParser = (value: string) => unknown
+type JsonContainer = unknown[] | Record<string, unknown>;
+type ContainerParser = (value: string) => unknown;
 
-const FIRST_PRINTABLE_CHARACTER_CODE = 0x20
+const FIRST_PRINTABLE_CHARACTER_CODE = 0x20;
 
 const isJsonContainer = (value: unknown): value is JsonContainer =>
-  value !== null && typeof value === 'object'
+  value !== null && typeof value === 'object';
 
 const escapeControlCharacters = (text: string): string =>
   Array.from(text, character =>
     character.charCodeAt(0) < FIRST_PRINTABLE_CHARACTER_CODE
       ? `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`
       : character,
-  ).join('')
+  ).join('');
 
 /** 解开缺少外层引号的 JSON 字符串转义，仅接受解码后以对象或数组开头的输入 */
 const decodeEscapedContainerText = (text: string): string | null => {
-  if (!text.includes('\\')) return null
+  if (!text.includes('\\')) return null;
 
   try {
-    const escapedControlCharacters = escapeControlCharacters(text)
-    const decoded: unknown = JSON.parse(`"${escapedControlCharacters}"`)
-    if (typeof decoded !== 'string' || decoded === text) return null
-    const firstCharacter = decoded.trimStart()[0]
-    return firstCharacter === '{' || firstCharacter === '[' ? decoded : null
+    const escapedControlCharacters = escapeControlCharacters(text);
+    const decoded: unknown = JSON.parse(`"${escapedControlCharacters}"`);
+    if (typeof decoded !== 'string' || decoded === text) return null;
+    const firstCharacter = decoded.trimStart()[0];
+    return firstCharacter === '{' || firstCharacter === '[' ? decoded : null;
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 const parseContainer = (text: string, parser: ContainerParser): JsonContainer | null => {
   try {
-    const data = parser(text)
-    return isJsonContainer(data) ? data : null
+    const data = parser(text);
+    return isJsonContainer(data) ? data : null;
   } catch {
-    return null
+    return null;
   }
-}
+};
 
 const parseEscapedContainer = (text: string, parser: ContainerParser): JsonContainer | null => {
-  const decoded = decodeEscapedContainerText(text)
-  return decoded ? parseContainer(decoded, parser) : null
-}
+  const decoded = decodeEscapedContainerText(text);
+  return decoded ? parseContainer(decoded, parser) : null;
+};
 
 /** 转义：把输入原文包成 JSON 字符串字面量（换行、缩进保留为 \n 等转义），可反复点击层层叠加 */
-export const escapeText = (text: string): string => JSON.stringify(text)
+export const escapeText = (text: string): string => JSON.stringify(text);
 
 /**
  * 反转义：剥开一层——
@@ -119,64 +119,65 @@ export const escapeText = (text: string): string => JSON.stringify(text)
  */
 export const unescapeText = (text: string): string | null => {
   try {
-    const data: unknown = JSON5.parse(text)
-    if (typeof data === 'string') return data
+    const data: unknown = JSON5.parse(text);
+    if (typeof data === 'string') return data;
   } catch {
     // 落入裸转义兜底
   }
-  return decodeEscapedContainerText(text)
-}
+  return decodeEscapedContainerText(text);
+};
 
 /** 解析 JSON5 输入；普通文本自动降级为字符串字面量，坏 JSON 仍报错（带行列号）。转义输入需显式点「反转义」 */
 export function parseInput(text: string): ParseResult {
   if (!text.trim()) {
-    return { ok: false, message: '输入为空' }
+    return { ok: false, message: '输入为空' };
   }
   try {
-    const data = JSON5.parse(text)
-    return { ok: true, data, stats: statsOf(data) }
+    const data = JSON5.parse(text);
+    return { ok: true, data, stats: statsOf(data) };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = error instanceof Error ? error.message : String(error);
     if (!intendsJson(text)) {
       // 纯文本：作为不带引号的字符串字面量处理
-      return { ok: true, data: text, stats: statsOf(text), isDegraded: true }
+      return { ok: true, data: text, stats: statsOf(text), isDegraded: true };
     }
     // json5 错误形如 "JSON5: xxx at 3:5"，提取行列
-    const locationMatch = message.match(/at (\d+):(\d+)\s*$/)
+    const locationMatch = message.match(/at (\d+):(\d+)\s*$/);
     return {
       ok: false,
       message,
       line: locationMatch ? Number(locationMatch[1]) : undefined,
       column: locationMatch ? Number(locationMatch[2]) : undefined,
-    }
+    };
   }
 }
 
 /** string value 只有能被原生 JSON 严格解析为对象或数组时才允许打开为新标签 */
 export const isStrictJson = (text: string): boolean => {
   try {
-    const value: unknown = JSON.parse(text)
-    return isJsonContainer(value) || (
-      typeof value === 'string' && parseContainer(value, item => JSON.parse(item)) !== null
-    )
+    const value: unknown = JSON.parse(text);
+    return (
+      isJsonContainer(value) ||
+      (typeof value === 'string' && parseContainer(value, item => JSON.parse(item)) !== null)
+    );
   } catch {
-    return parseEscapedContainer(text, value => JSON.parse(value)) !== null
+    return parseEscapedContainer(text, value => JSON.parse(value)) !== null;
   }
-}
+};
 
 export function byteLength(text: string): number {
-  return new TextEncoder().encode(text).length
+  return new TextEncoder().encode(text).length;
 }
 
 export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export type NodePath = (string | number)[]
+export type NodePath = (string | number)[];
 
-export const pathKey = (path: NodePath): string => JSON.stringify(path)
+export const pathKey = (path: NodePath): string => JSON.stringify(path);
 
 /**
  * 收集所有容器节点路径。
@@ -192,15 +193,15 @@ export function collectContainerPaths(
   paths: Set<string> = new Set(),
 ): Set<string> {
   if (Array.isArray(data)) {
-    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path))
+    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path));
     data.forEach((item, index) =>
       collectContainerPaths(item, mode, minDepth, [...path, index], depth + 1, paths),
-    )
+    );
   } else if (data && typeof data === 'object') {
-    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path))
+    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path));
     for (const [key, value] of Object.entries(data)) {
-      collectContainerPaths(value, mode, minDepth, [...path, key], depth + 1, paths)
+      collectContainerPaths(value, mode, minDepth, [...path, key], depth + 1, paths);
     }
   }
-  return paths
+  return paths;
 }

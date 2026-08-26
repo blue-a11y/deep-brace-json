@@ -1,10 +1,10 @@
-@import "tailwindcss";
-@import "@heroui/styles";
+@import 'tailwindcss';
+@import '@heroui/styles';
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --font-logo: "Silkscreen", ui-monospace, monospace;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-logo: 'Silkscreen', ui-monospace, monospace;
 }
 
 html,
@@ -399,29 +399,61 @@ body {
  * wrap = 收拢封装感,unwrap = 弹开拆封感
  */
 @keyframes icon-feedback-wrap {
-  0% { transform: scale(1) rotate(0deg); }
-  35% { transform: scale(0.75) rotate(-12deg); }
-  70% { transform: scale(1.1) rotate(0deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  35% {
+    transform: scale(0.75) rotate(-12deg);
+  }
+  70% {
+    transform: scale(1.1) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 @keyframes icon-feedback-unwrap {
-  0% { transform: scale(1) rotate(0deg); }
-  35% { transform: scale(1.2) rotate(12deg); }
-  70% { transform: scale(0.94) rotate(0deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  35% {
+    transform: scale(1.2) rotate(12deg);
+  }
+  70% {
+    transform: scale(0.94) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 /* 格式化:横向铺开感;压缩:收拢感 */
 @keyframes icon-feedback-format {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.12) scaleX(1.28); }
-  70% { transform: scale(0.96); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.12) scaleX(1.28);
+  }
+  70% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 @keyframes icon-feedback-minify {
-  0% { transform: scale(1); }
-  35% { transform: scale(0.78); }
-  70% { transform: scale(1.06); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.78);
+  }
+  70% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .icon-feedback-wrap {
   animation: icon-feedback-wrap 380ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));

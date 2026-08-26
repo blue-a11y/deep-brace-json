@@ -1,19 +1,39 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { Button } from '@heroui/react'
-import { ArrowLeftRight, Braces, Check, ChevronRight, Copy, Eye, FoldVertical, OctagonAlert, Trash2, UnfoldVertical, WrapText } from 'lucide-react'
-import { serializeForCopy, TREE_INDENT_PIXEL_RATIO } from '../lib/indent'
-import { isStrictJson, type NodePath, pathKey } from '../lib/parse'
-import { getAriaShortcut } from '../lib/shortcuts'
-import { bindTreeTabScrollPosition } from '../lib/tab-scroll'
-import { toast } from '../lib/toast'
-import { selectActiveTab, useStore } from '../store/use-store'
-import { Tip } from './tip'
-import { ShortcutHint } from './shortcut-hint'
-import { TreeActionButton } from './tree-action-button'
-import { TreeCopyButton } from './tree-copy-button'
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
+import { Button } from '@heroui/react';
+import {
+  ArrowLeftRight,
+  Braces,
+  Check,
+  ChevronRight,
+  Copy,
+  Eye,
+  FoldVertical,
+  OctagonAlert,
+  Trash2,
+  UnfoldVertical,
+  WrapText,
+} from 'lucide-react';
+import { serializeForCopy, TREE_INDENT_PIXEL_RATIO } from '../lib/indent';
+import { isStrictJson, pathKey, type NodePath } from '../lib/parse';
+import { getAriaShortcut } from '../lib/shortcuts';
+import { bindTreeTabScrollPosition } from '../lib/tab-scroll';
+import { toast } from '../lib/toast';
+import { selectActiveTab, useStore } from '../store/use-store';
+import { ShortcutHint } from './shortcut-hint';
+import { Tip } from './tip';
+import { TreeActionButton } from './tree-action-button';
+import { TreeCopyButton } from './tree-copy-button';
 
-const COPY_FEEDBACK_DURATION_MS = 1500
-const PUNCTUATION_CLASS_NAME = 'tree-token-punctuation'
+const COPY_FEEDBACK_DURATION_MS = 1500;
+const PUNCTUATION_CLASS_NAME = 'tree-token-punctuation';
 
 /* ---------- 叶子值：类型语义色 ---------- */
 
@@ -21,88 +41,87 @@ const LeafValue = ({
   value,
   shouldShowFullLongStrings,
 }: {
-  value: unknown
-  shouldShowFullLongStrings: boolean
+  value: unknown;
+  shouldShowFullLongStrings: boolean;
 }) => {
   if (value === null) {
-    return <span className="tree-token-null italic">null</span>
+    return <span className="tree-token-null italic">null</span>;
   }
   switch (typeof value) {
     case 'string': {
-      const stringValue = value as string
+      const stringValue = value as string;
       // 转义显示：内嵌引号、换行等以 JSON 形式可见
-      const escapedString = JSON.stringify(stringValue).slice(1, -1)
-      const isLong = escapedString.length > 120
-      const displayedString = shouldShowFullLongStrings || !isLong
-        ? escapedString
-        : `${escapedString.slice(0, 120)}…`
+      const escapedString = JSON.stringify(stringValue).slice(1, -1);
+      const isLong = escapedString.length > 120;
+      const displayedString =
+        shouldShowFullLongStrings || !isLong ? escapedString : `${escapedString.slice(0, 120)}…`;
       const renderedValue = (
         <span className="tree-token-string break-all">"{displayedString}"</span>
-      )
-      if (shouldShowFullLongStrings || !isLong) return renderedValue
+      );
+      if (shouldShowFullLongStrings || !isLong) return renderedValue;
       return (
         <Tip
-          label={(
+          label={
             <span className="-mr-2 block max-h-[min(50dvh,24rem)] max-w-md overflow-y-auto overscroll-contain break-all pr-px text-justify [text-justify:inter-character]">
               {escapedString}
             </span>
-          )}
+          }
         >
           {renderedValue}
         </Tip>
-      )
+      );
     }
     case 'number':
-      return <span className="tree-token-number">{String(value)}</span>
+      return <span className="tree-token-number">{String(value)}</span>;
     case 'boolean':
-      return <span className="tree-token-boolean">{String(value)}</span>
+      return <span className="tree-token-boolean">{String(value)}</span>;
     default:
-      return <span className="text-foreground/60">{String(value)}</span>
+      return <span className="text-foreground/60">{String(value)}</span>;
   }
-}
+};
 
 /* ---------- key 标签：属性名 / 数组索引 ---------- */
 
 const KeyLabel = ({ label }: { label: string }) => {
-  return <span className="tree-token-key shrink-0">"{label}"</span>
-}
+  return <span className="tree-token-key shrink-0">"{label}"</span>;
+};
 
 /** 尾逗号(非末位条目),呈现 JSON 文本形态 */
-const Comma = () => <span className={PUNCTUATION_CLASS_NAME}>,</span>
+const Comma = () => <span className={PUNCTUATION_CLASS_NAME}>,</span>;
 
 type ParseStringButtonProps = {
-  value: string
-  title: string
-}
+  value: string;
+  title: string;
+};
 
 const ParseStringButton = ({ value, title }: ParseStringButtonProps) => {
-  const handleParse = () => useStore.getState().openTab(value, title)
+  const handleParse = () => useStore.getState().openTab(value, title);
 
   return (
     <TreeActionButton onClick={handleParse}>
       Parse
       <Braces size={10} />
     </TreeActionButton>
-  )
-}
+  );
+};
 
 /* ---------- 树节点（递归） ---------- */
 
 type TreeNodeProps = {
-  label: string | null
-  value: unknown
-  path: NodePath
-  collapsed: Set<string>
-  touched: Set<string>
-  shouldShowFullLongStrings: boolean
+  label: string | null;
+  value: unknown;
+  path: NodePath;
+  collapsed: Set<string>;
+  touched: Set<string>;
+  shouldShowFullLongStrings: boolean;
   /** 本条目之后还有兄弟条目时显示尾逗号 */
-  hasTrailingComma?: boolean
-  onToggle: (key: string) => void
+  hasTrailingComma?: boolean;
+  onToggle: (key: string) => void;
   /** 嵌套深度(根 = 0),用于行盒外扩为整行 */
-  depth?: number
+  depth?: number;
   /** 每层内容缩进像素值,与 tree-body 的 --tree-indent-size 同源 */
-  indent?: number
-}
+  indent?: number;
+};
 
 /** 行盒外扩为整行:负 margin 抵消 depth 层缩进、padding 原位补回内容位置,hover 背景即整行。
     每层缩进 = ml7 + pl12 + 竖线边框1 + 内容缩进;
@@ -113,13 +132,13 @@ const fullRowStyle = (
   indentPx: number,
   isClosingRow = false,
 ): CSSProperties | undefined => {
-  if (depth === 0) return undefined
-  const shift = depth * (20 + indentPx) - (isClosingRow ? indentPx : 0)
+  if (depth === 0) return undefined;
+  const shift = depth * (20 + indentPx) - (isClosingRow ? indentPx : 0);
   return {
     marginLeft: `${-shift}px`,
     paddingLeft: `calc(3.5ch + ${shift}px)`,
-  }
-}
+  };
+};
 
 export const TreeNode = ({
   label,
@@ -133,14 +152,14 @@ export const TreeNode = ({
   depth = 0,
   indent = 4,
 }: TreeNodeProps): ReactNode => {
-  const isArray = Array.isArray(value)
-  const isObject = !isArray && value !== null && typeof value === 'object'
+  const isArray = Array.isArray(value);
+  const isObject = !isArray && value !== null && typeof value === 'object';
 
   if (!isArray && !isObject) {
-    const embeddedJsonTitle = label ?? (
-      typeof path.at(-1) === 'number' ? `数组项 ${Number(path.at(-1)) + 1}` : '嵌套 JSON'
-    )
-    const canParse = typeof value === 'string' && isStrictJson(value)
+    const embeddedJsonTitle =
+      label ??
+      (typeof path.at(-1) === 'number' ? `数组项 ${Number(path.at(-1)) + 1}` : '嵌套 JSON');
+    const canParse = typeof value === 'string' && isStrictJson(value);
     return (
       <div
         style={fullRowStyle(depth, indent)}
@@ -158,14 +177,14 @@ export const TreeNode = ({
         {hasTrailingComma && <Comma />}
         <TreeCopyButton value={value} />
       </div>
-    )
+    );
   }
 
   const entries: [string | number, unknown][] = isArray
     ? (value as unknown[]).map((item, index) => [index, item])
-    : Object.entries(value as Record<string, unknown>)
-  const openingBracket = isArray ? '[' : '{'
-  const closingBracket = isArray ? ']' : '}'
+    : Object.entries(value as Record<string, unknown>);
+  const openingBracket = isArray ? '[' : '{';
+  const closingBracket = isArray ? ']' : '}';
 
   if (entries.length === 0) {
     return (
@@ -186,24 +205,24 @@ export const TreeNode = ({
         </span>
         {hasTrailingComma && <Comma />}
       </div>
-    )
+    );
   }
 
-  const nodeKey = pathKey(path)
-  const isOpen = !collapsed.has(nodeKey)
-  const lineCount = useMemo(() => countLines(value), [value])
+  const nodeKey = pathKey(path);
+  const isOpen = !collapsed.has(nodeKey);
+  const lineCount = useMemo(() => countLines(value), [value]);
   const summary = isArray
     ? `${entries.length} 项`
     : `{ ${entries
         .slice(0, 3)
         .map(([entryKey]) => entryKey)
-        .join(', ')}${entries.length > 3 ? ', …' : ''} }`
+        .join(', ')}${entries.length > 3 ? ', …' : ''} }`;
 
   const handleToggleRow = () => {
     // 拖选文本时的 click 不是折叠意图
-    if (window.getSelection()?.toString()) return
-    onToggle(nodeKey)
-  }
+    if (window.getSelection()?.toString()) return;
+    onToggle(nodeKey);
+  };
 
   return (
     <div className="font-mono text-[13px] leading-6">
@@ -270,8 +289,8 @@ export const TreeNode = ({
         </TreeChildren>
       )}
     </div>
-  )
-}
+  );
+};
 
 /* ---------- 子树行数(用于折叠占位补号) ---------- */
 
@@ -280,15 +299,15 @@ function countLines(value: unknown): number {
   if (Array.isArray(value)) {
     return value.length === 0
       ? 1
-      : 2 + value.reduce<number>((total, item) => total + countLines(item), 0)
+      : 2 + value.reduce<number>((total, item) => total + countLines(item), 0);
   }
   if (value && typeof value === 'object') {
-    const values = Object.values(value as Record<string, unknown>)
+    const values = Object.values(value as Record<string, unknown>);
     return values.length === 0
       ? 1
-      : 2 + values.reduce<number>((total, item) => total + countLines(item), 0)
+      : 2 + values.reduce<number>((total, item) => total + countLines(item), 0);
   }
-  return 1
+  return 1;
 }
 
 /* ---------- 子树容器:展开/收起动画 ---------- */
@@ -301,31 +320,27 @@ const TreeChildren = ({
   indent,
   children,
 }: {
-  isOpen: boolean
-  hasTrailingComma?: boolean
-  closingBracket: string
-  depth: number
-  indent: number
-  children: ReactNode
+  isOpen: boolean;
+  hasTrailingComma?: boolean;
+  closingBracket: string;
+  depth: number;
+  indent: number;
+  children: ReactNode;
 }) => {
   // 首次挂载直接呈现最终状态；保留 DOM 后的开闭变化继续使用 grid 过渡。
-  const [hasEntered, setHasEntered] = useState(isOpen)
-  const hasMountedRef = useRef(false)
+  const [hasEntered, setHasEntered] = useState(isOpen);
+  const hasMountedRef = useRef(false);
   useEffect(() => {
     if (!hasMountedRef.current) {
-      hasMountedRef.current = true
-      return
+      hasMountedRef.current = true;
+      return;
     }
-    const animationFrame = requestAnimationFrame(() => setHasEntered(isOpen))
-    return () => cancelAnimationFrame(animationFrame)
-  }, [isOpen])
+    const animationFrame = requestAnimationFrame(() => setHasEntered(isOpen));
+    return () => cancelAnimationFrame(animationFrame);
+  }, [isOpen]);
   // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
   return (
-    <div
-      className="tree-children ml-[7px] pl-3"
-      data-expanded={isOpen}
-      data-open={hasEntered}
-    >
+    <div className="tree-children ml-[7px] pl-3" data-expanded={isOpen} data-open={hasEntered}>
       <div className="tree-children-inner border-l border-transparent">
         <div className="tree-children-content">{children}</div>
         <div
@@ -337,8 +352,8 @@ const TreeChildren = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 /* ---------- 面板头部 / 各状态面板 ---------- */
 
@@ -349,63 +364,64 @@ const PaneHeader = ({ title, extra }: { title: string; extra?: ReactNode }) => {
       <span className="font-medium">{title}</span>
       <div className="panel-header-actions ml-auto flex items-center gap-0.5">{extra}</div>
     </div>
-  )
-}
+  );
+};
 
 export const TreeView = () => {
-  const activeTab = useStore(selectActiveTab)
-  const result = activeTab.result
-  const data = result?.ok ? result.data : null
-  const stats = result?.ok ? result.stats : null
-  const { collapsed, touched, shouldWrap } = activeTab
-  const indentSize = useStore(state => state.indentSize)
-  const treeTheme = useStore(state => state.treeTheme)
-  const shouldShowFullLongStrings = useStore(state => state.shouldShowFullLongStrings)
-  const handleClear = useStore(state => state.clear)
-  const handleToggleWrap = useStore(state => state.toggleWrap)
-  const handleToggleNode = useStore(state => state.toggleCollapse)
-  const handleExpandAll = useStore(state => state.expandAll)
-  const handleCollapseAll = useStore(state => state.collapseAll)
-  const [isCopied, setIsCopied] = useState(false)
-  const copyFeedbackTimerRef = useRef<number | null>(null)
-  const treeScrollRef = useRef<HTMLDivElement>(null)
+  const activeTab = useStore(selectActiveTab);
+  const result = activeTab.result;
+  const data = result?.ok ? result.data : null;
+  const stats = result?.ok ? result.stats : null;
+  const { collapsed, touched, shouldWrap } = activeTab;
+  const indentSize = useStore(state => state.indentSize);
+  const treeTheme = useStore(state => state.treeTheme);
+  const shouldShowFullLongStrings = useStore(state => state.shouldShowFullLongStrings);
+  const handleClear = useStore(state => state.clear);
+  const handleToggleWrap = useStore(state => state.toggleWrap);
+  const handleToggleNode = useStore(state => state.toggleCollapse);
+  const handleExpandAll = useStore(state => state.expandAll);
+  const handleCollapseAll = useStore(state => state.collapseAll);
+  const [isCopied, setIsCopied] = useState(false);
+  const copyFeedbackTimerRef = useRef<number | null>(null);
+  const treeScrollRef = useRef<HTMLDivElement>(null);
   const treeStyle = {
     '--tree-indent-size': `${indentSize * TREE_INDENT_PIXEL_RATIO}px`,
-  } as CSSProperties
+  } as CSSProperties;
 
   useLayoutEffect(() => {
-    const element = treeScrollRef.current
-    return element
-      ? bindTreeTabScrollPosition(activeTab.id, element)
-      : undefined
-  }, [activeTab.id])
+    const element = treeScrollRef.current;
+    return element ? bindTreeTabScrollPosition(activeTab.id, element) : undefined;
+  }, [activeTab.id]);
 
-  useEffect(() => () => {
-    if (copyFeedbackTimerRef.current !== null) {
-      window.clearTimeout(copyFeedbackTimerRef.current)
-    }
-  }, [])
+  useEffect(
+    () => () => {
+      if (copyFeedbackTimerRef.current !== null) {
+        window.clearTimeout(copyFeedbackTimerRef.current);
+      }
+    },
+    [],
+  );
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(serializeForCopy(data, indentSize))
-      setIsCopied(true)
-      toast.success('已复制到剪贴板')
+      await navigator.clipboard.writeText(serializeForCopy(data, indentSize));
+      setIsCopied(true);
+      toast.success('已复制到剪贴板');
       if (copyFeedbackTimerRef.current !== null) {
-        window.clearTimeout(copyFeedbackTimerRef.current)
+        window.clearTimeout(copyFeedbackTimerRef.current);
       }
       copyFeedbackTimerRef.current = window.setTimeout(() => {
-        setIsCopied(false)
-        copyFeedbackTimerRef.current = null
-      }, COPY_FEEDBACK_DURATION_MS)
+        setIsCopied(false);
+        copyFeedbackTimerRef.current = null;
+      }, COPY_FEEDBACK_DURATION_MS);
     } catch {
       /* 剪贴板不可用时静默 */
     }
-  }
+  };
 
-  const handleToggleAll = collapsed.size > 0 ? handleExpandAll : handleCollapseAll
+  const handleToggleAll = collapsed.size > 0 ? handleExpandAll : handleCollapseAll;
 
-  if (!result?.ok || !stats) return null
+  if (!result?.ok || !stats) return null;
 
   return (
     <section className="pane-responsive-actions flex h-full min-h-0 flex-col">
@@ -485,9 +501,7 @@ export const TreeView = () => {
                     className={`col-start-1 row-start-1 transition-all duration-200 ${collapsed.size === 0 ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'}`}
                   />
                 </span>
-                <span className="pane-action-label">
-                  {collapsed.size > 0 ? '展开' : '折叠'}
-                </span>
+                <span className="pane-action-label">{collapsed.size > 0 ? '展开' : '折叠'}</span>
               </Button>
             </Tip>
           </>
@@ -511,8 +525,8 @@ export const TreeView = () => {
         />
       </div>
     </section>
-  )
-}
+  );
+};
 
 export const EmptyPane = ({ hint }: { hint: string }) => {
   return (
@@ -525,17 +539,17 @@ export const EmptyPane = ({ hint }: { hint: string }) => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
 export const ErrorPane = ({
   message,
   line,
   column,
 }: {
-  message: string
-  line?: number
-  column?: number
+  message: string;
+  line?: number;
+  column?: number;
 }) => {
   return (
     <section className="flex h-full min-h-0 flex-col">
@@ -555,5 +569,5 @@ export const ErrorPane = ({
         </div>
       </div>
     </section>
-  )
-}
+  );
+};

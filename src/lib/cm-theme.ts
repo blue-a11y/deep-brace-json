@@ -1,17 +1,17 @@
-import { createTheme } from '@uiw/codemirror-themes'
-import { tags as highlightTags } from '@lezer/highlight'
-import { TREE_THEME_OPTIONS, type TreeTheme } from './tree-theme'
+import { tags as highlightTags } from '@lezer/highlight';
+import { createTheme } from '@uiw/codemirror-themes';
+import { TREE_THEME_OPTIONS, type TreeTheme } from './tree-theme';
 
-type EditorThemeMode = 'dark' | 'light'
+type EditorThemeMode = 'dark' | 'light';
 
 type SyntaxColors = {
-  key: string
-  string: string
-  number: string
-  boolean: string
-  null: string
-  punctuation: string
-}
+  key: string;
+  string: string;
+  number: string;
+  boolean: string;
+  null: string;
+  punctuation: string;
+};
 
 const TOKEN_COLORS: Record<TreeTheme, Record<EditorThemeMode, SyntaxColors>> = {
   default: {
@@ -140,10 +140,10 @@ const TOKEN_COLORS: Record<TreeTheme, Record<EditorThemeMode, SyntaxColors>> = {
       punctuation: 'rgb(169 177 214 / 50%)',
     },
   },
-}
+};
 
 const createEditorTheme = (theme: EditorThemeMode, colors: SyntaxColors) => {
-  const isDark = theme === 'dark'
+  const isDark = theme === 'dark';
 
   return createTheme({
     theme,
@@ -169,26 +169,26 @@ const createEditorTheme = (theme: EditorThemeMode, colors: SyntaxColors) => {
       { tag: highlightTags.operator, color: colors.punctuation },
       { tag: highlightTags.invalid, color: isDark ? '#f87171' : '#dc2626' },
     ],
-  })
-}
+  });
+};
 
-type CodeMirrorTheme = ReturnType<typeof createEditorTheme>
+type CodeMirrorTheme = ReturnType<typeof createEditorTheme>;
 
 const CODE_MIRROR_THEMES = Object.fromEntries(
   TREE_THEME_OPTIONS.map(({ value }) => {
-    const colors = TOKEN_COLORS[value]
+    const colors = TOKEN_COLORS[value];
     return [
       value,
       {
         light: createEditorTheme('light', colors.light),
         dark: createEditorTheme('dark', colors.dark),
       },
-    ]
+    ];
   }),
-) as Record<TreeTheme, Record<EditorThemeMode, CodeMirrorTheme>>
+) as Record<TreeTheme, Record<EditorThemeMode, CodeMirrorTheme>>;
 
 export const getCodeMirrorTheme = (isDark: boolean, treeTheme: TreeTheme) => {
-  const theme = isDark ? 'dark' : 'light'
+  const theme = isDark ? 'dark' : 'light';
 
-  return CODE_MIRROR_THEMES[treeTheme][theme]
-}
+  return CODE_MIRROR_THEMES[treeTheme][theme];
+};

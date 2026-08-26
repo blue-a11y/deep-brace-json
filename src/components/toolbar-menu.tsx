@@ -1,5 +1,5 @@
-import type { Key } from 'react'
-import { Dropdown, useOverlayState } from '@heroui/react'
+import type { Key } from 'react';
+import { Dropdown, useOverlayState } from '@heroui/react';
 import {
   AlignLeft,
   Check,
@@ -10,57 +10,53 @@ import {
   Settings,
   Sparkles,
   Sun,
-} from 'lucide-react'
+} from 'lucide-react';
+import { INDENT_OPTIONS, type IndentSize } from '../lib/indent';
+import { TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree-theme';
+import { useStore } from '../store/use-store';
+import { AppSettings } from './app-settings';
+import { GithubMark } from './github-mark';
+import { ShortcutHelp } from './shortcut-help';
+import type { ToolbarActionVisibility } from './use-toolbar-action-visibility';
 
-import { INDENT_OPTIONS, type IndentSize } from '../lib/indent'
-import { TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree-theme'
-import { useStore } from '../store/use-store'
-import { AppSettings } from './app-settings'
-import { GithubMark } from './github-mark'
-import { ShortcutHelp } from './shortcut-help'
-import type { ToolbarActionVisibility } from './use-toolbar-action-visibility'
-
-const REPOSITORY_URL = 'https://github.com/blue-a11y/deep-brace-json'
+const REPOSITORY_URL = 'https://github.com/blue-a11y/deep-brace-json';
 
 type ToolbarMenuProps = {
-  actionVisibility: ToolbarActionVisibility
-}
+  actionVisibility: ToolbarActionVisibility;
+};
 
 export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
-  const handleLoadSample = useStore(state => state.loadSample)
-  const handleToggleTheme = useStore(state => state.toggleTheme)
-  const isDark = useStore(state => state.isDark)
-  const indentSize = useStore(state => state.indentSize)
-  const handleIndentSizeChange = useStore(state => state.setIndentSize)
-  const treeTheme = useStore(state => state.treeTheme)
-  const handleTreeThemeChange = useStore(state => state.setTreeTheme)
-  const shortcutOverlayState = useOverlayState()
-  const settingsOverlayState = useOverlayState()
+  const handleLoadSample = useStore(state => state.loadSample);
+  const handleToggleTheme = useStore(state => state.toggleTheme);
+  const isDark = useStore(state => state.isDark);
+  const indentSize = useStore(state => state.indentSize);
+  const handleIndentSizeChange = useStore(state => state.setIndentSize);
+  const treeTheme = useStore(state => state.treeTheme);
+  const handleTreeThemeChange = useStore(state => state.setTreeTheme);
+  const shortcutOverlayState = useOverlayState();
+  const settingsOverlayState = useOverlayState();
 
   const handleMenuAction = (key: Key) => {
-    if (key === 'sample') handleLoadSample()
-    if (key === 'shortcuts') shortcutOverlayState.open()
-    if (key === 'settings') settingsOverlayState.open()
-    if (key === 'theme') handleToggleTheme()
+    if (key === 'sample') handleLoadSample();
+    if (key === 'shortcuts') shortcutOverlayState.open();
+    if (key === 'settings') settingsOverlayState.open();
+    if (key === 'theme') handleToggleTheme();
     if (key === 'github') {
-      window.open(REPOSITORY_URL, '_blank', 'noopener,noreferrer')
+      window.open(REPOSITORY_URL, '_blank', 'noopener,noreferrer');
     }
-  }
+  };
 
   const handleIndentAction = (key: Key) => {
     if (typeof key === 'number' && INDENT_OPTIONS.includes(key as IndentSize)) {
-      handleIndentSizeChange(key as IndentSize)
+      handleIndentSizeChange(key as IndentSize);
     }
-  }
+  };
 
   const handleTreeThemeAction = (key: Key) => {
-    if (
-      typeof key === 'string'
-      && TREE_THEME_OPTIONS.some(option => option.value === key)
-    ) {
-      handleTreeThemeChange(key as TreeTheme)
+    if (typeof key === 'string' && TREE_THEME_OPTIONS.some(option => option.value === key)) {
+      handleTreeThemeChange(key as TreeTheme);
     }
-  }
+  };
 
   return (
     <>
@@ -72,11 +68,7 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
           <Menu className="shrink-0" size={18} />
         </Dropdown.Trigger>
         <Dropdown.Popover placement="bottom end">
-          <Dropdown.Menu
-            aria-label="工具菜单"
-            className="min-w-60"
-            onAction={handleMenuAction}
-          >
+          <Dropdown.Menu aria-label="工具菜单" className="min-w-60" onAction={handleMenuAction}>
             {!actionVisibility.shouldShowSample && (
               <Dropdown.Item id="sample" textValue="载入示例">
                 <Sparkles size={16} />
@@ -96,9 +88,11 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
                   <Dropdown.Menu aria-label="缩进" onAction={handleIndentAction}>
                     {INDENT_OPTIONS.map(option => (
                       <Dropdown.Item key={option} id={option} textValue={`${option} 空格`}>
-                        {indentSize === option
-                          ? <Check className="text-primary" size={16} />
-                          : <span className="size-4" />}
+                        {indentSize === option ? (
+                          <Check className="text-primary" size={16} />
+                        ) : (
+                          <span className="size-4" />
+                        )}
                         <span>{option} 空格</span>
                       </Dropdown.Item>
                     ))}
@@ -120,14 +114,12 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
                 <Dropdown.Popover placement="left top">
                   <Dropdown.Menu aria-label="树形主题" onAction={handleTreeThemeAction}>
                     {TREE_THEME_OPTIONS.map(option => (
-                      <Dropdown.Item
-                        key={option.value}
-                        id={option.value}
-                        textValue={option.label}
-                      >
-                        {treeTheme === option.value
-                          ? <Check className="text-primary" size={16} />
-                          : <span className="size-4" />}
+                      <Dropdown.Item key={option.value} id={option.value} textValue={option.label}>
+                        {treeTheme === option.value ? (
+                          <Check className="text-primary" size={16} />
+                        ) : (
+                          <span className="size-4" />
+                        )}
                         <span>{option.label}</span>
                       </Dropdown.Item>
                     ))}
@@ -149,10 +141,7 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
               </Dropdown.Item>
             )}
             {!actionVisibility.shouldShowTheme && (
-              <Dropdown.Item
-                id="theme"
-                textValue={isDark ? '切换至浅色主题' : '切换至深色主题'}
-              >
+              <Dropdown.Item id="theme" textValue={isDark ? '切换至浅色主题' : '切换至深色主题'}>
                 {isDark ? <Sun size={16} /> : <Moon size={16} />}
                 <span>{isDark ? '切换至浅色主题' : '切换至深色主题'}</span>
               </Dropdown.Item>
@@ -168,17 +157,11 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
       </Dropdown>
 
       {!actionVisibility.shouldShowShortcuts && (
-        <ShortcutHelp
-          overlayState={shortcutOverlayState}
-          shouldHideTrigger
-        />
+        <ShortcutHelp overlayState={shortcutOverlayState} shouldHideTrigger />
       )}
       {!actionVisibility.shouldShowSettings && (
-        <AppSettings
-          overlayState={settingsOverlayState}
-          shouldHideTrigger
-        />
+        <AppSettings overlayState={settingsOverlayState} shouldHideTrigger />
       )}
     </>
-  )
-}
+  );
+};

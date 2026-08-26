@@ -1,13 +1,12 @@
-import { Button, Modal, type UseOverlayStateReturn } from '@heroui/react'
-import { Keyboard } from 'lucide-react'
-
-import { SHORTCUT_GROUPS } from '../lib/shortcuts'
-import { ShortcutKbd } from './shortcut-hint'
+import { Button, Modal, type UseOverlayStateReturn } from '@heroui/react';
+import { Keyboard } from 'lucide-react';
+import { SHORTCUT_GROUPS } from '../lib/shortcuts';
+import { ShortcutKbd } from './shortcut-hint';
 
 type ShortcutHelpProps = {
-  overlayState?: UseOverlayStateReturn
-  shouldHideTrigger?: boolean
-}
+  overlayState?: UseOverlayStateReturn;
+  shouldHideTrigger?: boolean;
+};
 
 export const ShortcutHelp = ({
   overlayState,
@@ -48,10 +47,7 @@ export const ShortcutHelp = ({
                       className="flex min-h-11 items-center justify-between gap-4 rounded-xl px-3 py-2 text-foreground/80 hover:bg-surface"
                     >
                       <span className="text-sm">{item.label}</span>
-                      <ShortcutKbd
-                        className="min-w-16 justify-center"
-                        shortcut={item.id}
-                      />
+                      <ShortcutKbd className="min-w-16 justify-center" shortcut={item.id} />
                     </div>
                   ))}
                 </div>
@@ -62,4 +58,4 @@ export const ShortcutHelp = ({
       </Modal.Container>
     </Modal.Backdrop>
   </Modal>
-)
+);

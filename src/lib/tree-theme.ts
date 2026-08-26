@@ -6,8 +6,8 @@ export const TREE_THEME_OPTIONS = [
   { value: 'nord', label: 'Nord' },
   { value: 'solarized', label: 'Solarized' },
   { value: 'tokyo-night', label: 'Tokyo Night' },
-] as const
+] as const;
 
-export type TreeTheme = (typeof TREE_THEME_OPTIONS)[number]['value']
+export type TreeTheme = (typeof TREE_THEME_OPTIONS)[number]['value'];
 
-export const DEFAULT_TREE_THEME: TreeTheme = 'default'
+export const DEFAULT_TREE_THEME: TreeTheme = 'default';

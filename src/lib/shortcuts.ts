@@ -9,17 +9,17 @@ const SHORTCUTS = {
   nextTab: { code: 'BracketRight', key: ']' },
   toggleWrap: { code: 'KeyL', key: 'L' },
   toggleCollapse: { code: 'KeyX', key: 'X' },
-} as const
+} as const;
 
-export type ShortcutId = keyof typeof SHORTCUTS
+export type ShortcutId = keyof typeof SHORTCUTS;
 
 type ShortcutGroup = {
-  title: string
+  title: string;
   items: ReadonlyArray<{
-    id: ShortcutId
-    label: string
-  }>
-}
+    id: ShortcutId;
+    label: string;
+  }>;
+};
 
 export const SHORTCUT_GROUPS = [
   {
@@ -47,24 +47,23 @@ export const SHORTCUT_GROUPS = [
       { id: 'toggleCollapse', label: '折叠 / 展开全部' },
     ],
   },
-] as const satisfies ReadonlyArray<ShortcutGroup>
+] as const satisfies ReadonlyArray<ShortcutGroup>;
 
-const shortcutIds = Object.keys(SHORTCUTS) as ShortcutId[]
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+const shortcutIds = Object.keys(SHORTCUTS) as ShortcutId[];
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
-export const getShortcutKey = (id: ShortcutId) => SHORTCUTS[id].key
+export const getShortcutKey = (id: ShortcutId) => SHORTCUTS[id].key;
 
-export const getShortcutAltKey = (): 'option' | 'alt' => isMac ? 'option' : 'alt'
+export const getShortcutAltKey = (): 'option' | 'alt' => (isMac ? 'option' : 'alt');
 
 export const getShortcutLabel = (id: ShortcutId) => {
-  const key = SHORTCUTS[id].key
-  return isMac ? `⌥⇧${key}` : `Alt+Shift+${key}`
-}
+  const key = SHORTCUTS[id].key;
+  return isMac ? `⌥⇧${key}` : `Alt+Shift+${key}`;
+};
 
-export const getAriaShortcut = (id: ShortcutId) =>
-  `Alt+Shift+${SHORTCUTS[id].key}`
+export const getAriaShortcut = (id: ShortcutId) => `Alt+Shift+${SHORTCUTS[id].key}`;
 
 export const findShortcut = (event: KeyboardEvent): ShortcutId | null => {
-  if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return null
-  return shortcutIds.find(id => SHORTCUTS[id].code === event.code) ?? null
-}
+  if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return null;
+  return shortcutIds.find(id => SHORTCUTS[id].code === event.code) ?? null;
+};

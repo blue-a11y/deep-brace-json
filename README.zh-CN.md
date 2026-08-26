@@ -24,11 +24,11 @@
 
 Header 右侧的键盘按钮可随时查看完整列表。
 
-| 操作 | 快捷键 |
-| --- | --- |
-| 格式化 / 压缩 | `Shift+Alt+F` / `Shift+Alt+M` |
-| 转义 / 反转义 | `Shift+Alt+E` / `Shift+Alt+U` |
-| 新建 / 关闭标签 | `Shift+Alt+N` / `Shift+Alt+W` |
+| 操作                | 快捷键                        |
+| ------------------- | ----------------------------- |
+| 格式化 / 压缩       | `Shift+Alt+F` / `Shift+Alt+M` |
+| 转义 / 反转义       | `Shift+Alt+E` / `Shift+Alt+U` |
+| 新建 / 关闭标签     | `Shift+Alt+N` / `Shift+Alt+W` |
 | 上一个 / 下一个标签 | `Shift+Alt+[` / `Shift+Alt+]` |
 | 切换换行 / 折叠展开 | `Shift+Alt+L` / `Shift+Alt+X` |
 

@@ -24,12 +24,12 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 
 Press the keyboard button in the header to view all shortcuts at any time.
 
-| Action | Shortcut |
-| --- | --- |
-| Format / Minify | `Shift+Alt+F` / `Shift+Alt+M` |
-| Escape / Unescape | `Shift+Alt+E` / `Shift+Alt+U` |
-| New / Close tab | `Shift+Alt+N` / `Shift+Alt+W` |
-| Previous / Next tab | `Shift+Alt+[` / `Shift+Alt+]` |
+| Action                 | Shortcut                      |
+| ---------------------- | ----------------------------- |
+| Format / Minify        | `Shift+Alt+F` / `Shift+Alt+M` |
+| Escape / Unescape      | `Shift+Alt+E` / `Shift+Alt+U` |
+| New / Close tab        | `Shift+Alt+N` / `Shift+Alt+W` |
+| Previous / Next tab    | `Shift+Alt+[` / `Shift+Alt+]` |
 | Toggle wrap / Fold all | `Shift+Alt+L` / `Shift+Alt+X` |
 
 ## Getting Started

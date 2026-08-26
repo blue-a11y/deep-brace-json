@@ -1,36 +1,31 @@
-import type { Key, MouseEvent, PointerEvent } from 'react'
-import { Button, Tabs } from '@heroui/react'
-import { Braces, Plus, X } from 'lucide-react'
-
-import { getAriaShortcut, getShortcutLabel } from '../lib/shortcuts'
-import { closeTabWithUndo, getTabDisplayTitle, openNewTab } from '../lib/tab-actions'
-import { useStore, type JsonTab } from '../store/use-store'
-import { ShortcutHint } from './shortcut-hint'
-import { Tip } from './tip'
+import type { Key, MouseEvent, PointerEvent } from 'react';
+import { Button, Tabs } from '@heroui/react';
+import { Braces, Plus, X } from 'lucide-react';
+import { getAriaShortcut, getShortcutLabel } from '../lib/shortcuts';
+import { closeTabWithUndo, getTabDisplayTitle, openNewTab } from '../lib/tab-actions';
+import { useStore, type JsonTab } from '../store/use-store';
+import { ShortcutHint } from './shortcut-hint';
+import { Tip } from './tip';
 
 type JsonTabItemProps = {
-  tab: JsonTab
-  index: number
-  isCloseDisabled: boolean
-  onClose: (tab: JsonTab, index: number) => void
-}
+  tab: JsonTab;
+  index: number;
+  isCloseDisabled: boolean;
+  onClose: (tab: JsonTab, index: number) => void;
+};
 
 const JsonTabItem = ({ tab, index, isCloseDisabled, onClose }: JsonTabItemProps) => {
-  const displayTitle = getTabDisplayTitle(index)
+  const displayTitle = getTabDisplayTitle(index);
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    event.stopPropagation()
-  }
+    event.stopPropagation();
+  };
   const handleClose = (event: MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation()
-    onClose(tab, index)
-  }
+    event.stopPropagation();
+    onClose(tab, index);
+  };
 
   return (
-    <Tabs.Tab
-      id={tab.id}
-      aria-label={`${displayTitle}，${tab.title}`}
-      className="group gap-1"
-    >
+    <Tabs.Tab id={tab.id} aria-label={`${displayTitle}，${tab.title}`} className="group gap-1">
       <span title={tab.title} className="flex min-w-0 items-center gap-1 overflow-hidden">
         <Braces size={14} className="shrink-0" />
         <span className="min-w-0 truncate text-sm">{displayTitle}</span>
@@ -49,17 +44,17 @@ const JsonTabItem = ({ tab, index, isCloseDisabled, onClose }: JsonTabItemProps)
       </button>
       <Tabs.Indicator />
     </Tabs.Tab>
-  )
-}
+  );
+};
 
 export const JsonTabs = () => {
-  const tabs = useStore(state => state.tabs)
-  const activeTabId = useStore(state => state.activeTabId)
-  const setActiveTab = useStore(state => state.setActiveTab)
-  const handleSelectionChange = (key: Key) => setActiveTab(String(key))
-  const handleCloseTab = (tab: JsonTab) => closeTabWithUndo(tab.id)
-  const handleNewTab = () => openNewTab()
-  const tabCollectionKey = tabs.map(tab => tab.id).join(':')
+  const tabs = useStore(state => state.tabs);
+  const activeTabId = useStore(state => state.activeTabId);
+  const setActiveTab = useStore(state => state.setActiveTab);
+  const handleSelectionChange = (key: Key) => setActiveTab(String(key));
+  const handleCloseTab = (tab: JsonTab) => closeTabWithUndo(tab.id);
+  const handleNewTab = () => openNewTab();
+  const tabCollectionKey = tabs.map(tab => tab.id).join(':');
 
   return (
     <nav aria-label="JSON 标签" className="-mt-1 mb-1 flex min-w-0 items-center gap-1 px-1">
@@ -100,5 +95,5 @@ export const JsonTabs = () => {
         </Button>
       </Tip>
     </nav>
-  )
-}
+  );
+};

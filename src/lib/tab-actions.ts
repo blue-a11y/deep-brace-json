@@ -1,33 +1,32 @@
-import { flushSync } from 'react-dom'
+import { flushSync } from 'react-dom';
+import { useStore } from '../store/use-store';
+import { toast } from './toast';
 
-import { toast } from './toast'
-import { useStore } from '../store/use-store'
-
-export const getTabDisplayTitle = (index: number) => `Brace ${index + 1}`
+export const getTabDisplayTitle = (index: number) => `Brace ${index + 1}`;
 
 export const openNewTab = () => {
-  useStore.getState().openTab()
-  toast.info('已新建标签')
-}
+  useStore.getState().openTab();
+  toast.info('已新建标签');
+};
 
 export const closeTabWithUndo = (tabId: string) => {
-  const { tabs, closeTab, restoreTab } = useStore.getState()
-  if (tabs.length === 1) return false
-  const index = tabs.findIndex(tab => tab.id === tabId)
-  if (index < 0) return false
-  const tab = tabs[index]
+  const { tabs, closeTab, restoreTab } = useStore.getState();
+  if (tabs.length === 1) return false;
+  const index = tabs.findIndex(tab => tab.id === tabId);
+  if (index < 0) return false;
+  const tab = tabs[index];
   const target = {
     index,
     previousTabId: tabs[index - 1]?.id,
     nextTabId: tabs[index + 1]?.id,
-  }
+  };
 
-  flushSync(() => closeTab(tab.id))
-  let toastKey = ''
+  flushSync(() => closeTab(tab.id));
+  let toastKey = '';
   const handleUndo = () => {
-    flushSync(() => restoreTab(tab, target))
-    toast.close(toastKey)
-  }
+    flushSync(() => restoreTab(tab, target));
+    toast.close(toastKey);
+  };
   toastKey = toast(`已关闭 ${getTabDisplayTitle(index)}`, {
     actionProps: {
       children: '撤销',
@@ -36,6 +35,6 @@ export const closeTabWithUndo = (tabId: string) => {
       size: 'sm',
       variant: 'tertiary',
     },
-  })
-  return true
-}
+  });
+  return true;
+};

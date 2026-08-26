@@ -1,33 +1,33 @@
-import { useMemo } from 'react'
-import { byteLength, formatBytes } from '../lib/parse'
-import { selectActiveTab, useStore } from '../store/use-store'
+import { useMemo } from 'react';
+import { byteLength, formatBytes } from '../lib/parse';
+import { selectActiveTab, useStore } from '../store/use-store';
 
 export const StatusBar = () => {
-  const { input, result, isDirty } = useStore(selectActiveTab)
+  const { input, result, isDirty } = useStore(selectActiveTab);
 
-  const lines = useMemo(() => (input ? input.split('\n').length : 0), [input])
-  const bytes = useMemo(() => byteLength(input), [input])
+  const lines = useMemo(() => (input ? input.split('\n').length : 0), [input]);
+  const bytes = useMemo(() => byteLength(input), [input]);
 
-  let text: string
-  let className: string
+  let text: string;
+  let className: string;
   if (!result) {
-    text = '就绪'
-    className = 'text-foreground/50'
+    text = '就绪';
+    className = 'text-foreground/50';
   } else if (!result.ok) {
-    const position = result.line ? ` · ${result.line}:${result.column}` : ''
-    text = `解析失败${position} — ${result.message}`
-    className = 'text-red-500'
+    const position = result.line ? ` · ${result.line}:${result.column}` : '';
+    text = `解析失败${position} — ${result.message}`;
+    className = 'text-red-500';
   } else if (isDirty) {
-    text = '输入中 · 自动解析'
-    className = 'text-amber-500'
+    text = '输入中 · 自动解析';
+    className = 'text-amber-500';
   } else if (result.isDegraded) {
-    const length = (result.data as string).length
-    text = `纯文本 · 已按字符串处理 · ${length} 字符`
-    className = 'text-sky-500'
+    const length = (result.data as string).length;
+    text = `纯文本 · 已按字符串处理 · ${length} 字符`;
+    className = 'text-sky-500';
   } else {
-    const { rootType, nodes, maxDepth } = result.stats
-    text = `已解析 · ${rootType} · ${nodes} 节点 · 最大深度 ${maxDepth}`
-    className = 'text-emerald-500'
+    const { rootType, nodes, maxDepth } = result.stats;
+    text = `已解析 · ${rootType} · ${nodes} 节点 · 最大深度 ${maxDepth}`;
+    className = 'text-emerald-500';
   }
 
   return (
@@ -40,5 +40,5 @@ export const StatusBar = () => {
         {text}
       </div>
     </footer>
-  )
-}
+  );
+};

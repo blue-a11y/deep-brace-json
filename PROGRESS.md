@@ -69,4 +69,4 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 
 ---
 
-*2026-08-25 更新；详细提交历史见 git log。`ignoreCommand` 已上线并实测：本行为纯 .md 变更，用于验证 Vercel 跳过构建。*
+_2026-08-25 更新；详细提交历史见 git log。`ignoreCommand` 已上线并实测：本行为纯 .md 变更，用于验证 Vercel 跳过构建。_

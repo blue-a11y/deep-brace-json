@@ -1,43 +1,39 @@
-import type { Key } from 'react'
-import { CircleFill } from '@gravity-ui/icons'
-import { Button, Tabs } from '@heroui/react'
-import { Moon, Sparkles, Sun } from 'lucide-react'
-import { IndentSelect } from './indent-select'
-import { AppSettings } from './app-settings'
-import { GithubMark } from './github-mark'
-import { ShortcutHelp } from './shortcut-help'
-import { ToolbarMenu } from './toolbar-menu'
-import { TreeThemeSelect } from './tree-theme-select'
-import { Tip } from './tip'
-import AnimatedContent from './react-bits/animated-content'
-import Shuffle from './react-bits/shuffle'
-import { useToolbarActionVisibility } from './use-toolbar-action-visibility'
-import { useStore } from '../store/use-store'
+import type { Key } from 'react';
+import { CircleFill } from '@gravity-ui/icons';
+import { Button, Tabs } from '@heroui/react';
+import { Moon, Sparkles, Sun } from 'lucide-react';
+import { useStore } from '../store/use-store';
+import { AppSettings } from './app-settings';
+import { GithubMark } from './github-mark';
+import { IndentSelect } from './indent-select';
+import AnimatedContent from './react-bits/animated-content';
+import Shuffle from './react-bits/shuffle';
+import { ShortcutHelp } from './shortcut-help';
+import { Tip } from './tip';
+import { ToolbarMenu } from './toolbar-menu';
+import { TreeThemeSelect } from './tree-theme-select';
+import { useToolbarActionVisibility } from './use-toolbar-action-visibility';
 
-const FEATURE_DOT_SIZE = 4
+const FEATURE_DOT_SIZE = 4;
 
 export const Toolbar = () => {
-  const handleLoadSample = useStore(state => state.loadSample)
-  const handleToggleTheme = useStore(state => state.toggleTheme)
-  const isDark = useStore(state => state.isDark)
-  const indentSize = useStore(state => state.indentSize)
-  const handleIndentSizeChange = useStore(state => state.setIndentSize)
-  const treeTheme = useStore(state => state.treeTheme)
-  const handleTreeThemeChange = useStore(state => state.setTreeTheme)
-  const actionVisibility = useToolbarActionVisibility()
-  const hasOverflowActions = Object.values(actionVisibility).some(isVisible => !isVisible)
+  const handleLoadSample = useStore(state => state.loadSample);
+  const handleToggleTheme = useStore(state => state.toggleTheme);
+  const isDark = useStore(state => state.isDark);
+  const indentSize = useStore(state => state.indentSize);
+  const handleIndentSizeChange = useStore(state => state.setIndentSize);
+  const treeTheme = useStore(state => state.treeTheme);
+  const handleTreeThemeChange = useStore(state => state.setTreeTheme);
+  const actionVisibility = useToolbarActionVisibility();
+  const hasOverflowActions = Object.values(actionVisibility).some(isVisible => !isVisible);
 
   const handleThemeSelectionChange = (key: Key) => {
-    if ((key === 'dark') !== isDark) handleToggleTheme()
-  }
+    if ((key === 'dark') !== isDark) handleToggleTheme();
+  };
 
   const handleOpenRepository = () => {
-    window.open(
-      'https://github.com/blue-a11y/deep-brace-json',
-      '_blank',
-      'noopener,noreferrer',
-    )
-  }
+    window.open('https://github.com/blue-a11y/deep-brace-json', '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <header className="flex shrink-0 items-center gap-2 px-1 py-1.5">
@@ -70,19 +66,11 @@ export const Toolbar = () => {
           <span className="inline-flex h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500">
             嵌套解析
           </span>
-          <CircleFill
-            aria-hidden="true"
-            className="shrink-0 opacity-40"
-            width={FEATURE_DOT_SIZE}
-          />
+          <CircleFill aria-hidden="true" className="shrink-0 opacity-40" width={FEATURE_DOT_SIZE} />
           <span className="inline-flex h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500">
             数据持久化
           </span>
-          <CircleFill
-            aria-hidden="true"
-            className="shrink-0 opacity-40"
-            width={FEATURE_DOT_SIZE}
-          />
+          <CircleFill aria-hidden="true" className="shrink-0 opacity-40" width={FEATURE_DOT_SIZE} />
           <span className="inline-flex h-5 shrink-0 items-center px-1.5 text-xs font-medium text-emerald-500">
             多标签工作区
           </span>
@@ -162,5 +150,5 @@ export const Toolbar = () => {
         )}
       </div>
     </header>
-  )
-}
+  );
+};

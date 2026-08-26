@@ -1,15 +1,15 @@
-import type { MouseEvent, ReactNode } from 'react'
+import type { MouseEvent, ReactNode } from 'react';
 
 type TreeActionButtonProps = {
-  children: ReactNode
-  onClick: () => void
-}
+  children: ReactNode;
+  onClick: () => void;
+};
 
 export const TreeActionButton = ({ children, onClick }: TreeActionButtonProps) => {
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation()
-    onClick()
-  }
+    event.stopPropagation();
+    onClick();
+  };
 
   return (
     <button
@@ -19,5 +19,5 @@ export const TreeActionButton = ({ children, onClick }: TreeActionButtonProps) =
     >
       {children}
     </button>
-  )
-}
+  );
+};
