@@ -1,11 +1,11 @@
 import type { MouseEvent, ReactNode } from 'react'
 
-type ITreeActionButtonProps = {
+type TreeActionButtonProps = {
   children: ReactNode
   onClick: () => void
 }
 
-export const TreeActionButton = ({ children, onClick }: ITreeActionButtonProps) => {
+export const TreeActionButton = ({ children, onClick }: TreeActionButtonProps) => {
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
     onClick()

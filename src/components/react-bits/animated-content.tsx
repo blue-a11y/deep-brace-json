@@ -15,11 +15,11 @@ interface AnimatedContentProps extends React.HTMLAttributes<HTMLDivElement> {
   container?: Element | string | null;
   distance?: number;
   direction?: 'vertical' | 'horizontal';
-  reverse?: boolean;
+  isReversed?: boolean;
   duration?: number;
   ease?: string;
   initialOpacity?: number;
-  animateOpacity?: boolean;
+  shouldAnimateOpacity?: boolean;
   scale?: number;
   threshold?: number;
   delay?: number;
@@ -35,11 +35,11 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
   container,
   distance = 100,
   direction = 'vertical',
-  reverse = false,
+  isReversed = false,
   duration = 0.8,
   ease = 'power3.out',
   initialOpacity = 0,
-  animateOpacity = true,
+  shouldAnimateOpacity = true,
   scale = 1,
   threshold = 0.1,
   delay = 0,
@@ -65,13 +65,13 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
     }
 
     const axis = direction === 'horizontal' ? 'x' : 'y';
-    const offset = reverse ? -distance : distance;
+    const offset = isReversed ? -distance : distance;
     const startPct = (1 - threshold) * 100;
 
     gsap.set(el, {
       [axis]: offset,
       scale,
-      opacity: animateOpacity ? initialOpacity : 1,
+      opacity: shouldAnimateOpacity ? initialOpacity : 1,
       visibility: 'visible'
     });
 
@@ -83,9 +83,9 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
 
         if (disappearAfter > 0) {
           gsap.to(el, {
-            [axis]: reverse ? distance : -distance,
+            [axis]: isReversed ? distance : -distance,
             scale: 0.8,
-            opacity: animateOpacity ? initialOpacity : 0,
+            opacity: shouldAnimateOpacity ? initialOpacity : 0,
             delay: disappearAfter,
             duration: disappearDuration,
             ease: disappearEase,
@@ -119,11 +119,11 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
     container,
     distance,
     direction,
-    reverse,
+    isReversed,
     duration,
     ease,
     initialOpacity,
-    animateOpacity,
+    shouldAnimateOpacity,
     scale,
     threshold,
     delay,

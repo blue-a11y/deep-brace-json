@@ -4,18 +4,18 @@ import { Braces, Plus, X } from 'lucide-react'
 
 import { getAriaShortcut, getShortcutLabel } from '../lib/shortcuts'
 import { closeTabWithUndo, getTabDisplayTitle, openNewTab } from '../lib/tab-actions'
-import { useStore, type JsonTab } from '../store/useStore'
+import { useStore, type JsonTab } from '../store/use-store'
 import { ShortcutHint } from './shortcut-hint'
-import { Tip } from './Tip'
+import { Tip } from './tip'
 
-type IJsonTabItemProps = {
+type JsonTabItemProps = {
   tab: JsonTab
   index: number
-  closeDisabled: boolean
+  isCloseDisabled: boolean
   onClose: (tab: JsonTab, index: number) => void
 }
 
-const JsonTabItem = ({ tab, index, closeDisabled, onClose }: IJsonTabItemProps) => {
+const JsonTabItem = ({ tab, index, isCloseDisabled, onClose }: JsonTabItemProps) => {
   const displayTitle = getTabDisplayTitle(index)
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     event.stopPropagation()
@@ -39,7 +39,7 @@ const JsonTabItem = ({ tab, index, closeDisabled, onClose }: IJsonTabItemProps) 
         type="button"
         aria-label={`关闭 ${displayTitle}`}
         aria-keyshortcuts={getAriaShortcut('closeTab')}
-        disabled={closeDisabled}
+        disabled={isCloseDisabled}
         title={`关闭 ${displayTitle} · ${getShortcutLabel('closeTab')}`}
         className="grid size-6 shrink-0 place-items-center rounded-full text-foreground/45 outline-none transition-colors hover:bg-foreground/10 hover:text-foreground disabled:cursor-default disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-foreground/45"
         onPointerDown={handlePointerDown}
@@ -58,6 +58,7 @@ export const JsonTabs = () => {
   const setActiveTab = useStore(state => state.setActiveTab)
   const handleSelectionChange = (key: Key) => setActiveTab(String(key))
   const handleCloseTab = (tab: JsonTab) => closeTabWithUndo(tab.id)
+  const handleNewTab = () => openNewTab()
   const tabCollectionKey = tabs.map(tab => tab.id).join(':')
 
   return (
@@ -76,7 +77,7 @@ export const JsonTabs = () => {
                 key={tab.id}
                 tab={tab}
                 index={index}
-                closeDisabled={tabs.length === 1}
+                isCloseDisabled={tabs.length === 1}
                 onClose={handleCloseTab}
               />
             ))}
@@ -93,7 +94,7 @@ export const JsonTabs = () => {
           aria-label="新建标签"
           aria-keyshortcuts={getAriaShortcut('newTab')}
           className="shrink-0"
-          onPress={openNewTab}
+          onPress={handleNewTab}
         >
           <Plus size={14} />
         </Button>

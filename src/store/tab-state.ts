@@ -11,16 +11,16 @@ export const createJsonTab = (
   input = '',
   title = 'JSON 1',
   id = createTabId(),
-  wrap = true,
+  shouldWrap = true,
 ): JsonTab => ({
   id,
   title,
   input,
   result: null,
-  dirty: false,
+  isDirty: false,
   collapsed: new Set<string>(),
   touched: new Set<string>(),
-  wrap,
+  shouldWrap,
 })
 
 export const createInitialTab = (input: string): JsonTab =>
@@ -40,11 +40,11 @@ export const applyParseResult = (tab: JsonTab, result: ParseResult): JsonTab =>
     ? {
         ...tab,
         result,
-        dirty: false,
+        isDirty: false,
         collapsed: new Set<string>(),
         touched: new Set<string>(),
       }
-    : { ...tab, result, dirty: false }
+    : { ...tab, result, isDirty: false }
 
 export const getNextTabTitle = (tabs: JsonTab[]): string => {
   const maxIndex = tabs.reduce((max, tab) => {
@@ -55,17 +55,22 @@ export const getNextTabTitle = (tabs: JsonTab[]): string => {
 }
 
 export const restoreJsonTab = (value: unknown, index: number): JsonTab => {
-  const stored = value && typeof value === 'object' ? value as Partial<JsonTab> : {}
+  const stored = value && typeof value === 'object'
+    ? value as Partial<JsonTab> & { wrap?: unknown }
+    : {}
   const input = typeof stored.input === 'string' ? stored.input : ''
   const title = typeof stored.title === 'string' ? stored.title : `JSON ${index + 1}`
   const id = typeof stored.id === 'string' ? stored.id : createTabId()
-  return createJsonTab(input, title, id, stored.wrap !== false)
+  const shouldWrap = typeof stored.shouldWrap === 'boolean'
+    ? stored.shouldWrap
+    : stored.wrap !== false
+  return createJsonTab(input, title, id, shouldWrap)
 }
 
 export const prepareTabForStorage = (tab: JsonTab): JsonTab => ({
   ...tab,
   result: null,
-  dirty: false,
+  isDirty: false,
   collapsed: new Set<string>(),
   touched: new Set<string>(),
 })

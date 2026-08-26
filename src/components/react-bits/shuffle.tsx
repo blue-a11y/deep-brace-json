@@ -9,7 +9,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText as GSAPSplitText } from 'gsap/SplitText';
 import { useGSAP } from '@gsap/react';
-import './Shuffle.css';
+import './shuffle.css';
 
 gsap.registerPlugin(ScrollTrigger, GSAPSplitText, useGSAP);
 
@@ -28,7 +28,7 @@ export interface ShuffleProps {
   onShuffleComplete?: () => void;
   shuffleTimes?: number;
   animationMode?: 'random' | 'evenodd';
-  loop?: boolean;
+  shouldLoop?: boolean;
   loopDelay?: number;
   /** 首次播放前的延迟(不影响循环间隔) */
   delay?: number;
@@ -36,9 +36,9 @@ export interface ShuffleProps {
   scrambleCharset?: string;
   colorFrom?: string;
   colorTo?: string;
-  triggerOnce?: boolean;
-  respectReducedMotion?: boolean;
-  triggerOnHover?: boolean;
+  shouldTriggerOnce?: boolean;
+  shouldRespectReducedMotion?: boolean;
+  shouldTriggerOnHover?: boolean;
 }
 
 const Shuffle: React.FC<ShuffleProps> = ({
@@ -56,16 +56,16 @@ const Shuffle: React.FC<ShuffleProps> = ({
   onShuffleComplete,
   shuffleTimes = 1,
   animationMode = 'evenodd',
-  loop = false,
+  shouldLoop = false,
   loopDelay = 0,
   delay = 0,
   stagger = 0.03,
   scrambleCharset = '',
   colorFrom,
   colorTo,
-  triggerOnce = true,
-  respectReducedMotion = true,
-  triggerOnHover = true
+  shouldTriggerOnce = true,
+  shouldRespectReducedMotion = true,
+  shouldTriggerOnHover = true
 }) => {
   const ref = useRef<HTMLElement>(null);
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -96,7 +96,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
   useGSAP(
     () => {
       if (!ref.current || !text || !fontsLoaded) return;
-      if (respectReducedMotion && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (shouldRespectReducedMotion && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         onShuffleComplete?.();
         return;
       }
@@ -191,7 +191,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
           });
 
           inner.appendChild(firstOrig);
-          for (let k = 0; k < rolls; k++) {
+          for (let rollIndex = 0; rollIndex < rolls; rollIndex++) {
             const c = ch.cloneNode(true) as HTMLElement;
             if (scrambleCharset) c.textContent = rand(scrambleCharset);
             Object.assign(c.style, {
@@ -254,8 +254,8 @@ const Shuffle: React.FC<ShuffleProps> = ({
           const strip = w.firstElementChild as HTMLElement;
           if (!strip) return;
           const kids = Array.from(strip.children) as HTMLElement[];
-          for (let i = 1; i < kids.length - 1; i++) {
-            kids[i].textContent = scrambleCharset.charAt(Math.floor(Math.random() * scrambleCharset.length));
+          for (let childIndex = 1; childIndex < kids.length - 1; childIndex++) {
+            kids[childIndex].textContent = scrambleCharset.charAt(Math.floor(Math.random() * scrambleCharset.length));
           }
         });
       };
@@ -282,8 +282,8 @@ const Shuffle: React.FC<ShuffleProps> = ({
         const tl = gsap.timeline({
           smoothChildTiming: true,
           delay,
-          repeat: loop ? -1 : 0,
-          repeatDelay: loop ? loopDelay : 0,
+          repeat: shouldLoop ? -1 : 0,
+          repeatDelay: shouldLoop ? loopDelay : 0,
           onRepeat: () => {
             if (scrambleCharset) randomizeScrambles();
             if (isVertical) {
@@ -295,7 +295,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
           },
           onComplete: () => {
             playingRef.current = false;
-            if (!loop) {
+            if (!shouldLoop) {
               cleanupToStill();
               if (colorTo) gsap.set(strips, { color: colorTo });
               onShuffleComplete?.();
@@ -325,8 +325,8 @@ const Shuffle: React.FC<ShuffleProps> = ({
         };
 
         if (animationMode === 'evenodd') {
-          const odd = strips.filter((_, i) => i % 2 === 1);
-          const even = strips.filter((_, i) => i % 2 === 0);
+          const odd = strips.filter((_, stripIndex) => stripIndex % 2 === 1);
+          const even = strips.filter((_, stripIndex) => stripIndex % 2 === 0);
           const oddTotal = duration + Math.max(0, odd.length - 1) * stagger;
           const evenStart = odd.length ? oddTotal * 0.7 : 0;
           if (odd.length) addTween(odd, 0);
@@ -353,7 +353,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
       };
 
       const armHover = () => {
-        if (!triggerOnHover || !ref.current) return;
+        if (!shouldTriggerOnHover || !ref.current) return;
         removeHover();
         const handler = () => {
           if (playingRef.current) return;
@@ -376,7 +376,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
       const st = ScrollTrigger.create({
         trigger: el,
         start,
-        once: triggerOnce,
+        once: shouldTriggerOnce,
         onEnter: create
       });
 
@@ -398,16 +398,16 @@ const Shuffle: React.FC<ShuffleProps> = ({
         shuffleDirection,
         shuffleTimes,
         animationMode,
-        loop,
+        shouldLoop,
         loopDelay,
         delay,
         stagger,
         scrambleCharset,
         colorFrom,
         colorTo,
-        triggerOnce,
-        respectReducedMotion,
-        triggerOnHover,
+        shouldTriggerOnce,
+        shouldRespectReducedMotion,
+        shouldTriggerOnHover,
         onShuffleComplete
       ],
       scope: ref

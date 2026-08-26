@@ -1,16 +1,24 @@
-import { Button, Modal } from '@heroui/react'
+import { Button, Modal, type UseOverlayStateReturn } from '@heroui/react'
 import { Keyboard } from 'lucide-react'
 
 import { SHORTCUT_GROUPS } from '../lib/shortcuts'
 import { ShortcutKbd } from './shortcut-hint'
 
-export const ShortcutHelp = () => (
-  <Modal>
+type ShortcutHelpProps = {
+  overlayState?: UseOverlayStateReturn
+  shouldHideTrigger?: boolean
+}
+
+export const ShortcutHelp = ({
+  overlayState,
+  shouldHideTrigger = false,
+}: ShortcutHelpProps = {}) => (
+  <Modal state={overlayState}>
     <Button
       size="sm"
       variant="ghost"
       aria-label="查看快捷键"
-      className="w-9 px-0 md:w-8 xl:w-fit xl:px-3"
+      className={`${shouldHideTrigger ? 'hidden' : ''} w-9 shrink-0 px-0 md:w-8 xl:w-fit xl:px-3`}
     >
       <Keyboard size={15} />
       <span className="hidden xl:inline">快捷键</span>

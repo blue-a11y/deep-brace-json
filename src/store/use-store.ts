@@ -17,9 +17,9 @@ import {
 } from './tab-state'
 import type { DeepBraceState } from './types'
 
-export const applyTheme = (dark: boolean) => {
-  document.documentElement.classList.toggle('dark', dark)
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+export const applyTheme = (isDark: boolean) => {
+  document.documentElement.classList.toggle('dark', isDark)
+  document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
 }
 
 const isIndentSize = (value: unknown): value is IndentSize =>
@@ -30,7 +30,11 @@ const isTreeTheme = (value: unknown): value is TreeTheme =>
 
 const mergePersistedState = (persistedState: unknown, currentState: DeepBraceState) => {
   const persisted = persistedState && typeof persistedState === 'object'
-    ? persistedState as Partial<DeepBraceState> & { input?: unknown }
+    ? persistedState as Partial<DeepBraceState> & {
+        dark?: unknown
+        input?: unknown
+        showFullLongStrings?: unknown
+      }
     : {}
   const legacyInput = typeof persisted.input === 'string' ? persisted.input : SAMPLE
   const tabs = Array.isArray(persisted.tabs) && persisted.tabs.length > 0
@@ -45,13 +49,22 @@ const mergePersistedState = (persistedState: unknown, currentState: DeepBraceSta
     ...currentState,
     tabs,
     activeTabId,
-    dark: typeof persisted.dark === 'boolean' ? persisted.dark : currentState.dark,
+    isDark: typeof persisted.isDark === 'boolean'
+      ? persisted.isDark
+      : typeof persisted.dark === 'boolean'
+        ? persisted.dark
+        : currentState.isDark,
     indentSize: isIndentSize(persisted.indentSize)
       ? persisted.indentSize
       : currentState.indentSize,
     treeTheme: isTreeTheme(persisted.treeTheme)
       ? persisted.treeTheme
       : currentState.treeTheme,
+    shouldShowFullLongStrings: typeof persisted.shouldShowFullLongStrings === 'boolean'
+      ? persisted.shouldShowFullLongStrings
+      : typeof persisted.showFullLongStrings === 'boolean'
+        ? persisted.showFullLongStrings
+        : currentState.shouldShowFullLongStrings,
   }
 }
 
@@ -59,16 +72,20 @@ export const useStore = create<DeepBraceState>()(
   persist(
     (set, get, store) => ({
       ...createTabSlice(set, get, store),
-      dark: false,
+      isDark: false,
       indentSize: DEFAULT_INDENT_SIZE,
       treeTheme: DEFAULT_TREE_THEME,
+      shouldShowFullLongStrings: true,
       toggleTheme: () => {
-        const dark = !get().dark
-        set({ dark })
-        applyTheme(dark)
+        const isDark = !get().isDark
+        set({ isDark })
+        applyTheme(isDark)
       },
       setIndentSize: indentSize => set({ indentSize }),
       setTreeTheme: treeTheme => set({ treeTheme }),
+      setShouldShowFullLongStrings: shouldShowFullLongStrings => {
+        set({ shouldShowFullLongStrings })
+      },
     }),
     {
       name: STORAGE_KEYS.store,
@@ -77,9 +94,10 @@ export const useStore = create<DeepBraceState>()(
       partialize: state => ({
         tabs: state.tabs.map(prepareTabForStorage),
         activeTabId: state.activeTabId,
-        dark: state.dark,
+        isDark: state.isDark,
         indentSize: state.indentSize,
         treeTheme: state.treeTheme,
+        shouldShowFullLongStrings: state.shouldShowFullLongStrings,
       }),
     },
   ),

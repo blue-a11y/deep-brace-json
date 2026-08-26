@@ -5,25 +5,25 @@ import { foldGutter } from '@codemirror/language'
 import { json } from '@codemirror/lang-json'
 import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react'
 import { Button } from '@heroui/react'
-import { getCodeMirrorTheme } from '../lib/cmTheme'
+import { getCodeMirrorTheme } from '../lib/cm-theme'
 import { getAriaShortcut } from '../lib/shortcuts'
 import { bindEditorTabScrollPosition } from '../lib/tab-scroll'
-import { selectActiveTab, useStore } from '../store/useStore'
+import { selectActiveTab, useStore } from '../store/use-store'
 import { ShortcutHint } from './shortcut-hint'
-import { Tip } from './Tip'
+import { Tip } from './tip'
 
 /** 与 TreeView 同款 chevron:默认 ⌄/› 字形墨迹偏行底,换 SVG 在 24px 行内精确居中 */
 const FOLD_MARKER_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{d}"/></svg>'
-const chevronDown = FOLD_MARKER_SVG.replace('{d}', 'm6 9 6 6 6-6')
-const chevronRight = FOLD_MARKER_SVG.replace('{d}', 'm9 18 6-6-6-6')
+const CHEVRON_DOWN_SVG = FOLD_MARKER_SVG.replace('{d}', 'm6 9 6 6 6-6')
+const CHEVRON_RIGHT_SVG = FOLD_MARKER_SVG.replace('{d}', 'm9 18 6-6-6-6')
 
-const jsonFoldGutter = foldGutter({
-  markerDOM: open => {
+const JSON_FOLD_GUTTER = foldGutter({
+  markerDOM: isOpen => {
     const marker = document.createElement('span')
     marker.className = 'cm-fold-marker'
-    marker.title = open ? '折叠' : '展开'
-    marker.innerHTML = open ? chevronDown : chevronRight
+    marker.title = isOpen ? '折叠' : '展开'
+    marker.innerHTML = isOpen ? CHEVRON_DOWN_SVG : CHEVRON_RIGHT_SVG
     return marker
   },
 })
@@ -31,13 +31,13 @@ const jsonFoldGutter = foldGutter({
 export const EditorPane = () => {
   const activeTab = useStore(selectActiveTab)
   const input = activeTab.input
-  const dark = useStore(s => s.dark)
-  const treeTheme = useStore(s => s.treeTheme)
-  const editInput = useStore(s => s.editInput)
-  const format = useStore(s => s.format)
-  const minify = useStore(s => s.minify)
-  const escape = useStore(s => s.escape)
-  const unescape = useStore(s => s.unescape)
+  const isDark = useStore(state => state.isDark)
+  const treeTheme = useStore(state => state.treeTheme)
+  const handleInputChange = useStore(state => state.editInput)
+  const format = useStore(state => state.format)
+  const minify = useStore(state => state.minify)
+  const escape = useStore(state => state.escape)
+  const unescape = useStore(state => state.unescape)
   const [formatPulse, setFormatPulse] = useState(0)
   const [minifyPulse, setMinifyPulse] = useState(0)
   const [escapePulse, setEscapePulse] = useState(0)
@@ -47,6 +47,22 @@ export const EditorPane = () => {
   const handleCreateEditor = (view: EditorView) => {
     editorScrollCleanupRef.current?.()
     editorScrollCleanupRef.current = bindEditorTabScrollPosition(activeTab.id, view)
+  }
+
+  const handleFormat = () => {
+    if (format()) setFormatPulse(pulse => pulse + 1)
+  }
+
+  const handleMinify = () => {
+    if (minify()) setMinifyPulse(pulse => pulse + 1)
+  }
+
+  const handleEscape = () => {
+    if (escape()) setEscapePulse(pulse => pulse + 1)
+  }
+
+  const handleUnescape = () => {
+    if (unescape()) setUnescapePulse(pulse => pulse + 1)
   }
 
   useEffect(() => () => editorScrollCleanupRef.current?.(), [])
@@ -67,9 +83,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('format')}
-              onPress={() => {
-                if (format()) setFormatPulse(pulse => pulse + 1)
-              }}
+              onPress={handleFormat}
             >
               <Braces
                 size={14}
@@ -87,9 +101,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('minify')}
-              onPress={() => {
-                if (minify()) setMinifyPulse(pulse => pulse + 1)
-              }}
+              onPress={handleMinify}
             >
               <Minimize2
                 size={14}
@@ -111,9 +123,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('escape')}
-              onPress={() => {
-                if (escape()) setEscapePulse(pulse => pulse + 1)
-              }}
+              onPress={handleEscape}
             >
               <Package
                 size={14}
@@ -135,9 +145,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('unescape')}
-              onPress={() => {
-                if (unescape()) setUnescapePulse(pulse => pulse + 1)
-              }}
+              onPress={handleUnescape}
             >
               <PackageOpen
                 size={14}
@@ -154,15 +162,15 @@ export const EditorPane = () => {
           key={activeTab.id}
           value={input}
           height="100%"
-          theme={getCodeMirrorTheme(dark, treeTheme)}
-          extensions={[json(), jsonFoldGutter, EditorView.lineWrapping]}
+          theme={getCodeMirrorTheme(isDark, treeTheme)}
+          extensions={[json(), JSON_FOLD_GUTTER, EditorView.lineWrapping]}
           basicSetup={{
             foldGutter: false,
             autocompletion: false,
             highlightSelectionMatches: false,
           }}
           onCreateEditor={handleCreateEditor}
-          onChange={editInput}
+          onChange={handleInputChange}
           placeholder="粘贴 JSON / JSON5，输入即自动解析…"
         />
       </div>

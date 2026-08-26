@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "pnpm lint:filenames && pnpm lint:style && oxlint",
+    "lint:filenames": "node scripts/check-file-names.mjs",
+    "lint:style": "node scripts/check-code-style.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

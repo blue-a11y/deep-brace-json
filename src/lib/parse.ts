@@ -13,7 +13,7 @@ export interface ParseOk {
   data: unknown
   stats: TreeStats
   /** 解析失败后降级为纯文本字符串时为 true */
-  degraded?: boolean
+  isDegraded?: boolean
 }
 
 export interface ParseError {
@@ -135,19 +135,19 @@ export function parseInput(text: string): ParseResult {
   try {
     const data = JSON5.parse(text)
     return { ok: true, data, stats: statsOf(data) }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
     if (!intendsJson(text)) {
       // 纯文本：作为不带引号的字符串字面量处理
-      return { ok: true, data: text, stats: statsOf(text), degraded: true }
+      return { ok: true, data: text, stats: statsOf(text), isDegraded: true }
     }
     // json5 错误形如 "JSON5: xxx at 3:5"，提取行列
-    const m = message.match(/at (\d+):(\d+)\s*$/)
+    const locationMatch = message.match(/at (\d+):(\d+)\s*$/)
     return {
       ok: false,
       message,
-      line: m ? Number(m[1]) : undefined,
-      column: m ? Number(m[2]) : undefined,
+      line: locationMatch ? Number(locationMatch[1]) : undefined,
+      column: locationMatch ? Number(locationMatch[2]) : undefined,
     }
   }
 }
@@ -168,10 +168,10 @@ export function byteLength(text: string): number {
   return new TextEncoder().encode(text).length
 }
 
-export function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
-  return `${(n / 1024 / 1024).toFixed(1)} MB`
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
 }
 
 export type NodePath = (string | number)[]
@@ -189,18 +189,18 @@ export function collectContainerPaths(
   minDepth = 2,
   path: NodePath = [],
   depth = 1,
-  out: Set<string> = new Set(),
+  paths: Set<string> = new Set(),
 ): Set<string> {
   if (Array.isArray(data)) {
-    if (mode === 'all' || depth >= minDepth) out.add(pathKey(path))
-    data.forEach((item, i) =>
-      collectContainerPaths(item, mode, minDepth, [...path, i], depth + 1, out),
+    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path))
+    data.forEach((item, index) =>
+      collectContainerPaths(item, mode, minDepth, [...path, index], depth + 1, paths),
     )
   } else if (data && typeof data === 'object') {
-    if (mode === 'all' || depth >= minDepth) out.add(pathKey(path))
-    for (const [k, v] of Object.entries(data)) {
-      collectContainerPaths(v, mode, minDepth, [...path, k], depth + 1, out)
+    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path))
+    for (const [key, value] of Object.entries(data)) {
+      collectContainerPaths(value, mode, minDepth, [...path, key], depth + 1, paths)
     }
   }
-  return out
+  return paths
 }

@@ -49,3 +49,15 @@ pnpm lint
 ## Tech Stack
 
 React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6
+
+## 代码规范
+
+- `src` 内文件和目录统一使用 kebab-case，例如 `tree-view.tsx`、`use-store.ts`。
+- React 组件和类型等导出仍使用 PascalCase，Hook、函数和变量仍使用 camelCase。
+- React 组件声明统一使用 `const Component = () =>`，默认导出在声明后单独书写。
+- Props、Options 等类型直接使用 PascalCase，不添加 `I` 前缀。
+- Boolean 标识符使用 `is`、`has`、`can`、`should`、`does` 等语义前缀。
+- 组件内事件处理函数使用 `handleXxx`，回调 Props 使用 `onXxx`。
+- 避免 `s`、`v`、`cls`、`len` 等含义不清的缩写，使用完整语义名称。
+- 测试、类型声明等职责后缀使用点号分隔，例如 `tree-view.test.tsx`、`vite-env.d.ts`。
+- `pnpm lint` 会先校验文件名，再运行代码检查。

@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import { DEFAULT_TOAST_TIMEOUT, ToastQueue } from '@heroui/react'
 import type { ToastContentValue } from '@heroui/react'
 
-type IToastOptions = Omit<ToastContentValue, 'title'> & {
+type ToastOptions = Omit<ToastContentValue, 'title'> & {
   timeout?: number
   onClose?: () => void
 }
@@ -14,16 +14,16 @@ type QueueUpdate = () => void
 const MAX_VISIBLE_TOASTS = 3
 const DEFAULT_VARIANT: ToastVariant = 'default'
 
-let applyingTransitionUpdate = false
+let isApplyingTransitionUpdate = false
 let toastSequence = 0
 let transitionChain: Promise<void> | null = null
 
 const applyQueueUpdate = (update: QueueUpdate) => {
-  applyingTransitionUpdate = true
+  isApplyingTransitionUpdate = true
   try {
     update()
   } finally {
-    applyingTransitionUpdate = false
+    isApplyingTransitionUpdate = false
   }
 }
 
@@ -52,7 +52,7 @@ const scheduleQueueTransition = (update: QueueUpdate) => {
 export const toastQueue = new ToastQueue<ToastContentValue>({
   maxVisibleToasts: MAX_VISIBLE_TOASTS,
   wrapUpdate: update => {
-    if (applyingTransitionUpdate) {
+    if (isApplyingTransitionUpdate) {
       update()
       return
     }
@@ -62,7 +62,7 @@ export const toastQueue = new ToastQueue<ToastContentValue>({
 
 const queueKeys = new Map<string, string>()
 
-const notify = (title: ReactNode, variant: ToastVariant, options?: IToastOptions) => {
+const notify = (title: ReactNode, variant: ToastVariant, options?: ToastOptions) => {
   const key = `deep-brace-json-toast-${++toastSequence}`
   scheduleQueueTransition(() => {
     const queueKey = toastQueue.add(
@@ -87,7 +87,7 @@ const notify = (title: ReactNode, variant: ToastVariant, options?: IToastOptions
   return key
 }
 
-const toastBase = (title: ReactNode, options?: IToastOptions) =>
+const toastBase = (title: ReactNode, options?: ToastOptions) =>
   notify(title, DEFAULT_VARIANT, options)
 
 export const toast = Object.assign(toastBase, {
@@ -103,8 +103,8 @@ export const toast = Object.assign(toastBase, {
       if (queueKey) toastQueue.close(queueKey)
     })
   },
-  danger: (title: ReactNode, options?: IToastOptions) => notify(title, 'danger', options),
-  info: (title: ReactNode, options?: IToastOptions) => notify(title, 'accent', options),
-  success: (title: ReactNode, options?: IToastOptions) => notify(title, 'success', options),
-  warning: (title: ReactNode, options?: IToastOptions) => notify(title, 'warning', options),
+  danger: (title: ReactNode, options?: ToastOptions) => notify(title, 'danger', options),
+  info: (title: ReactNode, options?: ToastOptions) => notify(title, 'accent', options),
+  success: (title: ReactNode, options?: ToastOptions) => notify(title, 'success', options),
+  warning: (title: ReactNode, options?: ToastOptions) => notify(title, 'warning', options),
 })

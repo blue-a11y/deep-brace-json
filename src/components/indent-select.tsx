@@ -3,12 +3,12 @@ import { ListBox, Select } from '@heroui/react'
 
 import { INDENT_OPTIONS, type IndentSize } from '../lib/indent'
 
-type IIndentSelectProps = {
+type IndentSelectProps = {
   value: IndentSize
   onChange: (value: IndentSize) => void
 }
 
-export const IndentSelect = ({ value, onChange }: IIndentSelectProps) => {
+export const IndentSelect = ({ value, onChange }: IndentSelectProps) => {
   const handleChange = (nextValue: Key | Key[] | null) => {
     if (typeof nextValue !== 'number') return
     onChange(nextValue as IndentSize)

@@ -7,12 +7,12 @@ import {
   type ShortcutId,
 } from '../lib/shortcuts'
 
-type IShortcutHintProps = {
+type ShortcutHintProps = {
   shortcut: ShortcutId
   children: ReactNode
 }
 
-type IShortcutKbdProps = {
+type ShortcutKbdProps = {
   className?: string
   shortcut: ShortcutId
   variant?: 'default' | 'light'
@@ -22,7 +22,7 @@ export const ShortcutKbd = ({
   className = '',
   shortcut,
   variant = 'default',
-}: IShortcutKbdProps) => (
+}: ShortcutKbdProps) => (
   <Kbd variant={variant} className={`shrink-0 ${className}`}>
     <Kbd.Abbr keyValue={getShortcutAltKey()} />
     <Kbd.Abbr keyValue="shift" />
@@ -30,7 +30,7 @@ export const ShortcutKbd = ({
   </Kbd>
 )
 
-export const ShortcutHint = ({ shortcut, children }: IShortcutHintProps) => (
+export const ShortcutHint = ({ shortcut, children }: ShortcutHintProps) => (
   <span className="flex items-center gap-3">
     <span>{children}</span>
     <ShortcutKbd shortcut={shortcut} variant="light" />

@@ -3,12 +3,12 @@ import { ListBox, Select } from '@heroui/react'
 
 import { TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree-theme'
 
-type ITreeThemeSelectProps = {
+type TreeThemeSelectProps = {
   value: TreeTheme
   onChange: (value: TreeTheme) => void
 }
 
-export const TreeThemeSelect = ({ value, onChange }: ITreeThemeSelectProps) => {
+export const TreeThemeSelect = ({ value, onChange }: TreeThemeSelectProps) => {
   const handleChange = (nextValue: Key | Key[] | null) => {
     if (typeof nextValue !== 'string') return
     onChange(nextValue as TreeTheme)

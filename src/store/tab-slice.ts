@@ -24,7 +24,7 @@ const AUTO_PARSE_DELAY = 300
 const autoParseTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 const notifyResult = (result: ParseResult) => {
-  if (result.ok && result.degraded) {
+  if (result.ok && result.isDegraded) {
     toast.info(`已按纯文本字符串处理 · ${(result.data as string).length} 字符`)
   } else if (result.ok) {
     toast.success(`已解析 · ${result.stats.nodes} 节点 · 深度 ${result.stats.maxDepth}`)
@@ -44,12 +44,12 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
   const patchTab = (id: string, updater: Parameters<typeof updateJsonTab>[2]) =>
     set(state => ({ tabs: updateJsonTab(state.tabs, id, updater) }))
 
-  const parseTab = (id: string, quiet = false) => {
+  const parseTab = (id: string, isQuiet = false) => {
     const tab = get().tabs.find(item => item.id === id)
     if (!tab) return
     const result = parseInput(tab.input)
     patchTab(id, current => applyParseResult(current, result))
-    if (!quiet) notifyResult(result)
+    if (!isQuiet) notifyResult(result)
   }
 
   const rewrite = (transform: (data: unknown) => string, successMessage: string) => {
@@ -57,7 +57,7 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
     cancelAutoParse(tab.id)
     const result = parseInput(tab.input)
     if (!result.ok) {
-      patchTab(tab.id, current => ({ ...current, result, dirty: false }))
+      patchTab(tab.id, current => ({ ...current, result, isDirty: false }))
       notifyResult(result)
       return false
     }
@@ -157,19 +157,19 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
         ]
         return { tabs, activeTabId: tab.id }
       })
-      if (shouldRestore && tab.dirty) {
+      if (shouldRestore && tab.isDirty) {
         autoParseTimers.set(tab.id, setTimeout(() => parseTab(tab.id, true), AUTO_PARSE_DELAY))
       }
     },
 
     editInput: input => {
       const id = get().activeTabId
-      patchTab(id, tab => ({ ...tab, input, dirty: true }))
+      patchTab(id, tab => ({ ...tab, input, isDirty: true }))
       clearTimeout(autoParseTimers.get(id))
       autoParseTimers.set(id, setTimeout(() => parseTab(id, true), AUTO_PARSE_DELAY))
     },
 
-    parse: (quiet = false) => parseTab(get().activeTabId, quiet),
+    parse: (isQuiet = false) => parseTab(get().activeTabId, isQuiet),
     format: () => rewrite(data => JSON.stringify(data, null, 2), '已格式化 · JSON5 → 标准 JSON'),
     minify: () => rewrite(data => JSON.stringify(data), '已压缩为单行'),
 
@@ -206,7 +206,7 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
         ...tab,
         input: '',
         result: null,
-        dirty: false,
+        isDirty: false,
         collapsed: new Set<string>(),
         touched: new Set<string>(),
       }))
@@ -215,7 +215,7 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
 
     toggleWrap: () => {
       const id = get().activeTabId
-      patchTab(id, tab => ({ ...tab, wrap: !tab.wrap }))
+      patchTab(id, tab => ({ ...tab, shouldWrap: !tab.shouldWrap }))
     },
 
     toggleCollapse: key => {

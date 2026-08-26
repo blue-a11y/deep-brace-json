@@ -12,8 +12,8 @@ type ScrollAnchor = {
 
 type ScrollPosition = {
   left: number
-  pinnedBottom: boolean
-  pinnedRight: boolean
+  isPinnedToBottom: boolean
+  isPinnedToRight: boolean
   top: number
   anchor?: ScrollAnchor
 }
@@ -27,7 +27,7 @@ type ScrollAdapter = {
 
 type ActiveScrollElement = {
   adapter: ScrollAdapter
-  frozen: boolean
+  isFrozen: boolean
   latest: ScrollPosition
   tabId: string
 }
@@ -59,15 +59,24 @@ const restoreAnchor = (value: unknown): ScrollAnchor | undefined => {
 
 const restorePosition = (value: unknown): ScrollPosition | undefined => {
   if (!value || typeof value !== 'object') return undefined
-  const position = value as Partial<ScrollPosition>
+  const position = value as Partial<ScrollPosition> & {
+    pinnedBottom?: unknown
+    pinnedRight?: unknown
+  }
+  const isPinnedToBottom = typeof position.isPinnedToBottom === 'boolean'
+    ? position.isPinnedToBottom
+    : position.pinnedBottom
+  const isPinnedToRight = typeof position.isPinnedToRight === 'boolean'
+    ? position.isPinnedToRight
+    : position.pinnedRight
   return isFiniteNumber(position.left)
-    && typeof position.pinnedBottom === 'boolean'
-    && typeof position.pinnedRight === 'boolean'
+    && typeof isPinnedToBottom === 'boolean'
+    && typeof isPinnedToRight === 'boolean'
     && isFiniteNumber(position.top)
     ? {
         left: position.left,
-        pinnedBottom: position.pinnedBottom,
-        pinnedRight: position.pinnedRight,
+        isPinnedToBottom,
+        isPinnedToRight,
         top: position.top,
         anchor: restoreAnchor(position.anchor),
       }
@@ -137,9 +146,9 @@ const readPosition = (adapter: ScrollAdapter): ScrollPosition => {
   const maximumTop = getMaximumTop(element)
   return {
     left: element.scrollLeft,
-    pinnedBottom: maximumTop > EDGE_THRESHOLD
+    isPinnedToBottom: maximumTop > EDGE_THRESHOLD
       && maximumTop - element.scrollTop <= EDGE_THRESHOLD,
-    pinnedRight: maximumLeft > EDGE_THRESHOLD
+    isPinnedToRight: maximumLeft > EDGE_THRESHOLD
       && maximumLeft - element.scrollLeft <= EDGE_THRESHOLD,
     top: element.scrollTop,
     anchor: adapter.readAnchor(),
@@ -158,16 +167,16 @@ const resolvePosition = (adapter: ScrollAdapter, position: ScrollPosition) => {
     : anchorTop - position.anchor.viewportOffset
 
   return {
-    anchorPending: Boolean(
-      !position.pinnedBottom
+    isAnchorPending: Boolean(
+      !position.isPinnedToBottom
       && position.anchor
       && anchorTop === null,
     ),
     layoutKey: `${element.scrollHeight}:${anchorTop?.toFixed(2) ?? 'pending'}`,
-    left: position.pinnedRight
+    left: position.isPinnedToRight
       ? maximumLeft
       : clamp(position.left, 0, maximumLeft),
-    top: position.pinnedBottom
+    top: position.isPinnedToBottom
       ? maximumTop
       : clamp(anchoredTop, 0, maximumTop),
   }
@@ -181,20 +190,20 @@ const bindScrollPosition = (
   const key = getScrollKey(tabId, area)
   const saved = scrollPositions.get(key)
   let restoreFrame: number | null = null
-  let restoring = false
-  let userInteractionPending = false
+  let isRestoring = false
+  let isUserInteractionPending = false
   let viewportWidth = adapter.element.clientWidth
   let viewportHeight = adapter.element.clientHeight
   const active: ActiveScrollElement = {
     adapter,
-    frozen: false,
+    isFrozen: false,
     latest: saved ?? readPosition(adapter),
     tabId,
   }
   activeScrollElements.set(area, active)
 
   const finishRestore = () => {
-    restoring = false
+    isRestoring = false
     restoreFrame = null
     active.latest = readPosition(adapter)
     scrollPositions.set(key, active.latest)
@@ -202,9 +211,9 @@ const bindScrollPosition = (
   }
 
   const interruptRestore = () => {
-    if (!restoring) return
-    userInteractionPending = true
-    restoring = false
+    if (!isRestoring) return
+    isUserInteractionPending = true
+    isRestoring = false
     if (restoreFrame !== null) window.cancelAnimationFrame(restoreFrame)
     restoreFrame = null
   }
@@ -224,7 +233,7 @@ const bindScrollPosition = (
 
   const startRestore = (position: ScrollPosition) => {
     if (restoreFrame !== null) window.cancelAnimationFrame(restoreFrame)
-    restoring = true
+    isRestoring = true
     const startedAt = performance.now()
     let stableFrames = 0
     let previousLayoutKey: string | null = null
@@ -234,11 +243,11 @@ const bindScrollPosition = (
       adapter.element.scrollLeft = target.left
       adapter.element.scrollTop = target.top
 
-      const restored = (adapter.isLayoutReady?.() ?? true)
-        && !target.anchorPending
+      const isRestored = (adapter.isLayoutReady?.() ?? true)
+        && !target.isAnchorPending
         && isNear(adapter.element.scrollLeft, target.left)
         && isNear(adapter.element.scrollTop, target.top)
-      stableFrames = restored && target.layoutKey === previousLayoutKey
+      stableFrames = isRestored && target.layoutKey === previousLayoutKey
         ? stableFrames + 1
         : 0
       previousLayoutKey = target.layoutKey
@@ -257,11 +266,11 @@ const bindScrollPosition = (
   }
 
   const save = () => {
-    if (restoring || active.frozen) return
+    if (isRestoring || active.isFrozen) return
     active.latest = readPosition(adapter)
     scrollPositions.set(key, active.latest)
     scheduleScrollPersistence()
-    userInteractionPending = false
+    isUserInteractionPending = false
   }
 
   const resizeObserver = new ResizeObserver(() => {
@@ -270,7 +279,7 @@ const bindScrollPosition = (
     if (nextWidth === viewportWidth && nextHeight === viewportHeight) return
     viewportWidth = nextWidth
     viewportHeight = nextHeight
-    if (!restoring && !active.frozen && !userInteractionPending) {
+    if (!isRestoring && !active.isFrozen && !isUserInteractionPending) {
       startRestore(active.latest)
     }
   })
@@ -284,7 +293,7 @@ const bindScrollPosition = (
   resizeObserver.observe(adapter.element)
 
   return () => {
-    if (!restoring && !active.frozen) {
+    if (!isRestoring && !active.isFrozen) {
       scrollPositions.set(key, readPosition(adapter))
       scheduleScrollPersistence()
     }
@@ -304,7 +313,7 @@ const bindScrollPosition = (
 export const captureActiveTabScrollPositions = () => {
   for (const [area, active] of activeScrollElements) {
     active.latest = readPosition(active.adapter)
-    active.frozen = true
+    active.isFrozen = true
     scrollPositions.set(getScrollKey(active.tabId, area), active.latest)
   }
   persistScrollPositions()
@@ -335,12 +344,12 @@ export const bindTreeTabScrollPosition = (tabId: string, element: HTMLElement) =
     isLayoutReady: () => Array
       .from(element.querySelectorAll<HTMLElement>(TREE_CHILDREN_SELECTOR))
       .every(children => {
-        const waitingToExpand = children.dataset.expanded === 'true'
+        const isWaitingToExpand = children.dataset.expanded === 'true'
           && children.dataset.open !== 'true'
-        const transitioning = children.getAnimations().some(animation =>
+        const isTransitioning = children.getAnimations().some(animation =>
           animation.playState === 'running',
         )
-        return !waitingToExpand && !transitioning
+        return !isWaitingToExpand && !isTransitioning
       }),
     readAnchor: () => {
       const viewportTop = element.getBoundingClientRect().top

@@ -1,7 +1,7 @@
 import { flushSync } from 'react-dom'
 
 import { toast } from './toast'
-import { useStore } from '../store/useStore'
+import { useStore } from '../store/use-store'
 
 export const getTabDisplayTitle = (index: number) => `Brace ${index + 1}`
 

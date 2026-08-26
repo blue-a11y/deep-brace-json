@@ -1,28 +1,28 @@
 import { useEffect } from 'react'
 import { Toast } from '@heroui/react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
-import { Toolbar } from './components/Toolbar'
-import { EditorPane } from './components/EditorPane'
+import { Toolbar } from './components/toolbar'
+import { EditorPane } from './components/editor-pane'
 import { JsonTabs } from './components/json-tabs'
 import { ShortcutManager } from './components/shortcut-manager'
-import { EmptyPane, ErrorPane, TreeView } from './components/TreeView'
-import { StatusBar } from './components/StatusBar'
+import { EmptyPane, ErrorPane, TreeView } from './components/tree-view'
+import { StatusBar } from './components/status-bar'
 import { STORAGE_KEYS } from './lib/storage'
 import { toastQueue } from './lib/toast'
-import { useMediaQuery } from './lib/useMediaQuery'
-import { applyTheme, selectActiveTab, useStore } from './store/useStore'
+import { useMediaQuery } from './lib/use-media-query'
+import { applyTheme, selectActiveTab, useStore } from './store/use-store'
 
-export default function App() {
+const App = () => {
   const activeTab = useStore(selectActiveTab)
   const { id: activeTabId, input, result } = activeTab
-  const dark = useStore(s => s.dark)
-  const bootstrap = useStore(s => s.bootstrap)
+  const isDark = useStore(state => state.isDark)
+  const bootstrap = useStore(state => state.bootstrap)
 
   // 对 persist 恢复的输入补一次解析
   useEffect(bootstrap, [bootstrap])
 
   // 主题同步到 <html>（切换时 store 已即时应用，这里兜底首帧与恢复）
-  useEffect(() => applyTheme(dark), [dark])
+  useEffect(() => applyTheme(isDark), [isDark])
 
 
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -84,3 +84,5 @@ export default function App() {
     </div>
   )
 }
+
+export default App

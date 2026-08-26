@@ -1,5 +1,5 @@
 import { createTheme } from '@uiw/codemirror-themes'
-import { tags as t } from '@lezer/highlight'
+import { tags as highlightTags } from '@lezer/highlight'
 import { TREE_THEME_OPTIONS, type TreeTheme } from './tree-theme'
 
 type EditorThemeMode = 'dark' | 'light'
@@ -143,31 +143,31 @@ const TOKEN_COLORS: Record<TreeTheme, Record<EditorThemeMode, SyntaxColors>> = {
 }
 
 const createEditorTheme = (theme: EditorThemeMode, colors: SyntaxColors) => {
-  const dark = theme === 'dark'
+  const isDark = theme === 'dark'
 
   return createTheme({
     theme,
     settings: {
       background: 'transparent',
-      foreground: dark ? '#d4d4d8' : '#27272a',
+      foreground: isDark ? '#d4d4d8' : '#27272a',
       caret: colors.key,
-      selection: dark ? '#7dd3fc22' : '#0369a122',
-      selectionMatch: dark ? '#7dd3fc33' : '#0369a133',
-      lineHighlight: dark ? '#ffffff08' : '#00000006',
+      selection: isDark ? '#7dd3fc22' : '#0369a122',
+      selectionMatch: isDark ? '#7dd3fc33' : '#0369a133',
+      lineHighlight: isDark ? '#ffffff08' : '#00000006',
       gutterBackground: 'transparent',
-      gutterForeground: dark ? '#52525b' : '#a1a1aa',
+      gutterForeground: isDark ? '#52525b' : '#a1a1aa',
       gutterBorder: 'transparent',
     },
     styles: [
-      { tag: t.comment, color: dark ? '#52525b' : '#a1a1aa' },
-      { tag: t.propertyName, color: colors.key },
-      { tag: t.string, color: colors.string },
-      { tag: t.number, color: colors.number },
-      { tag: t.bool, color: colors.boolean },
-      { tag: t.null, color: colors.null },
-      { tag: t.bracket, color: colors.punctuation },
-      { tag: t.operator, color: colors.punctuation },
-      { tag: t.invalid, color: dark ? '#f87171' : '#dc2626' },
+      { tag: highlightTags.comment, color: isDark ? '#52525b' : '#a1a1aa' },
+      { tag: highlightTags.propertyName, color: colors.key },
+      { tag: highlightTags.string, color: colors.string },
+      { tag: highlightTags.number, color: colors.number },
+      { tag: highlightTags.bool, color: colors.boolean },
+      { tag: highlightTags.null, color: colors.null },
+      { tag: highlightTags.bracket, color: colors.punctuation },
+      { tag: highlightTags.operator, color: colors.punctuation },
+      { tag: highlightTags.invalid, color: isDark ? '#f87171' : '#dc2626' },
     ],
   })
 }
@@ -187,8 +187,8 @@ const CODE_MIRROR_THEMES = Object.fromEntries(
   }),
 ) as Record<TreeTheme, Record<EditorThemeMode, CodeMirrorTheme>>
 
-export const getCodeMirrorTheme = (dark: boolean, treeTheme: TreeTheme) => {
-  const theme = dark ? 'dark' : 'light'
+export const getCodeMirrorTheme = (isDark: boolean, treeTheme: TreeTheme) => {
+  const theme = isDark ? 'dark' : 'light'
 
   return CODE_MIRROR_THEMES[treeTheme][theme]
 }

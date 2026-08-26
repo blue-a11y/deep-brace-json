@@ -34,6 +34,13 @@ body {
   height: 14px;
 }
 
+/* 窄屏工具栏允许控件分行，但禁止按钮和图标被 Flex 压缩变形。 */
+.toolbar-actions > *,
+.toolbar-actions button,
+.toolbar-actions svg {
+  flex-shrink: 0;
+}
+
 /* 工具栏 Select 触发器无背景:静止透明、hover 才出现。
    注意:HeroUI 样式在 @layer components 内,本文件无层规则会无条件压过层内规则
    (包括其 hover),故 hover 态需在此显式声明 */
@@ -107,11 +114,22 @@ body {
   display: block;
 }
 
-/* 树形预览的滚动条保持细窄 */
-.tree-scroll::-webkit-scrollbar,
-.cm-scroller::-webkit-scrollbar {
+/* 全局滚动条：所有滚动容器自动保持一致 */
+*::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--color-foreground) 18%, transparent);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: color-mix(in oklab, var(--color-foreground) 18%, transparent) transparent;
+    scrollbar-width: thin;
+  }
 }
 
 /*
@@ -122,11 +140,6 @@ body {
 .tree-chevron {
   position: absolute;
   left: calc(3.5ch + 16px);
-}
-.tree-scroll::-webkit-scrollbar-thumb,
-.cm-scroller::-webkit-scrollbar-thumb {
-  border-radius: 8px;
-  background: color-mix(in oklab, currentColor 18%, transparent);
 }
 
 /*

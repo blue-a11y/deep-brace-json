@@ -6,9 +6,7 @@
  *     字体字号由使用处的 className 继承
  */
 .shuffle-parent {
-  display: inline-block;
-  white-space: normal;
-  word-wrap: break-word;
+  white-space: nowrap;
   will-change: transform;
   visibility: hidden;
 }

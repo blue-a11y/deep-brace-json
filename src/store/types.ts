@@ -7,10 +7,10 @@ export type JsonTab = {
   title: string
   input: string
   result: ParseResult | null
-  dirty: boolean
+  isDirty: boolean
   collapsed: Set<string>
   touched: Set<string>
-  wrap: boolean
+  shouldWrap: boolean
 }
 
 export type JsonTabRestoreTarget = {
@@ -28,7 +28,7 @@ export type JsonTabsSlice = {
   closeTab: (id: string) => void
   restoreTab: (tab: JsonTab, target: JsonTabRestoreTarget) => void
   editInput: (value: string) => void
-  parse: (quiet?: boolean) => void
+  parse: (isQuiet?: boolean) => void
   /** 以下变换类 action 返回是否成功（用于触发图标反馈动画） */
   format: () => boolean
   minify: () => boolean
@@ -43,12 +43,14 @@ export type JsonTabsSlice = {
 }
 
 export type PreferencesSlice = {
-  dark: boolean
+  isDark: boolean
   indentSize: IndentSize
   treeTheme: TreeTheme
+  shouldShowFullLongStrings: boolean
   toggleTheme: () => void
   setIndentSize: (value: IndentSize) => void
   setTreeTheme: (value: TreeTheme) => void
+  setShouldShowFullLongStrings: (value: boolean) => void
 }
 
 export type DeepBraceState = JsonTabsSlice & PreferencesSlice

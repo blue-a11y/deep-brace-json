@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 
 import { findShortcut, type ShortcutId } from '../lib/shortcuts'
 import { closeTabWithUndo, openNewTab } from '../lib/tab-actions'
-import { selectActiveTab, useStore } from '../store/useStore'
+import { selectActiveTab, useStore } from '../store/use-store'
 
 const activateSiblingTab = (offset: number) => {
   const { tabs, activeTabId, setActiveTab } = useStore.getState()
