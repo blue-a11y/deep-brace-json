@@ -114,6 +114,20 @@ body {
   display: block;
 }
 
+/* 下拉弹层固定按内容宽度展开:HeroUI 默认给弹层 max-w-[48svw],窄屏时弹层被压得
+   比菜单内容(min-width)更窄,overflow-x 又被隐式强制为 auto,多出的部分就成了
+   横向滚动条。放宽为近全屏宽使菜单始终保持固有宽度,横向永不滚动(极限窄屏裁剪),
+   只保留纵向滚动 */
+.dropdown__popover {
+  max-width: calc(100vw - 32px);
+  overflow-x: hidden;
+}
+
+/* 菜单项不换行:被压缩时宁可靠右裁剪,也不出现 CJK 折行破坏行高 */
+.dropdown__menu {
+  white-space: nowrap;
+}
+
 /* 全局滚动条：所有滚动容器自动保持一致 */
 *::-webkit-scrollbar {
   width: 8px;
