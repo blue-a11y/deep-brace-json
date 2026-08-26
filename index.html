@@ -2,6 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -18,15 +19,15 @@
     <script>
       // 首屏同步主题，避免闪烁；从 zustand persist 的存储中读取，默认暗色
       try {
-        var dark = false
-        var raw = localStorage.getItem('deep-brace-json:store')
+        var dark = false;
+        var raw = localStorage.getItem('deep-brace-json:store');
         if (raw) {
-          var st = JSON.parse(raw)
-          if (st && st.state && typeof st.state.dark === 'boolean') dark = st.state.dark
+          var st = JSON.parse(raw);
+          if (st && st.state && typeof st.state.dark === 'boolean') dark = st.state.dark;
         }
         if (dark) {
-          document.documentElement.classList.add('dark')
-          document.documentElement.setAttribute('data-theme', 'dark')
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
         }
       } catch (e) {}
     </script>
