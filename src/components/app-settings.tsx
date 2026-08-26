@@ -1,24 +1,33 @@
-import { Button, Modal, Switch, type UseOverlayStateReturn } from '@heroui/react'
-import { Settings } from 'lucide-react'
-
-import { useStore } from '../store/use-store'
+import {
+  AlertDialog,
+  Button,
+  Modal,
+  Switch,
+  useOverlayState,
+  type UseOverlayStateReturn,
+} from '@heroui/react';
+import { RotateCcw, Settings } from 'lucide-react';
+import { resetAllWithUndo } from '../lib/reset-actions';
+import { useStore } from '../store/use-store';
 
 type AppSettingsProps = {
-  overlayState?: UseOverlayStateReturn
-  shouldHideTrigger?: boolean
-}
+  overlayState?: UseOverlayStateReturn;
+  shouldHideTrigger?: boolean;
+};
 
-export const AppSettings = ({
-  overlayState,
-  shouldHideTrigger = false,
-}: AppSettingsProps = {}) => {
-  const shouldShowFullLongStrings = useStore(state => state.shouldShowFullLongStrings)
-  const handleShowFullLongStringsChange = useStore(
-    state => state.setShouldShowFullLongStrings,
-  )
+export const AppSettings = ({ overlayState, shouldHideTrigger = false }: AppSettingsProps = {}) => {
+  // 独立挂载时自带 overlay 状态,重置后才能主动收起弹窗
+  const fallbackOverlayState = useOverlayState();
+  const activeOverlayState = overlayState ?? fallbackOverlayState;
+  const shouldShowFullLongStrings = useStore(state => state.shouldShowFullLongStrings);
+  const handleShowFullLongStringsChange = useStore(state => state.setShouldShowFullLongStrings);
+  const handleResetConfirm = () => {
+    resetAllWithUndo();
+    activeOverlayState.close();
+  };
 
   return (
-    <Modal state={overlayState}>
+    <Modal state={activeOverlayState}>
       <Button
         size="sm"
         variant="ghost"
@@ -61,9 +70,42 @@ export const AppSettings = ({
                 </Switch>
               </section>
             </Modal.Body>
+            <Modal.Footer className="border-t border-default/60 pt-4">
+              <AlertDialog>
+                <Button variant="danger" className="w-full">
+                  <RotateCcw size={15} />
+                  重置所有数据
+                </Button>
+                <AlertDialog.Backdrop>
+                  <AlertDialog.Container placement="center" size="sm">
+                    <AlertDialog.Dialog>
+                      <AlertDialog.CloseTrigger />
+                      <AlertDialog.Header>
+                        <AlertDialog.Icon status="danger" />
+                        <AlertDialog.Heading>重置所有数据?</AlertDialog.Heading>
+                      </AlertDialog.Header>
+                      <AlertDialog.Body>
+                        <p className="text-sm leading-6 text-muted">
+                          将清空全部标签页内容，恢复默认偏好（主题、缩进、树形主题、长字符串展示），
+                          并回到示例数据。此操作不可撤销。
+                        </p>
+                      </AlertDialog.Body>
+                      <AlertDialog.Footer>
+                        <Button slot="close" variant="tertiary">
+                          取消
+                        </Button>
+                        <Button slot="close" variant="danger" onPress={handleResetConfirm}>
+                          确认重置
+                        </Button>
+                      </AlertDialog.Footer>
+                    </AlertDialog.Dialog>
+                  </AlertDialog.Container>
+                </AlertDialog.Backdrop>
+              </AlertDialog>
+            </Modal.Footer>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
     </Modal>
-  )
-}
+  );
+};
