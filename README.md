@@ -54,15 +54,15 @@ pnpm format
 
 React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6
 
-## 代码规范
+## Code Style
 
-- `src` 内文件和目录统一使用 kebab-case，例如 `tree-view.tsx`、`use-store.ts`。
-- React 组件和类型等导出仍使用 PascalCase，Hook、函数和变量仍使用 camelCase。
-- React 组件声明统一使用 `const Component = () =>`，默认导出在声明后单独书写。
-- Props、Options 等类型直接使用 PascalCase，不添加 `I` 前缀。
-- Boolean 标识符使用 `is`、`has`、`can`、`should`、`does` 等语义前缀。
-- 组件内事件处理函数使用 `handleXxx`，回调 Props 使用 `onXxx`。
-- 避免 `s`、`v`、`cls`、`len` 等含义不清的缩写，使用完整语义名称。
-- 测试、类型声明等职责后缀使用点号分隔，例如 `tree-view.test.tsx`、`vite-env.d.ts`。
-- 代码格式化统一由 Prettier 处理（分号、单引号、100 列、import 排序），`pnpm format` 一键执行。
-- `pnpm lint` 依次校验文件命名、命名规范、oxlint 与 Prettier 格式。
+- Files and directories under `src` use kebab-case, e.g. `tree-view.tsx`, `use-store.ts`.
+- Exported React components and types use PascalCase; hooks, functions and variables use camelCase.
+- React components are declared as `const Component = () =>`, with the default export on its own line below.
+- Props, options and other types use PascalCase without an `I` prefix.
+- Boolean identifiers use semantic prefixes: `is`, `has`, `can`, `should`, `does`.
+- Event handlers inside components use `handleXxx`; callback props use `onXxx`.
+- Avoid unclear abbreviations such as `s`, `v`, `cls`, `len` — use full semantic names.
+- Responsibility suffixes are dot-separated, e.g. `tree-view.test.tsx`, `vite-env.d.ts`.
+- Formatting is handled by Prettier (semicolons, single quotes, 100 columns, import sorting) — run `pnpm format`.
+- `pnpm lint` validates file naming, naming conventions, oxlint rules and Prettier formatting.
