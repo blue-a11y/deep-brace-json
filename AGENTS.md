@@ -14,3 +14,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Modal 默认提供右上角 `Modal.CloseTrigger`。
 - 内容即时生效、无需显式提交时，不添加底部“完成”按钮或仅用于关闭弹窗的 Footer。
 - 仅当用户需要确认、提交或取消一组尚未生效的更改时，才使用 Modal Footer 操作区。
+
+## 文档语言约束
+
+- README 分语言版本:`README.md` 只写英文,`README.zh-CN.md` 只写简体中文,两版章节结构与内容保持一致,更新时必须同步双语。
+- 禁止在 `README.md` 中出现中文段落或在 `README.zh-CN.md` 中出现英文段落(代码、命令、链接除外)。
+- `PROGRESS.md` 为简体中文进展日志,新批次工作完成后在「当前状态」追加一条记录。
