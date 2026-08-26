@@ -17,6 +17,7 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 - **Collapsible tree preview** with outline-style stable line numbers, full-row hover, per-line copy
 - **Nested JSON extraction**: string values that parse as objects/arrays get a one-click `Parse` button to open in a new tab
 - **Multi-tab workspace** with per-tab scroll position and state persistence
+- **Reset to defaults**: "Reset all data" in Settings restores factory state (sample tab + default preferences + scroll & split layout) behind a confirm dialog; a toast offers full undo for 8 seconds
 - **7 synced syntax themes** (Default, Dracula, Monokai, One Dark, Nord, Solarized, Tokyo Night) with light & dark variants
 - **100% client-side** — your data never leaves the browser
 
@@ -39,12 +40,15 @@ pnpm install
 pnpm dev
 ```
 
-Build and lint:
+Build, lint and format:
 
 ```bash
 pnpm build
 pnpm lint
+pnpm format
 ```
+
+`pnpm lint` validates file naming, naming conventions, oxlint rules and Prettier formatting; `pnpm format` formats everything in one shot.
 
 ## Tech Stack
 
@@ -60,4 +64,5 @@ React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6
 - 组件内事件处理函数使用 `handleXxx`，回调 Props 使用 `onXxx`。
 - 避免 `s`、`v`、`cls`、`len` 等含义不清的缩写，使用完整语义名称。
 - 测试、类型声明等职责后缀使用点号分隔，例如 `tree-view.test.tsx`、`vite-env.d.ts`。
-- `pnpm lint` 会先校验文件名，再运行代码检查。
+- 代码格式化统一由 Prettier 处理（分号、单引号、100 列、import 排序），`pnpm format` 一键执行。
+- `pnpm lint` 依次校验文件命名、命名规范、oxlint 与 Prettier 格式。

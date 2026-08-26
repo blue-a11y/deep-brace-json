@@ -53,7 +53,14 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 - HeroUI Toast 的原始入场问题已改由自定义 `ToastQueue` 在队列更新边界统一衔接 View Transition，没有补充一套 CSS 动画；历史环境实验与根因链仍保留在 `docs/HEROUI-TOAST-ISSUE.md`
 - 2026-08-25 会话批次（`cd9b6f2`）：转义/反转义独立按钮、四按钮图标动画、折叠箭头 SVG 化与固定列、整行 hover（overflow 绘制裁剪修复）、24px 行高基线统一；均通过浏览器交互验证
 - 2026-08-25 远端批次（`fe0e3ea..76daa98`）：品牌重塑 DeepBrace JSON、快捷键系统、四套新语法主题、工作区持久化、GitHub 导航与 Vercel 部署配置；本地已 `pnpm install` 同步依赖（新增 `@gravity-ui/icons`）并跑通 dev server
-- 最新提交：`76daa98 docs(meta): refine page description`，已推送 `origin/main`（部署域名 json.blueblog.me）
+- 2026-08-26 远端批次（`bb3bc82`）：响应式工具栏（溢出动作收进汉堡菜单）、全局设置面板、代码风格/文件名检查脚本与 kebab-case 全量重命名
+- 2026-08-27 会话批次：
+  - 工具菜单弹层固定宽度：HeroUI 默认 `max-w-[48svw]` + `overflow-x` 隐式 auto 导致窄屏横向滚动，放宽上限并禁止横向滚动与 CJK 折行
+  - 示例数据前置嵌套解析节点（新用户首屏可见 Parse 按钮），新增 `webhookEvent` 多层嵌套 Case（剥开一层后 payload 还有一层，可连续下钻）；TS 模板字面量与 JSON5 各吃一层转义，源码需四重转义
+  - 设置「重置全部数据」：AlertDialog 二次确认 + Toast 8 秒撤销；重置后经根容器 key 变化整树重挂载，标签页/偏好/滚动/分栏布局全量还原。关键坑：react-resizable-panels 实际落盘键带 `react-resizable-panels:` 前缀；`flushSync` 会把整树重挂载挤进点击回调造成卡顿
+  - favicon 重制（原 PNG 四角被垫白底），`index.html` 增加 SVG 候选图标
+  - 接入 Prettier（semi/单引号/100 列）与 @ianvs/prettier-plugin-sort-imports（react 系 → 三方 → `../` → `./`），lint 链挂载 `prettier --check`，全仓格式化
+- 部署域名 json.blueblog.me，远端 `origin/main`
 
 ## 排查实录（关键结论存档）
 
@@ -69,4 +76,4 @@ blue 需要一个日常使用的 **JSON / JSON5 解析工具**：左侧编辑器
 
 ---
 
-_2026-08-25 更新；详细提交历史见 git log。`ignoreCommand` 已上线并实测：本行为纯 .md 变更，用于验证 Vercel 跳过构建。_
+_2026-08-27 更新；详细提交历史见 git log。`ignoreCommand` 已上线并实测：本行为纯 .md 变更，用于验证 Vercel 跳过构建。_

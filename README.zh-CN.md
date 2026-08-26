@@ -17,6 +17,7 @@
 - **可折叠树形预览**:大纲式稳定行号、整行 hover、逐行复制
 - **嵌套 JSON 提取**:能解析为对象/数组的字符串值提供一键 `Parse`,在新标签中打开
 - **多标签工作区**:滚动位置与状态按标签持久化
+- **一键重置**:设置中的「重置全部数据」经二次确认后恢复出厂状态(示例标签页 + 默认偏好 + 滚动与分栏布局);误触可在 8 秒内通过 Toast 撤销,完整还原重置前状态
 - **7 套同步语法配色**(默认 / Dracula / Monokai / One Dark / Nord / Solarized / Tokyo Night),均含亮暗两套
 - **完全本地处理**——输入内容不会离开浏览器
 
@@ -44,7 +45,10 @@ pnpm dev
 ```bash
 pnpm build
 pnpm lint
+pnpm format
 ```
+
+`pnpm lint` 依次校验文件命名、代码命名规范、oxlint 与 Prettier 格式;`pnpm format` 一键格式化。
 
 ## 技术栈
 
