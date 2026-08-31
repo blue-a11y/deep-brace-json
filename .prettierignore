@@ -1,6 +1,9 @@
 node_modules
 dist
 pnpm-lock.yaml
+test-results
+playwright-report
+blob-report
 
 # 第三方 vendor 组件保持与上游 react-bits 一致,不做格式化
 src/components/react-bits

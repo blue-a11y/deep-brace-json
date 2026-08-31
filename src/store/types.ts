@@ -71,9 +71,9 @@ export type AppResetSlice = {
   /** 重置代数:每次重置/撤销自增,作为工作区容器 key 驱动整棵子树重挂载 */
   resetEpoch: number;
   /** 清空全部数据恢复出厂默认:仅保留示例标签页,偏好回到默认值,滚动/分栏记忆一并清除 */
-  resetAll: () => void;
+  resetAll: () => Promise<void>;
   /** 撤销重置:恢复快照里的标签页、偏好、滚动与分栏布局 */
-  restoreResetSnapshot: (snapshot: ResetSnapshot) => void;
+  restoreResetSnapshot: (snapshot: ResetSnapshot) => Promise<void>;
 };
 
 export type DeepBraceState = JsonTabsSlice & PreferencesSlice & AppResetSlice;

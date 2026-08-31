@@ -1,9 +1,11 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { DEFAULT_INDENT_SIZE, INDENT_OPTIONS, type IndentSize } from '../lib/indent';
+import { createIndexedDbPersistStorage, INDEXED_DB_STORES } from '../lib/indexed-db-storage';
+import { clearPanelLayoutStorage, restorePanelLayoutSnapshot } from '../lib/panel-layout-storage';
 import { parseInput } from '../lib/parse';
 import { SAMPLE } from '../lib/sample';
-import { getSplitLayoutStorageKey, STORAGE_KEYS } from '../lib/storage';
+import { STORAGE_KEYS } from '../lib/storage';
 import {
   captureActiveTabScrollPositions,
   clearTabScrollPositions,
@@ -20,6 +22,15 @@ import {
 } from './tab-state';
 import type { DeepBraceState } from './types';
 
+type PersistedDeepBraceState = Pick<
+  DeepBraceState,
+  'tabs' | 'activeTabId' | 'isDark' | 'indentSize' | 'treeTheme' | 'shouldShowFullLongStrings'
+>;
+
+const appStateStorage = createIndexedDbPersistStorage<PersistedDeepBraceState>(
+  INDEXED_DB_STORES.appState,
+);
+
 export const applyTheme = (isDark: boolean) => {
   document.documentElement.classList.toggle('dark', isDark);
   document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
@@ -34,17 +45,12 @@ const isTreeTheme = (value: unknown): value is TreeTheme =>
 const mergePersistedState = (persistedState: unknown, currentState: DeepBraceState) => {
   const persisted =
     persistedState && typeof persistedState === 'object'
-      ? (persistedState as Partial<DeepBraceState> & {
-          dark?: unknown;
-          input?: unknown;
-          showFullLongStrings?: unknown;
-        })
+      ? (persistedState as Partial<PersistedDeepBraceState>)
       : {};
-  const legacyInput = typeof persisted.input === 'string' ? persisted.input : SAMPLE;
   const tabs =
     Array.isArray(persisted.tabs) && persisted.tabs.length > 0
       ? persisted.tabs.map(restoreJsonTab)
-      : [createInitialTab(legacyInput)];
+      : [createInitialTab(SAMPLE)];
   const activeTabId =
     typeof persisted.activeTabId === 'string' && tabs.some(tab => tab.id === persisted.activeTabId)
       ? persisted.activeTabId
@@ -54,20 +60,13 @@ const mergePersistedState = (persistedState: unknown, currentState: DeepBraceSta
     ...currentState,
     tabs,
     activeTabId,
-    isDark:
-      typeof persisted.isDark === 'boolean'
-        ? persisted.isDark
-        : typeof persisted.dark === 'boolean'
-          ? persisted.dark
-          : currentState.isDark,
+    isDark: typeof persisted.isDark === 'boolean' ? persisted.isDark : currentState.isDark,
     indentSize: isIndentSize(persisted.indentSize) ? persisted.indentSize : currentState.indentSize,
     treeTheme: isTreeTheme(persisted.treeTheme) ? persisted.treeTheme : currentState.treeTheme,
     shouldShowFullLongStrings:
       typeof persisted.shouldShowFullLongStrings === 'boolean'
         ? persisted.shouldShowFullLongStrings
-        : typeof persisted.showFullLongStrings === 'boolean'
-          ? persisted.showFullLongStrings
-          : currentState.shouldShowFullLongStrings,
+        : currentState.shouldShowFullLongStrings,
   };
 };
 
@@ -84,26 +83,28 @@ export const useStore = create<DeepBraceState>()(
         set({ isDark });
         applyTheme(isDark);
       },
-      setIndentSize: indentSize => set({ indentSize }),
-      setTreeTheme: treeTheme => set({ treeTheme }),
+      setIndentSize: indentSize => {
+        set({ indentSize });
+      },
+      setTreeTheme: treeTheme => {
+        set({ treeTheme });
+      },
       setShouldShowFullLongStrings: shouldShowFullLongStrings => {
         set({ shouldShowFullLongStrings });
       },
 
       resetEpoch: 0,
 
-      resetAll: () => {
-        // 先冻结当前滚动元素:重挂载卸载旧编辑器时,清理回调不得把旧位置写回存储
-        captureActiveTabScrollPositions();
-        clearTabScrollPositions();
-        try {
-          localStorage.removeItem(getSplitLayoutStorageKey());
-        } catch {
-          // 本地存储不可用时跳过,分栏宽度随重挂载回到默认值。
-        }
+      resetAll: async () => {
+        // 先冻结当前滚动元素；重挂载卸载旧编辑器时，清理回调不得写回旧位置。
+        void captureActiveTabScrollPositions();
+        // 内存缓存必须在 set 触发重挂载前同步清空；方法内部会等待旧数据落盘后再清库。
+        const clearPersistence = Promise.all([
+          clearTabScrollPositions(),
+          clearPanelLayoutStorage(),
+        ]);
         applyTheme(false);
         set(state => ({
-          // bootstrap 只在启动时解析一次,重置发生在运行时,须立即解析示例供树形预览展示
           tabs: [applyParseResult(createInitialTab(SAMPLE), parseInput(SAMPLE))],
           activeTabId: 'json-tab-1',
           isDark: false,
@@ -112,21 +113,17 @@ export const useStore = create<DeepBraceState>()(
           shouldShowFullLongStrings: true,
           resetEpoch: state.resetEpoch + 1,
         }));
+        await Promise.all([clearPersistence, appStateStorage.flush()]);
       },
 
-      restoreResetSnapshot: snapshot => {
-        // 冻结当前编辑器:被换下的标签页卸载时,清理回调不得覆盖恢复的滚动快照
-        captureActiveTabScrollPositions();
-        restoreTabScrollSnapshot(snapshot.scroll);
-        try {
-          if (snapshot.splitLayout == null) {
-            localStorage.removeItem(getSplitLayoutStorageKey());
-          } else {
-            localStorage.setItem(getSplitLayoutStorageKey(), snapshot.splitLayout);
-          }
-        } catch {
-          // 本地存储不可用时跳过,分栏宽度维持当前值。
-        }
+      restoreResetSnapshot: async snapshot => {
+        // 先冻结重置后的工作区，再按顺序恢复快照，避免异步清理覆盖撤销数据。
+        void captureActiveTabScrollPositions();
+        // 先同步恢复内存缓存，再重挂载工作区；IndexedDB 写入沿同一队列异步完成。
+        const restorePersistence = Promise.all([
+          restoreTabScrollSnapshot(snapshot.scroll),
+          restorePanelLayoutSnapshot(snapshot.splitLayout),
+        ]);
         applyTheme(snapshot.isDark);
         set(state => ({
           tabs: snapshot.tabs,
@@ -137,11 +134,14 @@ export const useStore = create<DeepBraceState>()(
           shouldShowFullLongStrings: snapshot.shouldShowFullLongStrings,
           resetEpoch: state.resetEpoch + 1,
         }));
+        await Promise.all([restorePersistence, appStateStorage.flush()]);
       },
     }),
     {
-      name: STORAGE_KEYS.store,
-      storage: createJSONStorage(() => localStorage),
+      name: STORAGE_KEYS.appState,
+      storage: appStateStorage,
+      skipHydration: true,
+      version: 1,
       merge: mergePersistedState,
       partialize: state => ({
         tabs: state.tabs.map(prepareTabForStorage),

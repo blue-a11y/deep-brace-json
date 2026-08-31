@@ -7,6 +7,7 @@ import { ShortcutManager } from './components/shortcut-manager';
 import { StatusBar } from './components/status-bar';
 import { Toolbar } from './components/toolbar';
 import { EmptyPane, ErrorPane, TreeView } from './components/tree-view';
+import { panelLayoutStorage } from './lib/panel-layout-storage';
 import { STORAGE_KEYS } from './lib/storage';
 import { toastQueue } from './lib/toast';
 import { useMediaQuery } from './lib/use-media-query';
@@ -20,7 +21,9 @@ const App = () => {
   const resetEpoch = useStore(state => state.resetEpoch);
 
   // 对 persist 恢复的输入补一次解析
-  useEffect(bootstrap, [bootstrap]);
+  useEffect(() => {
+    bootstrap();
+  }, [bootstrap]);
 
   // 主题同步到 <html>（切换时 store 已即时应用，这里兜底首帧与恢复）
   useEffect(() => applyTheme(isDark), [isDark]);
@@ -61,11 +64,15 @@ const App = () => {
               direction="horizontal"
               className="min-h-0 flex-1"
               autoSaveId={STORAGE_KEYS.splitLayout}
+              storage={panelLayoutStorage}
             >
               <Panel defaultSize={50} minSize={20} className="p-1">
                 {editorPane}
               </Panel>
-              <PanelResizeHandle className="group flex w-2 items-center justify-center outline-none">
+              <PanelResizeHandle
+                aria-label="调整编辑器与树形预览宽度"
+                className="group flex w-2 items-center justify-center outline-none"
+              >
                 <div className="h-14 w-1 rounded-full bg-foreground/15 transition-colors group-hover:bg-primary/70 group-data-[resize-handle-state=drag]:bg-primary" />
               </PanelResizeHandle>
               <Panel defaultSize={50} minSize={20} className="p-1">

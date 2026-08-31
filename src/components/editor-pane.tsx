@@ -27,6 +27,7 @@ const JSON_FOLD_GUTTER = foldGutter({
     return marker;
   },
 });
+const JSON_EDITOR_ATTRIBUTES = EditorView.contentAttributes.of({ 'aria-label': 'JSON 编辑器' });
 
 export const EditorPane = () => {
   const activeTab = useStore(selectActiveTab);
@@ -159,7 +160,7 @@ export const EditorPane = () => {
           value={input}
           height="100%"
           theme={getCodeMirrorTheme(isDark, treeTheme)}
-          extensions={[json(), JSON_FOLD_GUTTER, EditorView.lineWrapping]}
+          extensions={[json(), JSON_FOLD_GUTTER, JSON_EDITOR_ATTRIBUTES, EditorView.lineWrapping]}
           basicSetup={{
             foldGutter: false,
             autocompletion: false,

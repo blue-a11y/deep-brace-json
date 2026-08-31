@@ -1,8 +1,7 @@
 export const STORAGE_KEYS = {
+  appState: 'current',
   splitLayout: 'deep-brace-json-split',
-  store: 'deep-brace-json:store',
-  tabScroll: 'deep-brace-json:tab-scroll',
 } as const;
 
-/** react-resizable-panels 会给 autoSaveId 加前缀后落盘,这是它实际读写的键 */
+/** react-resizable-panels 会给 autoSaveId 加前缀后再交给 storage */
 export const getSplitLayoutStorageKey = () => `react-resizable-panels:${STORAGE_KEYS.splitLayout}`;

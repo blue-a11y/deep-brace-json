@@ -1,5 +1,12 @@
 import type { EditorView } from '@codemirror/view';
-import { STORAGE_KEYS } from './storage';
+import {
+  clearIndexedDbStore,
+  getAllIndexedDbEntries,
+  INDEXED_DB_STORES,
+  putIndexedDbEntries,
+  reportIndexedDbFailure,
+  type IndexedDbEntry,
+} from './indexed-db-storage';
 
 export type TabScrollArea = 'editor' | 'tree';
 
@@ -15,6 +22,10 @@ type ScrollPosition = {
   isPinnedToRight: boolean;
   top: number;
   anchor?: ScrollAnchor;
+};
+
+type TabScrollValue = ScrollPosition & {
+  version: number;
 };
 
 type ScrollAdapter = {
@@ -82,58 +93,93 @@ const restorePosition = (value: unknown): ScrollPosition | undefined => {
     : undefined;
 };
 
-const loadScrollPositions = () => {
-  const positions = new Map<string, ScrollPosition>();
-  if (typeof window === 'undefined') return positions;
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.tabScroll) ?? 'null');
-    if (!stored || stored.version !== SCROLL_STORAGE_VERSION) return positions;
-    for (const [key, value] of Object.entries(stored.positions ?? {})) {
-      const position = restorePosition(value);
-      if (position) positions.set(key, position);
-    }
-  } catch {
-    // 无效或不可用的本地存储不影响页面启动。
-  }
-  return positions;
+const scrollPositions = new Map<string, ScrollPosition>();
+const pendingScrollKeys = new Set<string>();
+
+const getScrollKey = (tabId: string, area: TabScrollArea) => `${tabId}:${area}`;
+
+const rememberScrollPosition = (tabId: string, area: TabScrollArea, position: ScrollPosition) => {
+  const key = getScrollKey(tabId, area);
+  scrollPositions.set(key, position);
+  pendingScrollKeys.add(key);
 };
 
-const scrollPositions = loadScrollPositions();
+const createScrollEntry = (
+  key: string,
+  position: ScrollPosition,
+): IndexedDbEntry<TabScrollValue> => {
+  const separatorIndex = key.lastIndexOf(':');
+  return {
+    key: [key.slice(0, separatorIndex), key.slice(separatorIndex + 1)],
+    value: {
+      version: SCROLL_STORAGE_VERSION,
+      ...position,
+    },
+  };
+};
+
+const parseScrollEntryKey = (key: IDBValidKey): { tabId: string; area: TabScrollArea } | null => {
+  if (!Array.isArray(key) || key.length !== 2) return null;
+  const [tabId, area] = key;
+  return typeof tabId === 'string' && (area === 'editor' || area === 'tree')
+    ? { tabId, area }
+    : null;
+};
+
+export const hydrateTabScrollStorage = async () => {
+  const entries = await getAllIndexedDbEntries<TabScrollValue>(INDEXED_DB_STORES.tabScroll);
+  for (const { key, value } of entries) {
+    const parsedKey = parseScrollEntryKey(key);
+    if (!parsedKey || value.version !== SCROLL_STORAGE_VERSION) continue;
+    const position = restorePosition(value);
+    if (position) {
+      scrollPositions.set(getScrollKey(parsedKey.tabId, parsedKey.area), position);
+    }
+  }
+};
+
 const activeScrollElements = new Map<TabScrollArea, ActiveScrollElement>();
 let persistTimer: number | null = null;
+let persistenceQueue = Promise.resolve();
 
 const persistScrollPositions = () => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return persistenceQueue;
   if (persistTimer !== null) window.clearTimeout(persistTimer);
   persistTimer = null;
-  try {
-    window.localStorage.setItem(
-      STORAGE_KEYS.tabScroll,
-      JSON.stringify({
-        version: SCROLL_STORAGE_VERSION,
-        positions: Object.fromEntries(scrollPositions),
-      }),
-    );
-  } catch {
-    // localStorage 满额或被禁用时退化为当前页面内存记忆。
-  }
+  const keys = [...pendingScrollKeys];
+  pendingScrollKeys.clear();
+  const entries = keys.flatMap(key => {
+    const position = scrollPositions.get(key);
+    return position ? [createScrollEntry(key, position)] : [];
+  });
+  persistenceQueue = persistenceQueue
+    .then(() => putIndexedDbEntries(INDEXED_DB_STORES.tabScroll, entries))
+    .catch(error => {
+      for (const key of keys) pendingScrollKeys.add(key);
+      reportIndexedDbFailure(error);
+    });
+  return persistenceQueue;
 };
 
 const scheduleScrollPersistence = () => {
   if (typeof window === 'undefined') return;
   if (persistTimer !== null) window.clearTimeout(persistTimer);
-  persistTimer = window.setTimeout(persistScrollPositions, PERSIST_DELAY);
+  persistTimer = window.setTimeout(() => {
+    void persistScrollPositions();
+  }, PERSIST_DELAY);
 };
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('pagehide', persistScrollPositions);
+  const handlePageHide = () => {
+    void persistScrollPositions();
+  };
+  window.addEventListener('pagehide', handlePageHide);
   import.meta.hot?.dispose(() => {
-    persistScrollPositions();
-    window.removeEventListener('pagehide', persistScrollPositions);
+    void persistScrollPositions();
+    window.removeEventListener('pagehide', handlePageHide);
   });
 }
 
-const getScrollKey = (tabId: string, area: TabScrollArea) => `${tabId}:${area}`;
 const clamp = (value: number, minimum: number, maximum: number) =>
   Math.min(Math.max(value, minimum), maximum);
 const isNear = (actual: number, expected: number) => Math.abs(actual - expected) < 1;
@@ -195,7 +241,7 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
     isRestoring = false;
     restoreFrame = null;
     active.latest = readPosition(adapter);
-    scrollPositions.set(key, active.latest);
+    rememberScrollPosition(tabId, area, active.latest);
     scheduleScrollPersistence();
   };
 
@@ -264,7 +310,7 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
   const save = () => {
     if (isRestoring || active.isFrozen) return;
     active.latest = readPosition(adapter);
-    scrollPositions.set(key, active.latest);
+    rememberScrollPosition(tabId, area, active.latest);
     scheduleScrollPersistence();
     isUserInteractionPending = false;
   };
@@ -290,7 +336,7 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
 
   return () => {
     if (!isRestoring && !active.isFrozen) {
-      scrollPositions.set(key, readPosition(adapter));
+      rememberScrollPosition(tabId, area, readPosition(adapter));
       scheduleScrollPersistence();
     }
     if (activeScrollElements.get(area)?.adapter.element === adapter.element) {
@@ -310,32 +356,38 @@ export const captureActiveTabScrollPositions = () => {
   for (const [area, active] of activeScrollElements) {
     active.latest = readPosition(active.adapter);
     active.isFrozen = true;
-    scrollPositions.set(getScrollKey(active.tabId, area), active.latest);
+    rememberScrollPosition(active.tabId, area, active.latest);
   }
-  persistScrollPositions();
+  return persistScrollPositions();
 };
 
-/** 重置时调用:清掉内存与本地存储的全部滚动记忆 */
-export const clearTabScrollPositions = () => {
+/** 重置时清空内存与 IndexedDB 中的全部滚动记忆。 */
+export const clearTabScrollPositions = async () => {
+  if (persistTimer !== null && typeof window !== 'undefined') {
+    window.clearTimeout(persistTimer);
+  }
+  persistTimer = null;
   scrollPositions.clear();
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.removeItem(STORAGE_KEYS.tabScroll);
-    } catch {
-      // 本地存储不可用时清内存即可。
-    }
+  pendingScrollKeys.clear();
+  await persistenceQueue;
+  try {
+    await clearIndexedDbStore(INDEXED_DB_STORES.tabScroll);
+  } catch (error) {
+    reportIndexedDbFailure(error);
   }
 };
 
 export type TabScrollSnapshot = ReadonlyMap<string, ScrollPosition>;
 
-/** 重置前拍快照,撤销重置时据此恢复各标签页的滚动位置 */
+/** 重置前拍快照，撤销时据此恢复各标签页滚动位置。 */
 export const captureTabScrollSnapshot = (): TabScrollSnapshot => new Map(scrollPositions);
 
-/** 撤销重置:把快照合并回当前记忆并落盘(覆盖重置后产生的新条目) */
 export const restoreTabScrollSnapshot = (snapshot: TabScrollSnapshot) => {
-  for (const [key, position] of snapshot) scrollPositions.set(key, position);
-  persistScrollPositions();
+  for (const [key, position] of snapshot) {
+    scrollPositions.set(key, position);
+    pendingScrollKeys.add(key);
+  }
+  return persistScrollPositions();
 };
 
 export const bindEditorTabScrollPosition = (tabId: string, view: EditorView) =>

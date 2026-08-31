@@ -40,7 +40,7 @@ export const AppSettings = ({ overlayState, shouldHideTrigger = false }: AppSett
       <Modal.Backdrop>
         <Modal.Container placement="center" size="md">
           <Modal.Dialog>
-            <Modal.CloseTrigger />
+            <Modal.CloseTrigger aria-label="关闭设置" />
             <Modal.Header className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-0">
               <Modal.Icon className="row-span-2 bg-default text-foreground">
                 <Settings className="size-5" />

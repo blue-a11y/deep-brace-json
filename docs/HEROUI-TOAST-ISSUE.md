@@ -115,4 +115,6 @@ commit `6cb6a1a`（"Next.js 16 版(含 Toast 复刻实现)"）包含一个**行�
 
 ## 8. 当前项目状态
 
-架构已回归 **Vite 8 + React 19**，Toast 使用**官方代码零改动**（`<Toast.Provider />` + `toast()`，无任何 CSS 补丁），功能完整；进出场动画在本机环境下缺失（与官方站在本机的表现一致），等待官方修复或按 §6 排查。
+架构为 **Vite 8 + React 19**，渲染继续使用 HeroUI 的 `<Toast.Provider />` 与 `ToastQueue`，但队列更新已不再是“官方代码零改动”：项目在 `src/lib/toast.ts` 中提供统一封装，将新增、关闭和清空操作串行接入 `document.startViewTransition`，并在更新回调中使用 `flushSync`；浏览器不支持 View Transition 时退化为同步更新。
+
+当前队列最多同时显示 3 条 Toast，统一承载转换、复制、标签关闭撤销和重置撤销等反馈。§1–§7 保留为历史环境、根因链与替代方案记录；当前实际行为以源码和测试为准，当前开发计划见 [docs/ROADMAP.md](ROADMAP.md)。

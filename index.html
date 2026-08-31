@@ -15,21 +15,6 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Silkscreen:wght@400;700&display=swap"
       rel="stylesheet"
     />
-    <script>
-      // 首屏同步主题，避免闪烁；从 zustand persist 的存储中读取，默认暗色
-      try {
-        var dark = false;
-        var raw = localStorage.getItem('deep-brace-json:store');
-        if (raw) {
-          var st = JSON.parse(raw);
-          if (st && st.state && typeof st.state.dark === 'boolean') dark = st.state.dark;
-        }
-        if (dark) {
-          document.documentElement.classList.add('dark');
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
-      } catch (e) {}
-    </script>
   </head>
   <body>
     <div id="root"></div>

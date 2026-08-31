@@ -1,18 +1,10 @@
 import type { ResetSnapshot } from '../store/types';
 import { useStore } from '../store/use-store';
-import { getSplitLayoutStorageKey } from './storage';
+import { capturePanelLayoutSnapshot } from './panel-layout-storage';
 import { captureActiveTabScrollPositions, captureTabScrollSnapshot } from './tab-scroll';
 import { toast } from './toast';
 
 const RESET_TOAST_TIMEOUT = 8000;
-
-const readSplitLayoutStorage = () => {
-  try {
-    return localStorage.getItem(getSplitLayoutStorageKey());
-  } catch {
-    return null;
-  }
-};
 
 /** 重置全部数据并弹出可撤销的 Toast;撤销窗口内可完整恢复重置前的
    标签页、偏好、滚动位置与分栏布局(根容器 key 变化驱动整树重挂载) */
@@ -29,16 +21,18 @@ export const resetAllWithUndo = () => {
     treeTheme,
     shouldShowFullLongStrings,
     scroll: captureTabScrollSnapshot(),
-    splitLayout: readSplitLayoutStorage(),
+    splitLayout: capturePanelLayoutSnapshot(),
   };
 
   // 不用 flushSync:整树重挂载较重,同步渲染会卡住点击响应,交给 React 正常调度
-  useStore.getState().resetAll();
+  const resetPromise = useStore.getState().resetAll();
 
   let toastKey = '';
   const handleUndo = () => {
-    useStore.getState().restoreResetSnapshot(snapshot);
-    toast.close(toastKey);
+    void resetPromise.then(async () => {
+      await useStore.getState().restoreResetSnapshot(snapshot);
+      toast.close(toastKey);
+    });
   };
   toastKey = toast('已重置全部数据', {
     actionProps: {

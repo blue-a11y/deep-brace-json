@@ -81,12 +81,13 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
     tabs: [createInitialTab(SAMPLE)],
     activeTabId: 'json-tab-1',
 
-    bootstrap: () =>
+    bootstrap: () => {
       set(state => ({
         tabs: state.tabs.map(tab =>
           tab.input.trim() ? applyParseResult(tab, parseInput(tab.input)) : tab,
         ),
-      })),
+      }));
+    },
 
     setActiveTab: activeTabId => {
       if (activeTabId !== get().activeTabId && get().tabs.some(tab => tab.id === activeTabId)) {

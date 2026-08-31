@@ -424,7 +424,7 @@ export const TreeView = () => {
   if (!result?.ok || !stats) return null;
 
   return (
-    <section className="pane-responsive-actions flex h-full min-h-0 flex-col">
+    <section aria-label="树形预览" className="pane-responsive-actions flex h-full min-h-0 flex-col">
       <PaneHeader
         title="树形预览"
         extra={
@@ -509,6 +509,8 @@ export const TreeView = () => {
       />
       <div
         ref={treeScrollRef}
+        role="region"
+        aria-label="树形预览内容"
         className={`tree-body min-h-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
         data-tree-theme={treeTheme}
         style={treeStyle}
@@ -530,7 +532,7 @@ export const TreeView = () => {
 
 export const EmptyPane = ({ hint }: { hint: string }) => {
   return (
-    <section className="flex h-full min-h-0 flex-col">
+    <section aria-label="树形预览" className="flex h-full min-h-0 flex-col">
       <PaneHeader title="树形预览" />
       <div className="grid flex-1 place-items-center">
         <div className="flex flex-col items-center gap-2 text-foreground/35">
@@ -552,7 +554,7 @@ export const ErrorPane = ({
   column?: number;
 }) => {
   return (
-    <section className="flex h-full min-h-0 flex-col">
+    <section aria-label="树形预览" className="flex h-full min-h-0 flex-col">
       <PaneHeader title="树形预览" />
       <div className="flex-1 overflow-auto p-4">
         <div className="rounded-xl bg-red-500/10 p-4">
