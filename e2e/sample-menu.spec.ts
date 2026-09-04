@@ -14,6 +14,76 @@ const openSamples = async (page: Page) => {
 };
 
 for (const width of [1280, 375]) {
+  test(`鼠标选择示例后没有残留焦点框，键盘焦点仍可见 ${width}px`, async ({ page }) => {
+    const issues: string[] = [];
+    page.on('pageerror', error => issues.push(error.message));
+    page.on('console', message => {
+      if (['error', 'warning'].includes(message.type())) issues.push(message.text());
+    });
+    await page.setViewportSize({ width, height: 800 });
+    await page.addInitScript(() =>
+      localStorage.setItem('deep-brace-json:tab-guide-dismissed', 'true'),
+    );
+    await page.goto('/');
+    await expect(page).toHaveTitle(/DeepBrace JSON/);
+    await expect(page.getByRole('textbox', { name: 'JSON 编辑器' })).toBeVisible();
+    const trigger = page.getByRole('button', {
+      name: width === 1280 ? '选择示例' : '打开工具菜单',
+      exact: true,
+    });
+    for (const mode of ['light', 'dark']) {
+      if (mode === 'dark') {
+        if (width === 1280) await page.getByRole('tab', { name: '深色', exact: true }).click();
+        else {
+          await trigger.click();
+          await page.getByRole('menuitem', { name: '切换至深色主题', exact: true }).click();
+        }
+        await expect(page.locator('html')).toHaveClass(/dark/);
+      }
+      for (const label of ['普通示例', '大文档 · 约 1 MB', '大文档 · 约 10 MB']) {
+        await trigger.click();
+        await page.getByRole('menuitem', { name: label, exact: true }).click();
+        await expect(page.getByRole('menu')).toHaveCount(0);
+        await expect(trigger).toBeFocused();
+        await page.mouse.move(0, 0);
+        if (label === '普通示例') {
+          await page.screenshot({
+            path: `/tmp/deepbrace-sample-focus-${width}-${mode}.png`,
+            clip: { x: 0, y: 0, width, height: 110 },
+          });
+        }
+        await expect(trigger).toHaveCSS('box-shadow', 'none');
+        await expect(trigger).toHaveCSS('outline-style', 'none');
+        await expect(page.getByText(/已解析 · (object|array) ·/)).toBeVisible({ timeout: 15000 });
+      }
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+      await expect(trigger).toBeFocused();
+      await expect(trigger).toHaveAttribute('data-focus-visible', 'true');
+      await expect(trigger).not.toHaveCSS('box-shadow', 'none');
+      await page.screenshot({
+        path: `/tmp/deepbrace-sample-keyboard-focus-${width}-${mode}.png`,
+        clip: { x: 0, y: 0, width, height: 110 },
+      });
+      await page.keyboard.press('Enter');
+      await page.getByRole('menuitem', { name: '普通示例', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('menu')).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+      await expect(trigger).toHaveAttribute('data-focus-visible', 'true');
+      await expect(trigger).not.toHaveCSS('box-shadow', 'none');
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('menu')).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('menu')).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+    }
+    await expect(page.locator('vite-error-overlay')).toHaveCount(0);
+    expect(issues).toEqual([]);
+  });
+}
+
+for (const width of [1280, 375]) {
   test(`示例菜单支持普通和大文档数据 ${width}px`, async ({ page }) => {
     const issues: string[] = [];
     let isRestoring = false;

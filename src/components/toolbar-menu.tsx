@@ -51,7 +51,7 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
       <Dropdown>
         <Dropdown.Trigger
           aria-label="打开工具菜单"
-          className="grid size-9 shrink-0 place-items-center rounded-xl text-foreground outline-none transition-colors hover:bg-default focus-visible:ring-2 focus-visible:ring-primary"
+          className="grid size-9 shrink-0 place-items-center rounded-xl text-foreground outline-none transition-colors hover:bg-default"
         >
           <Menu className="shrink-0" size={18} />
         </Dropdown.Trigger>
