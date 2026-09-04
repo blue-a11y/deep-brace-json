@@ -36,12 +36,12 @@ const App = () => {
 
   const paneClass = 'h-full overflow-hidden rounded-2xl bg-white dark:bg-foreground/5';
   const editorPane = (
-    <div key={`${activeTabId}-editor`} className={paneClass}>
+    <div key={`${activeTabId}-editor`} data-workspace-pane="editor" className={paneClass}>
       <EditorPane />
     </div>
   );
   const previewPane = (
-    <div key={`${activeTabId}-preview`} className={paneClass}>
+    <div key={`${activeTabId}-preview`} data-workspace-pane="preview" className={paneClass}>
       {!input.trim() ? (
         <EmptyPane hint="在左侧输入内容，这里实时展开成树" />
       ) : !result ? (

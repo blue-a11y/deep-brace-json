@@ -32,7 +32,7 @@ export const StatusBar = () => {
   }
 
   return (
-    <footer className="flex shrink-0 items-center justify-between gap-4 px-2 py-1 font-mono text-[12.5px]">
+    <footer className="workspace-status flex shrink-0 items-center justify-between gap-4 px-2 py-1 font-mono text-[12.5px]">
       <div className="shrink-0 text-foreground/50">
         {lines} 行 · {input.length} 字符 · {formatBytes(bytes)}
       </div>

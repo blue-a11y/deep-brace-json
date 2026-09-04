@@ -14,10 +14,9 @@ import {
 import { useShortcutLabels } from '../lib/use-shortcut-labels';
 import { useStore } from '../store/use-store';
 import { AppSettings } from './app-settings';
+import { Brand } from './brand';
 import { GithubMark } from './github-mark';
 import { IndentSelect } from './indent-select';
-import AnimatedContent from './react-bits/animated-content';
-import Shuffle from './react-bits/shuffle';
 import { SampleMenu } from './sample-menu';
 import { ShortcutHelp } from './shortcut-help';
 import { ThemeSettings } from './theme-settings';
@@ -74,31 +73,9 @@ export const Toolbar = () => {
   };
 
   return (
-    <header className="flex shrink-0 items-center gap-2 px-1 py-1.5">
+    <header className="workspace-toolbar flex shrink-0 items-center gap-2 px-1 py-1.5">
       <div className="mr-1 flex shrink-0 items-baseline gap-2.5 md:mr-3">
-        <AnimatedContent
-          distance={0}
-          scale={0}
-          duration={0.65}
-          ease="back.out(2)"
-          className="flex shrink-0 self-center"
-        >
-          <div className="grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground font-mono text-xs font-bold text-background">
-            {'{ }'}
-          </div>
-        </AnimatedContent>
-        <Shuffle
-          text="DeepBrace JSON"
-          tag="span"
-          shouldTriggerOnHover={false}
-          shouldLoop
-          loopDelay={5}
-          delay={1.5}
-          duration={0.6}
-          stagger={0.05}
-          textAlign="left"
-          className="shrink-0 whitespace-nowrap font-logo text-[18px] tracking-tight sm:text-[20px]"
-        />
+        <Brand />
         {/* 工具特性 */}
         <div
           role="group"
