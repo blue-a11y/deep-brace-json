@@ -26,6 +26,7 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 - **Feature highlights** beside the logo use matching icon tags with hover and keyboard-focus descriptions. The large-document tag appears from 1,280px, with the remaining capabilities from 1,536px; narrower screens prioritize the product name and tools
 - **Reset to defaults**: "Reset all data" in Settings restores factory state (sample tab + blank tab + default preferences + scroll & split layout) behind a confirm dialog; a toast offers full undo for 8 seconds
 - **Live status bar** with line, character and UTF-8 size metrics plus parse type, node count, depth and errors
+- **Progressive startup**: show a lightweight workspace skeleton before JavaScript is ready, with responsive panes, system light/dark styling and reduced-motion support; load settings, theme and shortcut dialogs with the workspace so opening them requires no additional script download. Shared layout dimensions and an inline brand-font subset align the skeleton with the default workspace without an external font request. Main styles download without blocking the skeleton; the workspace mounts once styles are ready, with a retry entry on failure. Other fonts do not block rendering; wordmark animation loads after the workspace mounts without resizing the logo, with a static fallback for reduced motion or download failures
 - **100% client-side** — your data never leaves the browser
 
 ## Documentation

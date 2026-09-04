@@ -256,7 +256,7 @@ export const JsonTabs = () => {
   return (
     <nav
       aria-label="JSON 标签"
-      className="relative -mt-1 mb-3 flex min-w-0 items-center gap-5 px-1"
+      className="workspace-tabs relative flex min-w-0 items-center gap-5 px-1"
       onKeyDownCapture={handleContextMenuKeyDown}
     >
       <Tabs

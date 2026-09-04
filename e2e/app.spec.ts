@@ -1268,7 +1268,7 @@ test('主题在 679/680px 边界逐项进入工具菜单', async ({ page }) => {
   await expect(directTrigger).toBeVisible();
   await expect(page.locator('.font-logo')).toBeVisible();
   const headerOverflow = await page
-    .locator('header')
+    .getByRole('banner')
     .evaluate(element => Math.max(0, element.scrollWidth - element.clientWidth));
   expect(headerOverflow).toBeLessThanOrEqual(1);
 });

@@ -9,15 +9,356 @@
       content="DeepBrace JSON — 支持 JSON / JSON5、转义文本与嵌套子节点的一站式解析工具"
     />
     <title>DeepBrace JSON · 深入解析每一层 JSON</title>
+    <style>
+      /* Silkscreen: brand-text subset. Copyright The Silkscreen Project Authors.
+         SIL Open Font License 1.1: /licenses/silkscreen.txt */
+      @font-face {
+        font-family: 'DeepBrace Logo';
+        font-style: normal;
+        font-weight: 400;
+        font-display: block;
+        src: url(data:font/woff2;base64,d09GMgABAAAAAANYAA4AAAAAB+QAAAMFAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhYbHhweBmAAgQQRCAqFAINmCxwAATYCJAM0BCAFhEYHIBs3BsgEHtLW7yWb08VlUZdTXZi5IC3eeiWlS0cN02tl9o1FcrXfvqIdGqFcKtT0xBfXKGqRIVRCIasn+97iV5HNZ4jqsAIXz0YAzVCdEiGBHYUgTDeUi7nzl64liOo1G8PTg52s5DNxCh+C8ojcqGiWJNPFdkbj4XKHALFVaHZh3fIly3mGQ1H5jR9m6z2vRARFnXykuR2sIwIJ304GAaUi/7dOtMIiiMNs5rKYFaxhF3uIkKd4MKZTzfI3zWfz1Dwx980dc9NcNpfMRXPGnCbt7GYKhDG0ZNLm4i7izoYHQPtivFbdUbeFvK9UJrWyJCgV9FXtmin102YqGFTNwqqVsn3N1XrbCtu+5tgyzGZbhKXEVInuO3ssW+4UYWFjY/siDBHLVmHhEWNNlj1AG5EtojkbTYrPtVM0Z9QgBh7VGo4NCHvniaQgoPA1B+yApBZBcTIVXNCJ2Q/rglv4XdOuRhdcrV2tf1frdb2LpgZfk8v5VavTddWadgVvrEZjyM3MeLxUtPv3YS/j8fuXdnWt2iTneLT+RQR1lV112vM819vn8WuYUEzV6lSNO5qk13oetRscI553NGpBMiFb2Hf9lmD27tvbJu9oObU+2NJ6f3Hf7+Q9/T2vnl/wmXnGryJd4H83yRnUOzyzemfm/TupIu/StOaygJZfgzFWqkqiedgq6g4SaU5ffKzNeiCrriDRN6xGhYAbYniBBO1EFyRpIZohi8m85JWgvQLkYy2bkZ++jOdbyNchTpkyeUpMZgQj5NI9FEmQp2wph1Pi07iXo0iMEaxgPktZ06FNcZZGiJBlGKtZaowKaXaBXy9Ace72HFkcRjGckYwU3FNwCENRdlFBao44CbJKxGEgVa7QRIYz1vz/CQxjHHsZx24GUapzWiiWv47lLGE5Uw7bptKRO3MOOfLsvzsQu29eh9FEi3FYS5wIzgH3raRIjiQR9syBWdcN8bsKJbPtc3DHSAzuq7Cb4ewhR6bDmSPHImkiRO8r8ZTkI9oQwqB/K65NNOcY/fMDAA==)
+          format('woff2');
+      }
+      .brand-wordmark,
+      .brand-metrics {
+        font-family: 'DeepBrace Logo', ui-monospace, monospace;
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 1.5;
+        letter-spacing: -0.025em;
+        white-space: nowrap;
+      }
+      .brand-symbol {
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+      .brand-slot {
+        position: relative;
+        display: inline-grid;
+        flex-shrink: 0;
+      }
+      .brand-metrics {
+        visibility: hidden;
+      }
+      .brand-slot > .brand-wordmark {
+        position: absolute;
+        inset: 0;
+      }
+      /* 动效等待其他字体时仍显示已就绪的品牌字形。 */
+      .brand-wordmark.shuffle-parent {
+        visibility: visible;
+      }
+      @media (min-width: 640px) {
+        .brand-wordmark,
+        .brand-metrics {
+          font-size: 20px;
+        }
+      }
+      /* 骨架与工作区共用结构尺寸，避免字体及响应式初始化推动已显示内容。 */
+      :root {
+        --workspace-toolbar-height: 48px;
+        --workspace-tabs-height: 36px;
+        /* 状态栏：12.5px 字号 × 1.5 行高 + 上下各 4px。 */
+        --workspace-status-height: 26.75px;
+      }
+      .workspace-toolbar {
+        box-sizing: border-box;
+        height: var(--workspace-toolbar-height);
+      }
+      .workspace-tabs {
+        box-sizing: border-box;
+        flex-shrink: 0;
+        height: var(--workspace-tabs-height);
+        margin-top: -4px;
+        margin-bottom: 12px;
+      }
+      .workspace-status {
+        box-sizing: border-box;
+        height: var(--workspace-status-height);
+        line-height: 18.75px;
+      }
+      @media (min-width: 768px) {
+        :root {
+          --workspace-tabs-height: 33px;
+        }
+      }
+      @media (min-width: 860px) {
+        :root {
+          --workspace-toolbar-height: 44px;
+        }
+      }
+      .startup-shell {
+        --startup-surface: #fff;
+        --startup-placeholder: #e8e8eb;
+        --startup-muted: #71717a;
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        box-sizing: border-box;
+        padding: 8px 12px 4px;
+        background: #f5f5f5;
+        color: #27272a;
+        font-family: system-ui, sans-serif;
+      }
+      .startup-toolbar,
+      .startup-brand,
+      .startup-tools,
+      .startup-tabs,
+      .startup-pane-heading,
+      .startup-message {
+        display: flex;
+        align-items: center;
+      }
+      .startup-toolbar {
+        flex-shrink: 0;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 0 4px;
+      }
+      .startup-brand {
+        align-items: baseline;
+        color: oklch(0.2103 0.0059 285.89);
+        gap: 10px;
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+      .startup-logo {
+        align-self: center;
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border-radius: 8px;
+        background: oklch(0.2103 0.0059 285.89);
+        color: oklch(0.9702 0 0);
+        font-size: 12px;
+        line-height: 16px;
+        font-weight: 700;
+      }
+      .startup-placeholder,
+      .startup-line,
+      .startup-line::before {
+        background: var(--startup-placeholder);
+        border-radius: 5px;
+      }
+      .startup-tools {
+        gap: 16px;
+      }
+      .startup-tools span {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+      }
+      .startup-tools span:first-child {
+        width: 72px;
+        border-radius: 14px;
+      }
+      .startup-tabs {
+        gap: 24px;
+        padding: 0 4px;
+        border-bottom: 1px solid var(--startup-placeholder);
+      }
+      .startup-body {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        flex-direction: column;
+      }
+      .startup-tabs span {
+        width: 80px;
+        height: 12px;
+      }
+      .startup-tabs span:last-child {
+        width: 60px;
+        opacity: 0.6;
+      }
+      .startup-workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        flex: 1;
+        min-height: 0;
+        gap: 16px;
+        padding: 4px;
+      }
+      .startup-pane {
+        overflow: hidden;
+        border-radius: 16px;
+        background: var(--startup-surface);
+      }
+      .startup-pane-heading {
+        height: 40px;
+        justify-content: space-between;
+        padding: 0 16px;
+      }
+      .startup-pane-heading span {
+        width: 68px;
+        height: 10px;
+      }
+      .startup-pane-heading span:last-child {
+        width: 104px;
+        opacity: 0.6;
+      }
+      .startup-lines {
+        display: grid;
+        gap: 18px;
+        padding: 20px 24px 24px 52px;
+      }
+      .startup-line {
+        position: relative;
+        height: 10px;
+        width: 65%;
+      }
+      .startup-line::before {
+        content: '';
+        position: absolute;
+        left: -28px;
+        width: 12px;
+        height: 8px;
+        opacity: 0.5;
+      }
+      .startup-line:nth-child(3n + 1) {
+        width: 38%;
+      }
+      .startup-line:nth-child(3n + 2) {
+        width: 82%;
+      }
+      .startup-tree .startup-line:nth-child(3n + 2) {
+        margin-left: 16px;
+        width: 64%;
+      }
+      .startup-tree .startup-line:nth-child(3n) {
+        margin-left: 32px;
+        width: 48%;
+      }
+      .startup-message {
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 4px 16px;
+        padding: 4px 8px;
+        color: var(--startup-muted);
+        font-size: 11px;
+      }
+      .startup-message p {
+        margin: 0;
+      }
+      .startup-message a {
+        color: inherit;
+        text-underline-offset: 3px;
+      }
+      @media (max-width: 767px) {
+        .startup-workspace {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 12px;
+          padding: 0;
+        }
+        .startup-tools span:not(:last-child) {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .startup-lines {
+          animation: startup-pulse 1.8s ease-in-out infinite alternate;
+        }
+      }
+      @keyframes startup-pulse {
+        to {
+          opacity: 0.45;
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        .startup-shell {
+          --startup-surface: #232326;
+          --startup-placeholder: #343438;
+          --startup-muted: #a1a1aa;
+          background: #18181b;
+          color: #e4e4e7;
+        }
+        .startup-logo {
+          background: oklch(0.9911 0 0);
+          color: oklch(0.12 0.005 285.823);
+        }
+        .startup-brand {
+          color: oklch(0.9911 0 0);
+        }
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Inconsolata:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&family=Source+Code+Pro:wght@400;500;600&family=Ubuntu+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Inconsolata:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Roboto+Mono:wght@400;500;600&family=Source+Code+Pro:wght@400;500;600&family=Ubuntu+Mono:wght@400;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media = 'all'"
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="startup-shell" aria-label="工作区加载状态">
+        <div class="startup-toolbar workspace-toolbar" aria-hidden="true">
+          <div class="startup-brand">
+            <span class="startup-logo brand-symbol">{ }</span>
+            <span class="brand-wordmark">DeepBrace JSON</span>
+          </div>
+          <div class="startup-tools">
+            <span class="startup-placeholder"></span>
+            <span class="startup-placeholder"></span>
+            <span class="startup-placeholder"></span>
+            <span class="startup-placeholder"></span>
+          </div>
+        </div>
+        <div class="startup-body">
+          <div class="startup-tabs workspace-tabs" aria-hidden="true">
+            <span class="startup-placeholder"></span>
+            <span class="startup-placeholder"></span>
+          </div>
+          <div class="startup-workspace" aria-hidden="true">
+            <div class="startup-pane" data-workspace-pane="editor">
+              <div class="startup-pane-heading">
+                <span class="startup-placeholder"></span><span class="startup-placeholder"></span>
+              </div>
+              <div class="startup-lines">
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+              </div>
+            </div>
+            <div class="startup-pane startup-tree" data-workspace-pane="preview">
+              <div class="startup-pane-heading">
+                <span class="startup-placeholder"></span><span class="startup-placeholder"></span>
+              </div>
+              <div class="startup-lines">
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+                <div class="startup-line"></div>
+              </div>
+            </div>
+          </div>
+          <div class="startup-message workspace-status">
+            <p role="status">正在加载工作区…</p>
+            <a href="">等待过久？重新加载</a>
+            <noscript>请启用 JavaScript 后使用 JSON 工作区。</noscript>
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
