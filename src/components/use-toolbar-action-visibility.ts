@@ -3,7 +3,7 @@ import { useMediaQuery } from '../lib/use-media-query';
 export type ToolbarActionVisibility = {
   shouldShowSample: boolean;
   shouldShowIndent: boolean;
-  shouldShowTreeTheme: boolean;
+  shouldShowAppearance: boolean;
   shouldShowShortcuts: boolean;
   shouldShowSettings: boolean;
   shouldShowTheme: boolean;
@@ -13,7 +13,7 @@ export type ToolbarActionVisibility = {
 export const useToolbarActionVisibility = (): ToolbarActionVisibility => {
   const shouldShowSample = useMediaQuery('(min-width: 860px)');
   const shouldShowIndent = useMediaQuery('(min-width: 800px)');
-  const shouldShowTreeTheme = useMediaQuery('(min-width: 680px)');
+  const shouldShowAppearance = useMediaQuery('(min-width: 680px)');
   const shouldShowShortcuts = useMediaQuery('(min-width: 600px)');
   const shouldShowSettings = useMediaQuery('(min-width: 560px)');
   const shouldShowTheme = useMediaQuery('(min-width: 480px)');
@@ -22,7 +22,7 @@ export const useToolbarActionVisibility = (): ToolbarActionVisibility => {
   return {
     shouldShowSample,
     shouldShowIndent,
-    shouldShowTreeTheme,
+    shouldShowAppearance,
     shouldShowShortcuts,
     shouldShowSettings,
     shouldShowTheme,

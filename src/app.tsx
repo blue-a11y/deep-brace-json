@@ -11,12 +11,13 @@ import { panelLayoutStorage } from './lib/panel-layout-storage';
 import { STORAGE_KEYS } from './lib/storage';
 import { toastQueue } from './lib/toast';
 import { useMediaQuery } from './lib/use-media-query';
-import { applyTheme, selectActiveTab, useStore } from './store/use-store';
+import { applyCodeFont, applyTheme, selectActiveTab, useStore } from './store/use-store';
 
 const App = () => {
   const activeTab = useStore(selectActiveTab);
   const { id: activeTabId, input, result } = activeTab;
   const isDark = useStore(state => state.isDark);
+  const codeFont = useStore(state => state.codeFont);
   const bootstrap = useStore(state => state.bootstrap);
   const resetEpoch = useStore(state => state.resetEpoch);
 
@@ -27,6 +28,9 @@ const App = () => {
 
   // 主题同步到 <html>（切换时 store 已即时应用，这里兜底首帧与恢复）
   useEffect(() => applyTheme(isDark), [isDark]);
+
+  // 代码字体同步到 <html>，供 CodeMirror、树形预览和错误内容共享。
+  useEffect(() => applyCodeFont(codeFont), [codeFont]);
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -51,7 +55,7 @@ const App = () => {
   );
 
   return (
-    <div className="flex h-full flex-col gap-2 bg-background px-3 py-2">
+    <div className="flex h-full flex-col gap-2 bg-background px-3 pt-2 pb-1">
       <ShortcutManager />
       <Toolbar />
       {/* 重置/撤销时变更 key,一次性重挂载标签栏以下的全部工作区

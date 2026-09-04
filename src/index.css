@@ -7,6 +7,44 @@
   --font-logo: 'Silkscreen', ui-monospace, monospace;
 }
 
+:root {
+  --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-fira-code: 'Fira Code', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-source-code-pro: 'Source Code Pro', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-ibm-plex-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-roboto-mono: 'Roboto Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-ubuntu-mono: 'Ubuntu Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-inconsolata: 'Inconsolata', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+html[data-code-font='jetbrains-mono'] {
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+html[data-code-font='fira-code'] {
+  --font-mono: var(--font-fira-code);
+}
+
+html[data-code-font='source-code-pro'] {
+  --font-mono: var(--font-source-code-pro);
+}
+
+html[data-code-font='ibm-plex-mono'] {
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+html[data-code-font='roboto-mono'] {
+  --font-mono: var(--font-roboto-mono);
+}
+
+html[data-code-font='ubuntu-mono'] {
+  --font-mono: var(--font-ubuntu-mono);
+}
+
+html[data-code-font='inconsolata'] {
+  --font-mono: var(--font-inconsolata);
+}
+
 html,
 body,
 #root {
@@ -22,7 +60,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 单行关闭通知包含更高的操作按钮，三列统一按垂直中心对齐。 */
+/* 标签列表会裁切横向溢出，HeroUI 的外部焦点环因此只剩左右两条竖线。
+   标签以选中下划线表达激活态，方向键移动时选中态跟随焦点，这里直接收敛焦点环。 */
+.json-tabs .tabs__tab:focus-visible,
+.json-tabs .tabs__tab[data-focus-visible='true'] {
+  box-shadow: none;
+  outline: none;
+}
+
+/* 可撤销通知包含即时操作按钮：三列统一按垂直中心对齐。 */
 .toast:has(.tab-close-toast-action) {
   align-items: center;
 }
@@ -149,11 +195,11 @@ body {
 /*
  * 折叠箭头固定列:绝对定位锚到 tree-body(与行号同模式),
  * 所有层级箭头与根节点箭头同一列;行内由 w-4 占位补回原有缩进。
- * 列位置 = tree-body 内边距(16px) + 行号占位(3.5ch)
+ * 列位置 = tree-body 内边距(16px) + 随总行数扩展的行号占位
  */
 .tree-chevron {
   position: absolute;
-  left: calc(3.5ch + 16px);
+  left: calc(var(--tree-gutter-width) + 16px);
 }
 
 /*
@@ -162,6 +208,8 @@ body {
 .tree-body {
   position: relative;
   counter-reset: treeline;
+  --tree-line-number-width: 3ch;
+  --tree-gutter-width: calc(var(--tree-line-number-width) + 0.5ch);
   --tree-token-key: var(--color-sky-700);
   --tree-token-string: var(--color-emerald-700);
   --tree-token-number: var(--color-amber-700);
@@ -275,6 +323,10 @@ body {
 .tree-token-key {
   color: var(--tree-token-key);
 }
+/* 数组条目索引:与标点同级弱化,保证各主题下都不喧宾夺主 */
+.tree-token-index {
+  color: var(--tree-token-punctuation);
+}
 .tree-token-string {
   color: var(--tree-token-string);
 }
@@ -292,17 +344,27 @@ body {
 }
 .tree-line {
   counter-increment: treeline;
-  padding-left: 3.5ch;
+  padding-left: var(--tree-gutter-width);
   cursor: default;
 }
 .tree-line--toggle {
   cursor: pointer;
 }
+/* 文本 token 精确呈现文字选择的 I 光标,行空白与标点保持默认 */
+.tree-token-key,
+.tree-token-index,
+.tree-token-string,
+.tree-token-number,
+.tree-token-boolean,
+.tree-token-null {
+  cursor: text;
+}
 .tree-line::before {
   content: counter(treeline);
   position: absolute;
   left: 8px;
-  width: 3ch;
+  width: var(--tree-line-number-width);
+  white-space: nowrap;
   text-align: right;
   color: color-mix(in oklab, var(--color-foreground) 32%, transparent);
   font-variant-numeric: tabular-nums;
@@ -360,7 +422,7 @@ body {
     color-mix(in oklab, var(--color-foreground) 10%, transparent),
     color-mix(in oklab, var(--color-foreground) 10%, transparent)
   );
-  background-position: calc(3.5ch + 3px) 0;
+  background-position: calc(var(--tree-gutter-width) + 3px) 0;
   background-repeat: no-repeat;
   background-size: 1px calc(100% - 1.5rem - 2px);
   transition: opacity 160ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
@@ -381,6 +443,42 @@ body {
 .tree-wrap .tree-line {
   overflow-wrap: break-word;
   word-break: break-all;
+}
+.tree-virtual {
+  overflow-anchor: none;
+}
+.tree-virtual .tree-line::before {
+  display: none;
+}
+.tree-virtual .tree-chevron {
+  left: var(--tree-gutter-width);
+}
+.virtual-tree-row::before {
+  content: attr(data-line-number);
+  position: absolute;
+  left: -8px;
+  width: var(--tree-line-number-width);
+  text-align: right;
+  color: color-mix(in oklab, var(--color-foreground) 32%, transparent);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  user-select: none;
+}
+.virtual-tree-guides {
+  position: absolute;
+  inset-block: 0;
+  /* 避开固定的 16px 箭头列，留出 8px 间隔；后续竖线仍按层级缩进排列。 */
+  left: calc(var(--tree-gutter-width) + 24px);
+  pointer-events: none;
+  background-image: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--color-foreground) 10%, transparent) 1px,
+    transparent 1px
+  );
+}
+.tree-virtual.tree-wrap .tree-token-key {
+  max-width: 40%;
+  min-width: 0;
 }
 .tree-nowrap {
   overflow-x: auto;

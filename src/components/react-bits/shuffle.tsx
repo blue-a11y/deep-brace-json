@@ -13,7 +13,7 @@ import './shuffle.css';
 
 gsap.registerPlugin(ScrollTrigger, GSAPSplitText, useGSAP);
 
-export interface ShuffleProps {
+interface ShuffleProps {
   text: string;
   className?: string;
   style?: React.CSSProperties;
@@ -97,6 +97,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
     () => {
       if (!ref.current || !text || !fontsLoaded) return;
       if (shouldRespectReducedMotion && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setReady(true);
         onShuffleComplete?.();
         return;
       }

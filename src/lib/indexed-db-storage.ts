@@ -8,7 +8,7 @@ export const INDEXED_DB_STORES = {
   tabScroll: 'tab-scroll',
 } as const;
 
-export type IndexedDbStoreName = (typeof INDEXED_DB_STORES)[keyof typeof INDEXED_DB_STORES];
+type IndexedDbStoreName = (typeof INDEXED_DB_STORES)[keyof typeof INDEXED_DB_STORES];
 
 const DATABASE_VERSION = 3;
 const LEGACY_OBJECT_STORE_NAME = 'key-value';
@@ -154,7 +154,7 @@ type PersistedValue<State extends object> = State & {
   [PERSIST_VERSION_FIELD]?: number;
 };
 
-export type IndexedDbPersistStorage<State extends object> = PersistStorage<State, Promise<void>> & {
+type IndexedDbPersistStorage<State extends object> = PersistStorage<State, Promise<void>> & {
   flush: () => Promise<void>;
 };
 

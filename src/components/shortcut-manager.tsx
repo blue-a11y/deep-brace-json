@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { findShortcut, type ShortcutId } from '../lib/shortcuts';
-import { closeTabWithUndo, openNewTab } from '../lib/tab-actions';
+import {
+  closeTabWithUndo,
+  handleTabCloseMenuAction,
+  openNewTab,
+  openTabRelative,
+} from '../lib/tab-actions';
+import { dispatchWorkspaceCommand } from '../lib/workspace-commands';
 import { selectActiveTab, useStore } from '../store/use-store';
 
 const activateSiblingTab = (offset: number) => {
@@ -19,6 +25,17 @@ const toggleCollapse = () => {
 };
 
 const shortcutHandlers: Record<ShortcutId, () => void> = {
+  focusEditor: () => dispatchWorkspaceCommand('focusEditor'),
+  renameTab: () => dispatchWorkspaceCommand('renameTab'),
+  openTheme: () => dispatchWorkspaceCommand('openTheme'),
+  openSettings: () => dispatchWorkspaceCommand('openSettings'),
+  openShortcuts: () => dispatchWorkspaceCommand('openShortcuts'),
+  toggleTheme: () => useStore.getState().toggleTheme(),
+  insertTabLeft: () => openTabRelative(useStore.getState().activeTabId, 'left'),
+  insertTabRight: () => openTabRelative(useStore.getState().activeTabId, 'right'),
+  closeTabsLeft: () => handleTabCloseMenuAction(useStore.getState().activeTabId, 'close-left'),
+  closeTabsRight: () => handleTabCloseMenuAction(useStore.getState().activeTabId, 'close-right'),
+  closeOtherTabs: () => handleTabCloseMenuAction(useStore.getState().activeTabId, 'close-others'),
   format: () => useStore.getState().format(),
   minify: () => useStore.getState().minify(),
   escape: () => useStore.getState().escape(),
@@ -32,16 +49,18 @@ const shortcutHandlers: Record<ShortcutId, () => void> = {
 };
 
 const isOverlayTarget = (target: EventTarget | null) =>
-  target instanceof Element && Boolean(target.closest('[role="dialog"], [role="listbox"]'));
+  target instanceof Element &&
+  Boolean(target.closest('[role="dialog"], [role="alertdialog"], [role="listbox"], [role="menu"]'));
 
 export const ShortcutManager = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat || event.isComposing) return;
       if (isOverlayTarget(event.target)) return;
-      const shortcut = findShortcut(event);
+      const shortcut = findShortcut(event, useStore.getState().shortcutModifiers);
       if (!shortcut) return;
       event.preventDefault();
+      event.stopPropagation();
       shortcutHandlers[shortcut]();
     };
 

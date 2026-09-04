@@ -10,9 +10,7 @@ import {
 import { Button } from '@heroui/react';
 import {
   ArrowLeftRight,
-  Braces,
   Check,
-  ChevronRight,
   Copy,
   Eye,
   FoldVertical,
@@ -22,352 +20,50 @@ import {
   WrapText,
 } from 'lucide-react';
 import { serializeForCopy, TREE_INDENT_PIXEL_RATIO } from '../lib/indent';
-import { isStrictJson, pathKey, type NodePath } from '../lib/parse';
-import { getAriaShortcut } from '../lib/shortcuts';
+import {
+  isLargeResult,
+  LARGE_INPUT_LENGTH,
+  LARGE_VALUE_PREVIEW_LENGTH,
+} from '../lib/large-document';
 import { bindTreeTabScrollPosition } from '../lib/tab-scroll';
 import { toast } from '../lib/toast';
+import { getTreeLineCount } from '../lib/tree-metrics';
+import { useShortcutLabels } from '../lib/use-shortcut-labels';
 import { selectActiveTab, useStore } from '../store/use-store';
 import { ShortcutHint } from './shortcut-hint';
 import { Tip } from './tip';
-import { TreeActionButton } from './tree-action-button';
-import { TreeCopyButton } from './tree-copy-button';
+import { TreeNode } from './tree-node';
+import { VirtualTree } from './virtual-tree';
 
 const COPY_FEEDBACK_DURATION_MS = 1500;
-const PUNCTUATION_CLASS_NAME = 'tree-token-punctuation';
-
-/* ---------- 叶子值：类型语义色 ---------- */
-
-const LeafValue = ({
-  value,
-  shouldShowFullLongStrings,
-}: {
-  value: unknown;
-  shouldShowFullLongStrings: boolean;
-}) => {
-  if (value === null) {
-    return <span className="tree-token-null italic">null</span>;
-  }
-  switch (typeof value) {
-    case 'string': {
-      const stringValue = value as string;
-      // 转义显示：内嵌引号、换行等以 JSON 形式可见
-      const escapedString = JSON.stringify(stringValue).slice(1, -1);
-      const isLong = escapedString.length > 120;
-      const displayedString =
-        shouldShowFullLongStrings || !isLong ? escapedString : `${escapedString.slice(0, 120)}…`;
-      const renderedValue = (
-        <span className="tree-token-string break-all">"{displayedString}"</span>
-      );
-      if (shouldShowFullLongStrings || !isLong) return renderedValue;
-      return (
-        <Tip
-          label={
-            <span className="-mr-2 block max-h-[min(50dvh,24rem)] max-w-md overflow-y-auto overscroll-contain break-all pr-px text-justify [text-justify:inter-character]">
-              {escapedString}
-            </span>
-          }
-        >
-          {renderedValue}
-        </Tip>
-      );
-    }
-    case 'number':
-      return <span className="tree-token-number">{String(value)}</span>;
-    case 'boolean':
-      return <span className="tree-token-boolean">{String(value)}</span>;
-    default:
-      return <span className="text-foreground/60">{String(value)}</span>;
-  }
-};
-
-/* ---------- key 标签：属性名 / 数组索引 ---------- */
-
-const KeyLabel = ({ label }: { label: string }) => {
-  return <span className="tree-token-key shrink-0">"{label}"</span>;
-};
-
-/** 尾逗号(非末位条目),呈现 JSON 文本形态 */
-const Comma = () => <span className={PUNCTUATION_CLASS_NAME}>,</span>;
-
-type ParseStringButtonProps = {
-  value: string;
-  title: string;
-};
-
-const ParseStringButton = ({ value, title }: ParseStringButtonProps) => {
-  const handleParse = () => useStore.getState().openTab(value, title);
-
-  return (
-    <TreeActionButton onClick={handleParse}>
-      Parse
-      <Braces size={10} />
-    </TreeActionButton>
-  );
-};
-
-/* ---------- 树节点（递归） ---------- */
-
-type TreeNodeProps = {
-  label: string | null;
-  value: unknown;
-  path: NodePath;
-  collapsed: Set<string>;
-  touched: Set<string>;
-  shouldShowFullLongStrings: boolean;
-  /** 本条目之后还有兄弟条目时显示尾逗号 */
-  hasTrailingComma?: boolean;
-  onToggle: (key: string) => void;
-  /** 嵌套深度(根 = 0),用于行盒外扩为整行 */
-  depth?: number;
-  /** 每层内容缩进像素值,与 tree-body 的 --tree-indent-size 同源 */
-  indent?: number;
-};
-
-/** 行盒外扩为整行:负 margin 抵消 depth 层缩进、padding 原位补回内容位置,hover 背景即整行。
-    每层缩进 = ml7 + pl12 + 竖线边框1 + 内容缩进;
-    闭合括号行位于 tree-children-inner 内、未穿过内容缩进,比内容行少补一个 indent。
-    像素值在 JS 侧算好,内联样式只保留最简 calc,避免跨内核兼容差异。 */
-const fullRowStyle = (
-  depth: number,
-  indentPx: number,
-  isClosingRow = false,
-): CSSProperties | undefined => {
-  if (depth === 0) return undefined;
-  const shift = depth * (20 + indentPx) - (isClosingRow ? indentPx : 0);
-  return {
-    marginLeft: `${-shift}px`,
-    paddingLeft: `calc(3.5ch + ${shift}px)`,
-  };
-};
-
-export const TreeNode = ({
-  label,
-  value,
-  path,
-  collapsed,
-  touched,
-  shouldShowFullLongStrings,
-  hasTrailingComma,
-  onToggle,
-  depth = 0,
-  indent = 4,
-}: TreeNodeProps): ReactNode => {
-  const isArray = Array.isArray(value);
-  const isObject = !isArray && value !== null && typeof value === 'object';
-
-  if (!isArray && !isObject) {
-    const embeddedJsonTitle =
-      label ??
-      (typeof path.at(-1) === 'number' ? `数组项 ${Number(path.at(-1)) + 1}` : '嵌套 JSON');
-    const canParse = typeof value === 'string' && isStrictJson(value);
-    return (
-      <div
-        style={fullRowStyle(depth, indent)}
-        className="tree-line group flex items-baseline gap-1.5 rounded px-0.5 font-mono text-[13px] leading-6 hover:bg-foreground/5"
-      >
-        <span className="w-4 shrink-0" />
-        {label !== null && (
-          <>
-            <KeyLabel label={label} />
-            <span className={`shrink-0 ${PUNCTUATION_CLASS_NAME}`}>:</span>
-          </>
-        )}
-        {canParse && <ParseStringButton value={value} title={embeddedJsonTitle} />}
-        <LeafValue value={value} shouldShowFullLongStrings={shouldShowFullLongStrings} />
-        {hasTrailingComma && <Comma />}
-        <TreeCopyButton value={value} />
-      </div>
-    );
-  }
-
-  const entries: [string | number, unknown][] = isArray
-    ? (value as unknown[]).map((item, index) => [index, item])
-    : Object.entries(value as Record<string, unknown>);
-  const openingBracket = isArray ? '[' : '{';
-  const closingBracket = isArray ? ']' : '}';
-
-  if (entries.length === 0) {
-    return (
-      <div
-        style={fullRowStyle(depth, indent)}
-        className="tree-line flex items-baseline gap-1.5 px-0.5 font-mono text-[13px] leading-6"
-      >
-        <span className="w-4 shrink-0" />
-        {label !== null && (
-          <>
-            <KeyLabel label={label} />
-            <span className={PUNCTUATION_CLASS_NAME}>:</span>
-          </>
-        )}
-        <span className={PUNCTUATION_CLASS_NAME}>
-          {openingBracket}
-          {closingBracket}
-        </span>
-        {hasTrailingComma && <Comma />}
-      </div>
-    );
-  }
-
-  const nodeKey = pathKey(path);
-  const isOpen = !collapsed.has(nodeKey);
-  const lineCount = useMemo(() => countLines(value), [value]);
-  const summary = isArray
-    ? `${entries.length} 项`
-    : `{ ${entries
-        .slice(0, 3)
-        .map(([entryKey]) => entryKey)
-        .join(', ')}${entries.length > 3 ? ', …' : ''} }`;
-
-  const handleToggleRow = () => {
-    // 拖选文本时的 click 不是折叠意图
-    if (window.getSelection()?.toString()) return;
-    onToggle(nodeKey);
-  };
-
-  return (
-    <div className="font-mono text-[13px] leading-6">
-      <div
-        style={fullRowStyle(depth, indent)}
-        className="tree-line tree-line--toggle group flex items-baseline gap-1.5 rounded px-0.5 hover:bg-foreground/5"
-        onClick={handleToggleRow}
-      >
-        {/* 箭头绝对定位固定在根节点箭头列(不随缩进漂移),行内 w-4 占位维持内容对齐 */}
-        <span className="tree-chevron grid size-4 self-center place-items-center text-foreground/40">
-          <ChevronRight
-            size={12}
-            className={`transition-transform duration-150 ${isOpen ? 'rotate-90' : ''}`}
-          />
-        </span>
-        <span className="w-4 shrink-0" />
-        {label !== null && (
-          <>
-            <KeyLabel label={label} />
-            <span className={PUNCTUATION_CLASS_NAME}>:</span>
-          </>
-        )}
-        <span className={PUNCTUATION_CLASS_NAME}>{openingBracket}</span>
-        {!isOpen && (
-          <>
-            <span className="truncate text-left text-foreground/45">{summary}</span>
-            <span className={PUNCTUATION_CLASS_NAME}>{closingBracket}</span>
-            {hasTrailingComma && <Comma />}
-          </>
-        )}
-        <TreeCopyButton value={value} />
-      </div>
-      {/* 未挂载的折叠子树:counter 占位补足行数,保证其后行号与展开时一致 */}
-      {!isOpen && !touched.has(nodeKey) && (
-        <span
-          className="tree-line-holder"
-          style={{ counterIncrement: `treeline ${lineCount - 1}` }}
-        />
-      )}
-      {/* 展开过的子树保留 DOM 由 grid 0fr→1fr 做折叠动画;从未展开的保持懒渲染 */}
-      {(isOpen || touched.has(nodeKey)) && (
-        <TreeChildren
-          isOpen={isOpen}
-          hasTrailingComma={hasTrailingComma}
-          closingBracket={closingBracket}
-          depth={depth + 1}
-          indent={indent}
-        >
-          {entries.map(([entryKey, entryValue], index) => (
-            <TreeNode
-              key={String(entryKey)}
-              label={isArray ? null : String(entryKey)}
-              value={entryValue}
-              path={[...path, entryKey]}
-              collapsed={collapsed}
-              touched={touched}
-              shouldShowFullLongStrings={shouldShowFullLongStrings}
-              hasTrailingComma={index < entries.length - 1}
-              onToggle={onToggle}
-              depth={depth + 1}
-              indent={indent}
-            />
-          ))}
-        </TreeChildren>
-      )}
-    </div>
-  );
-};
-
-/* ---------- 子树行数(用于折叠占位补号) ---------- */
-
-/** 该值展开后占的行数:容器=头+子孙+闭合,叶子=1,空容器=1 */
-function countLines(value: unknown): number {
-  if (Array.isArray(value)) {
-    return value.length === 0
-      ? 1
-      : 2 + value.reduce<number>((total, item) => total + countLines(item), 0);
-  }
-  if (value && typeof value === 'object') {
-    const values = Object.values(value as Record<string, unknown>);
-    return values.length === 0
-      ? 1
-      : 2 + values.reduce<number>((total, item) => total + countLines(item), 0);
-  }
-  return 1;
-}
-
-/* ---------- 子树容器:展开/收起动画 ---------- */
-
-const TreeChildren = ({
-  isOpen,
-  hasTrailingComma,
-  closingBracket,
-  depth,
-  indent,
-  children,
-}: {
-  isOpen: boolean;
-  hasTrailingComma?: boolean;
-  closingBracket: string;
-  depth: number;
-  indent: number;
-  children: ReactNode;
-}) => {
-  // 首次挂载直接呈现最终状态；保留 DOM 后的开闭变化继续使用 grid 过渡。
-  const [hasEntered, setHasEntered] = useState(isOpen);
-  const hasMountedRef = useRef(false);
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      return;
-    }
-    const animationFrame = requestAnimationFrame(() => setHasEntered(isOpen));
-    return () => cancelAnimationFrame(animationFrame);
-  }, [isOpen]);
-  // 收起后保留 DOM(grid 0fr):行继续占 counter,后续行号保持原号不重排
-  return (
-    <div className="tree-children ml-[7px] pl-3" data-expanded={isOpen} data-open={hasEntered}>
-      <div className="tree-children-inner border-l border-transparent">
-        <div className="tree-children-content">{children}</div>
-        <div
-          style={fullRowStyle(depth, indent, true)}
-          className={`tree-line ${PUNCTUATION_CLASS_NAME} rounded px-0.5 hover:bg-foreground/5`}
-        >
-          {closingBracket}
-          {hasTrailingComma && <Comma />}
-        </div>
-      </div>
-    </div>
-  );
-};
-
+const LARGE_DOCUMENT_NOTICE = `大文档预览 · 按需渲染，长值仅预览前 ${LARGE_VALUE_PREVIEW_LENGTH} 字符；复制保留完整内容`;
 /* ---------- 面板头部 / 各状态面板 ---------- */
 
-const PaneHeader = ({ title, extra }: { title: string; extra?: ReactNode }) => {
+const PaneHeader = ({
+  title,
+  notice,
+  extra,
+}: {
+  title: string;
+  notice?: string;
+  extra?: ReactNode;
+}) => {
   return (
-    <div className="flex min-h-10 shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
-      <Eye size={13} />
-      <span className="font-medium">{title}</span>
-      <div className="panel-header-actions ml-auto flex items-center gap-0.5">{extra}</div>
+    <div className="flex min-h-10 min-w-0 shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
+      <Eye size={13} className="shrink-0" />
+      <span className="shrink-0 whitespace-nowrap font-medium">{title}</span>
+      {notice && (
+        <Tip label={notice} triggerClassName="min-w-0 flex-1 text-left text-foreground/50">
+          <span className="block truncate">{notice}</span>
+        </Tip>
+      )}
+      <div className="panel-header-actions ml-auto flex shrink-0 items-center gap-0.5">{extra}</div>
     </div>
   );
 };
 
 export const TreeView = () => {
+  const { getAriaShortcut, getShortcutRef } = useShortcutLabels();
   const activeTab = useStore(selectActiveTab);
   const result = activeTab.result;
   const data = result?.ok ? result.data : null;
@@ -381,17 +77,35 @@ export const TreeView = () => {
   const handleToggleNode = useStore(state => state.toggleCollapse);
   const handleExpandAll = useStore(state => state.expandAll);
   const handleCollapseAll = useStore(state => state.collapseAll);
+  const isLargeDocument = activeTab.input.length >= LARGE_INPUT_LENGTH || isLargeResult(result);
+  // 输入去抖期间仍展示同一份解析结果，不让旧树随每次击键、Toast 或主题开关重渲染。
+  const treeContent = useMemo(
+    () => (
+      <TreeNode
+        label={null}
+        value={data}
+        path={[]}
+        collapsed={collapsed}
+        touched={touched}
+        shouldShowFullLongStrings={shouldShowFullLongStrings}
+        onToggle={handleToggleNode}
+        indent={indentSize * TREE_INDENT_PIXEL_RATIO}
+      />
+    ),
+    [data, collapsed, touched, shouldShowFullLongStrings, handleToggleNode, indentSize],
+  );
   const [isCopied, setIsCopied] = useState(false);
   const copyFeedbackTimerRef = useRef<number | null>(null);
   const treeScrollRef = useRef<HTMLDivElement>(null);
   const treeStyle = {
     '--tree-indent-size': `${indentSize * TREE_INDENT_PIXEL_RATIO}px`,
+    '--tree-line-number-width': `${Math.max(3, String(getTreeLineCount(data)).length)}ch`,
   } as CSSProperties;
 
   useLayoutEffect(() => {
     const element = treeScrollRef.current;
     return element ? bindTreeTabScrollPosition(activeTab.id, element) : undefined;
-  }, [activeTab.id]);
+  }, [activeTab.id, isLargeDocument]);
 
   useEffect(
     () => () => {
@@ -427,6 +141,7 @@ export const TreeView = () => {
     <section aria-label="树形预览" className="pane-responsive-actions flex h-full min-h-0 flex-col">
       <PaneHeader
         title="树形预览"
+        notice={isLargeDocument ? LARGE_DOCUMENT_NOTICE : undefined}
         extra={
           <>
             <Tip label={isCopied ? '已复制' : '复制内容'}>
@@ -462,6 +177,7 @@ export const TreeView = () => {
                 size="sm"
                 variant="ghost"
                 aria-keyshortcuts={getAriaShortcut('toggleWrap')}
+                ref={getShortcutRef('toggleWrap')}
                 onPress={handleToggleWrap}
               >
                 <span className="relative inline-grid place-items-center">
@@ -489,6 +205,7 @@ export const TreeView = () => {
                 size="sm"
                 variant="ghost"
                 aria-keyshortcuts={getAriaShortcut('toggleCollapse')}
+                ref={getShortcutRef('toggleCollapse')}
                 onPress={handleToggleAll}
               >
                 <span className="relative inline-grid place-items-center">
@@ -507,25 +224,32 @@ export const TreeView = () => {
           </>
         }
       />
-      <div
-        ref={treeScrollRef}
-        role="region"
-        aria-label="树形预览内容"
-        className={`tree-body min-h-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
-        data-tree-theme={treeTheme}
-        style={treeStyle}
-      >
-        <TreeNode
-          label={null}
-          value={data}
-          path={[]}
+      {isLargeDocument ? (
+        <VirtualTree
+          key={activeTab.id}
+          tabId={activeTab.id}
+          data={data}
           collapsed={collapsed}
           touched={touched}
+          shouldWrap={shouldWrap}
           shouldShowFullLongStrings={shouldShowFullLongStrings}
-          onToggle={handleToggleNode}
           indent={indentSize * TREE_INDENT_PIXEL_RATIO}
+          theme={treeTheme}
+          style={treeStyle}
+          onToggle={handleToggleNode}
         />
-      </div>
+      ) : (
+        <div
+          ref={treeScrollRef}
+          role="region"
+          aria-label="树形预览内容"
+          className={`tree-body min-h-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
+          data-tree-theme={treeTheme}
+          style={treeStyle}
+        >
+          {treeContent}
+        </div>
+      )}
     </section>
   );
 };

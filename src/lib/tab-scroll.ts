@@ -8,12 +8,13 @@ import {
   type IndexedDbEntry,
 } from './indexed-db-storage';
 
-export type TabScrollArea = 'editor' | 'tree';
+type TabScrollArea = 'editor' | 'tree';
 
-type ScrollAnchor = {
+export type ScrollAnchor = {
   kind: TabScrollArea;
   value: number;
   viewportOffset: number;
+  nodeKey?: string;
 };
 
 type ScrollPosition = {
@@ -30,6 +31,7 @@ type TabScrollValue = ScrollPosition & {
 
 type ScrollAdapter = {
   element: HTMLElement;
+  restoreTimeoutMs?: number;
   isLayoutReady?: () => boolean;
   readAnchor: () => ScrollAnchor | undefined;
   resolveAnchorTop: (anchor: ScrollAnchor) => number | null;
@@ -37,6 +39,7 @@ type ScrollAdapter = {
 
 type ActiveScrollElement = {
   adapter: ScrollAdapter;
+  isRestoring: () => boolean;
   isFrozen: boolean;
   latest: ScrollPosition;
   tabId: string;
@@ -63,6 +66,7 @@ const restoreAnchor = (value: unknown): ScrollAnchor | undefined => {
         kind: anchor.kind,
         value: anchor.value,
         viewportOffset: anchor.viewportOffset,
+        ...(typeof anchor.nodeKey === 'string' ? { nodeKey: anchor.nodeKey } : {}),
       }
     : undefined;
 };
@@ -231,6 +235,7 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
   let viewportHeight = adapter.element.clientHeight;
   const active: ActiveScrollElement = {
     adapter,
+    isRestoring: () => isRestoring,
     isFrozen: false,
     latest: saved ?? readPosition(adapter),
     tabId,
@@ -277,6 +282,7 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
   const startRestore = (position: ScrollPosition) => {
     if (restoreFrame !== null) window.cancelAnimationFrame(restoreFrame);
     isRestoring = true;
+    active.latest = position;
     const startedAt = performance.now();
     let stableFrames = 0;
     let previousLayoutKey: string | null = null;
@@ -296,7 +302,7 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
 
       if (
         stableFrames >= REQUIRED_STABLE_FRAMES ||
-        performance.now() - startedAt >= MAX_RESTORE_DURATION
+        performance.now() - startedAt >= (adapter.restoreTimeoutMs ?? MAX_RESTORE_DURATION)
       ) {
         finishRestore();
         return;
@@ -334,7 +340,7 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
   adapter.element.addEventListener('keydown', handleKeyDown, true);
   resizeObserver.observe(adapter.element);
 
-  return () => {
+  const dispose = () => {
     if (!isRestoring && !active.isFrozen) {
       rememberScrollPosition(tabId, area, readPosition(adapter));
       scheduleScrollPersistence();
@@ -350,11 +356,25 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
     adapter.element.removeEventListener('pointerdown', handlePointerDown);
     adapter.element.removeEventListener('keydown', handleKeyDown, true);
   };
+  return Object.assign(dispose, {
+    save,
+    scrollToEdge: (edge: 'start' | 'end') =>
+      startRestore({
+        ...readPosition(adapter),
+        top: edge === 'end' ? getMaximumTop(adapter.element) : 0,
+        isPinnedToBottom: edge === 'end',
+        anchor: undefined,
+      }),
+    refresh: () => {
+      if (!active.isFrozen) startRestore(active.latest);
+    },
+  });
 };
 
 export const captureActiveTabScrollPositions = () => {
   for (const [area, active] of activeScrollElements) {
-    active.latest = readPosition(active.adapter);
+    // 测量恢复期间捕获目标锚点，不把暂时的估计布局当成用户的新位置。
+    if (!active.isRestoring()) active.latest = readPosition(active.adapter);
     active.isFrozen = true;
     rememberScrollPosition(active.tabId, area, active.latest);
   }
@@ -409,6 +429,9 @@ export const bindEditorTabScrollPosition = (tabId: string, view: EditorView) =>
 
 const getTreeLines = (element: HTMLElement) =>
   Array.from(element.querySelectorAll<HTMLElement>(TREE_LINE_SELECTOR));
+
+export const bindVirtualTreeTabScrollPosition = (tabId: string, adapter: ScrollAdapter) =>
+  bindScrollPosition(tabId, 'tree', adapter);
 
 export const bindTreeTabScrollPosition = (tabId: string, element: HTMLElement) =>
   bindScrollPosition(tabId, 'tree', {
