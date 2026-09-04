@@ -1,22 +1,15 @@
 import type { Key } from 'react';
-import { Dropdown, useOverlayState } from '@heroui/react';
-import {
-  AlignLeft,
-  Check,
-  Keyboard,
-  Menu,
-  Moon,
-  Palette,
-  Settings,
-  Sparkles,
-  Sun,
-} from 'lucide-react';
+import { Dropdown, Header, useOverlayState } from '@heroui/react';
+import { AlignLeft, Check, Keyboard, Menu, Moon, Palette, Settings, Sun } from 'lucide-react';
 import { INDENT_OPTIONS, type IndentSize } from '../lib/indent';
-import { TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree-theme';
+import { isSampleId, SAMPLE_OPTIONS } from '../lib/sample';
+import { useShortcutLabels } from '../lib/use-shortcut-labels';
 import { useStore } from '../store/use-store';
 import { AppSettings } from './app-settings';
 import { GithubMark } from './github-mark';
 import { ShortcutHelp } from './shortcut-help';
+import { ShortcutKbd } from './shortcut-hint';
+import { ThemeSettings } from './theme-settings';
 import type { ToolbarActionVisibility } from './use-toolbar-action-visibility';
 
 const REPOSITORY_URL = 'https://github.com/blue-a11y/deep-brace-json';
@@ -26,21 +19,22 @@ type ToolbarMenuProps = {
 };
 
 export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
-  const handleLoadSample = useStore(state => state.loadSample);
+  const { getAriaShortcut, getShortcutRef } = useShortcutLabels();
   const handleToggleTheme = useStore(state => state.toggleTheme);
+  const handleLoadSample = useStore(state => state.loadSample);
   const isDark = useStore(state => state.isDark);
   const indentSize = useStore(state => state.indentSize);
   const handleIndentSizeChange = useStore(state => state.setIndentSize);
-  const treeTheme = useStore(state => state.treeTheme);
-  const handleTreeThemeChange = useStore(state => state.setTreeTheme);
+  const appearanceOverlayState = useOverlayState();
   const shortcutOverlayState = useOverlayState();
   const settingsOverlayState = useOverlayState();
 
   const handleMenuAction = (key: Key) => {
-    if (key === 'sample') handleLoadSample();
+    if (isSampleId(key)) handleLoadSample(key);
     if (key === 'shortcuts') shortcutOverlayState.open();
     if (key === 'settings') settingsOverlayState.open();
-    if (key === 'theme') handleToggleTheme();
+    if (key === 'appearance') appearanceOverlayState.open();
+    if (key === 'page-theme') handleToggleTheme();
     if (key === 'github') {
       window.open(REPOSITORY_URL, '_blank', 'noopener,noreferrer');
     }
@@ -49,12 +43,6 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
   const handleIndentAction = (key: Key) => {
     if (typeof key === 'number' && INDENT_OPTIONS.includes(key as IndentSize)) {
       handleIndentSizeChange(key as IndentSize);
-    }
-  };
-
-  const handleTreeThemeAction = (key: Key) => {
-    if (typeof key === 'string' && TREE_THEME_OPTIONS.some(option => option.value === key)) {
-      handleTreeThemeChange(key as TreeTheme);
     }
   };
 
@@ -70,10 +58,22 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
         <Dropdown.Popover placement="bottom end">
           <Dropdown.Menu aria-label="工具菜单" className="min-w-60" onAction={handleMenuAction}>
             {!actionVisibility.shouldShowSample && (
-              <Dropdown.Item id="sample" textValue="载入示例">
-                <Sparkles size={16} />
-                <span>载入示例</span>
-              </Dropdown.Item>
+              <Dropdown.Section aria-label="示例数据">
+                <Header>载入示例</Header>
+                {SAMPLE_OPTIONS.map(option => (
+                  <Dropdown.Item
+                    key={option.id}
+                    id={option.id}
+                    textValue={option.label}
+                    aria-label={option.label}
+                  >
+                    <span className="flex flex-col gap-0.5">
+                      <span>{option.label}</span>
+                      <span className="text-xs text-muted">{option.description}</span>
+                    </span>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Section>
             )}
 
             {!actionVisibility.shouldShowIndent && (
@@ -101,49 +101,57 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
               </Dropdown.SubmenuTrigger>
             )}
 
-            {!actionVisibility.shouldShowTreeTheme && (
-              <Dropdown.SubmenuTrigger>
-                <Dropdown.Item id="tree-theme" textValue={`树形主题：${treeTheme}`}>
-                  <Palette size={16} />
-                  <span>树形主题</span>
-                  <span className="ml-auto max-w-24 truncate text-xs text-muted">
-                    {TREE_THEME_OPTIONS.find(option => option.value === treeTheme)?.label}
-                  </span>
-                  <Dropdown.SubmenuIndicator />
-                </Dropdown.Item>
-                <Dropdown.Popover placement="left top">
-                  <Dropdown.Menu aria-label="树形主题" onAction={handleTreeThemeAction}>
-                    {TREE_THEME_OPTIONS.map(option => (
-                      <Dropdown.Item key={option.value} id={option.value} textValue={option.label}>
-                        {treeTheme === option.value ? (
-                          <Check className="text-primary" size={16} />
-                        ) : (
-                          <span className="size-4" />
-                        )}
-                        <span>{option.label}</span>
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown.Popover>
-              </Dropdown.SubmenuTrigger>
+            {!actionVisibility.shouldShowAppearance && (
+              <Dropdown.Item
+                id="appearance"
+                textValue="主题"
+                aria-label="主题"
+                aria-keyshortcuts={getAriaShortcut('openTheme')}
+                ref={getShortcutRef('openTheme')}
+              >
+                <Palette size={16} />
+                <span>主题</span>
+                <ShortcutKbd shortcut="openTheme" className="ml-auto text-xs" variant="light" />
+              </Dropdown.Item>
             )}
 
             {!actionVisibility.shouldShowShortcuts && (
-              <Dropdown.Item id="shortcuts" textValue="快捷键">
+              <Dropdown.Item
+                id="shortcuts"
+                textValue="快捷键"
+                aria-label="快捷键"
+                aria-keyshortcuts={getAriaShortcut('openShortcuts')}
+                ref={getShortcutRef('openShortcuts')}
+              >
                 <Keyboard size={16} />
                 <span>快捷键</span>
+                <ShortcutKbd shortcut="openShortcuts" className="ml-auto text-xs" variant="light" />
               </Dropdown.Item>
             )}
             {!actionVisibility.shouldShowSettings && (
-              <Dropdown.Item id="settings" textValue="设置">
+              <Dropdown.Item
+                id="settings"
+                textValue="设置"
+                aria-label="设置"
+                aria-keyshortcuts={getAriaShortcut('openSettings')}
+                ref={getShortcutRef('openSettings')}
+              >
                 <Settings size={16} />
                 <span>设置</span>
+                <ShortcutKbd shortcut="openSettings" className="ml-auto text-xs" variant="light" />
               </Dropdown.Item>
             )}
             {!actionVisibility.shouldShowTheme && (
-              <Dropdown.Item id="theme" textValue={isDark ? '切换至浅色主题' : '切换至深色主题'}>
+              <Dropdown.Item
+                id="page-theme"
+                textValue={isDark ? '切换至浅色主题' : '切换至深色主题'}
+                aria-label={isDark ? '切换至浅色主题' : '切换至深色主题'}
+                aria-keyshortcuts={getAriaShortcut('toggleTheme')}
+                ref={getShortcutRef('toggleTheme')}
+              >
                 {isDark ? <Sun size={16} /> : <Moon size={16} />}
                 <span>{isDark ? '切换至浅色主题' : '切换至深色主题'}</span>
+                <ShortcutKbd shortcut="toggleTheme" className="ml-auto text-xs" variant="light" />
               </Dropdown.Item>
             )}
             {!actionVisibility.shouldShowGithub && (
@@ -161,6 +169,9 @@ export const ToolbarMenu = ({ actionVisibility }: ToolbarMenuProps) => {
       )}
       {!actionVisibility.shouldShowSettings && (
         <AppSettings overlayState={settingsOverlayState} shouldHideTrigger />
+      )}
+      {!actionVisibility.shouldShowAppearance && (
+        <ThemeSettings overlayState={appearanceOverlayState} shouldHideTrigger />
       )}
     </>
   );

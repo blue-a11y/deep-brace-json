@@ -4,7 +4,7 @@ import './index.css';
 import App from './app.tsx';
 import { hydratePanelLayoutStorage } from './lib/panel-layout-storage';
 import { hydrateTabScrollStorage } from './lib/tab-scroll';
-import { applyTheme, useStore } from './store/use-store';
+import { applyCodeFont, applyTheme, useStore } from './store/use-store';
 
 const renderApp = () => {
   createRoot(document.getElementById('root')!).render(
@@ -25,6 +25,7 @@ const initializeApp = async () => {
     console.warn('持久化状态恢复失败，已使用默认状态启动。', rejectedHydration.reason);
   }
   applyTheme(useStore.getState().isDark);
+  applyCodeFont(useStore.getState().codeFont);
   renderApp();
 };
 

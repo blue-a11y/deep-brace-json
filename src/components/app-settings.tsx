@@ -8,6 +8,8 @@ import {
 } from '@heroui/react';
 import { RotateCcw, Settings } from 'lucide-react';
 import { resetAllWithUndo } from '../lib/reset-actions';
+import { useShortcutLabels } from '../lib/use-shortcut-labels';
+import { useWorkspaceCommand } from '../lib/use-workspace-command';
 import { useStore } from '../store/use-store';
 
 type AppSettingsProps = {
@@ -19,6 +21,8 @@ export const AppSettings = ({ overlayState, shouldHideTrigger = false }: AppSett
   // 独立挂载时自带 overlay 状态,重置后才能主动收起弹窗
   const fallbackOverlayState = useOverlayState();
   const activeOverlayState = overlayState ?? fallbackOverlayState;
+  const { getAriaShortcut, getShortcutLabel, getShortcutRef } = useShortcutLabels();
+  useWorkspaceCommand('openSettings', () => activeOverlayState.open());
   const shouldShowFullLongStrings = useStore(state => state.shouldShowFullLongStrings);
   const handleShowFullLongStringsChange = useStore(state => state.setShouldShowFullLongStrings);
   const handleResetConfirm = () => {
@@ -32,6 +36,9 @@ export const AppSettings = ({ overlayState, shouldHideTrigger = false }: AppSett
         size="sm"
         variant="ghost"
         aria-label="打开全局设置"
+        aria-keyshortcuts={getAriaShortcut('openSettings')}
+        ref={getShortcutRef('openSettings')}
+        aria-description={getShortcutLabel('openSettings')}
         className={`${shouldHideTrigger ? 'hidden' : ''} w-9 shrink-0 px-0 md:w-8 xl:w-fit xl:px-3`}
       >
         <Settings size={15} />
@@ -86,8 +93,8 @@ export const AppSettings = ({ overlayState, shouldHideTrigger = false }: AppSett
                       </AlertDialog.Header>
                       <AlertDialog.Body>
                         <p className="text-sm leading-6 text-muted">
-                          将清空全部标签页内容，恢复默认偏好（主题、缩进、树形主题、长字符串展示），
-                          并回到示例数据。此操作不可撤销。
+                          将清空全部标签页内容，恢复默认偏好（主题、代码字体、缩进、树形主题、
+                          长字符串展示），并回到示例数据。此操作不可撤销。
                         </p>
                       </AlertDialog.Body>
                       <AlertDialog.Footer>

@@ -1,3 +1,18 @@
+export const SAMPLE_OPTIONS = [
+  { id: 'default', label: '普通示例', description: 'JSON5 与嵌套 JSON 字符串' },
+  { id: 'large-1mb', label: '大文档 · 约 1 MB', description: '2,000 条记录 · 约 10,000 个节点' },
+  {
+    id: 'large-10mb',
+    label: '大文档 · 约 10 MB',
+    description: '20,000 条记录 · 约 100,000 个节点',
+  },
+] as const;
+
+export type SampleId = (typeof SAMPLE_OPTIONS)[number]['id'];
+export type LargeSampleId = Exclude<SampleId, 'default'>;
+export const isSampleId = (value: unknown): value is SampleId =>
+  SAMPLE_OPTIONS.some(option => option.id === value);
+
 /** 展示 JSON5 特性及可二次解析的 JSON 字符串 */
 export const SAMPLE = `{
   // 一段 JSON5 —— key 可以不带引号

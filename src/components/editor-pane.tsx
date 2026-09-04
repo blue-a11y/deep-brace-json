@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { json } from '@codemirror/lang-json';
 import { foldGutter } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
@@ -6,8 +6,9 @@ import { Button } from '@heroui/react';
 import CodeMirror from '@uiw/react-codemirror';
 import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react';
 import { getCodeMirrorTheme } from '../lib/cm-theme';
-import { getAriaShortcut } from '../lib/shortcuts';
 import { bindEditorTabScrollPosition } from '../lib/tab-scroll';
+import { useShortcutLabels } from '../lib/use-shortcut-labels';
+import { useWorkspaceCommand } from '../lib/use-workspace-command';
 import { selectActiveTab, useStore } from '../store/use-store';
 import { ShortcutHint } from './shortcut-hint';
 import { Tip } from './tip';
@@ -28,8 +29,30 @@ const JSON_FOLD_GUTTER = foldGutter({
   },
 });
 const JSON_EDITOR_ATTRIBUTES = EditorView.contentAttributes.of({ 'aria-label': 'JSON 编辑器' });
+const JSON_EDITOR_EXTENSIONS = [
+  json(),
+  JSON_FOLD_GUTTER,
+  JSON_EDITOR_ATTRIBUTES,
+  EditorView.lineWrapping,
+];
+const JSON_EDITOR_BASIC_SETUP = {
+  foldGutter: false,
+  autocompletion: false,
+  highlightSelectionMatches: false,
+};
 
 export const EditorPane = () => {
+  const { getAriaShortcut, getShortcutRef } = useShortcutLabels();
+  const focusShortcut = getAriaShortcut('focusEditor');
+  const extensions = useMemo(
+    () => [
+      ...JSON_EDITOR_EXTENSIONS,
+      EditorView.contentAttributes.of({ 'aria-keyshortcuts': focusShortcut }),
+    ],
+    [focusShortcut],
+  );
+  const editorRef = useRef<EditorView | null>(null);
+  useWorkspaceCommand('focusEditor', () => editorRef.current?.focus());
   const activeTab = useStore(selectActiveTab);
   const input = activeTab.input;
   const isDark = useStore(state => state.isDark);
@@ -46,6 +69,7 @@ export const EditorPane = () => {
   const editorScrollCleanupRef = useRef<(() => void) | null>(null);
 
   const handleCreateEditor = (view: EditorView) => {
+    editorRef.current = view;
     editorScrollCleanupRef.current?.();
     editorScrollCleanupRef.current = bindEditorTabScrollPosition(activeTab.id, view);
   };
@@ -82,6 +106,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('format')}
+              ref={getShortcutRef('format')}
               onPress={handleFormat}
             >
               <Braces
@@ -100,6 +125,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('minify')}
+              ref={getShortcutRef('minify')}
               onPress={handleMinify}
             >
               <Minimize2
@@ -122,6 +148,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('escape')}
+              ref={getShortcutRef('escape')}
               onPress={handleEscape}
             >
               <Package
@@ -142,6 +169,7 @@ export const EditorPane = () => {
               size="sm"
               variant="ghost"
               aria-keyshortcuts={getAriaShortcut('unescape')}
+              ref={getShortcutRef('unescape')}
               onPress={handleUnescape}
             >
               <PackageOpen
@@ -160,12 +188,8 @@ export const EditorPane = () => {
           value={input}
           height="100%"
           theme={getCodeMirrorTheme(isDark, treeTheme)}
-          extensions={[json(), JSON_FOLD_GUTTER, JSON_EDITOR_ATTRIBUTES, EditorView.lineWrapping]}
-          basicSetup={{
-            foldGutter: false,
-            autocompletion: false,
-            highlightSelectionMatches: false,
-          }}
+          extensions={extensions}
+          basicSetup={JSON_EDITOR_BASIC_SETUP}
           onCreateEditor={handleCreateEditor}
           onChange={handleInputChange}
           placeholder="粘贴 JSON / JSON5，输入即自动解析…"

@@ -1,4 +1,6 @@
 import type { StateCreator } from 'zustand';
+import { startBackgroundParse, type ParseTask } from '../lib/background-parse';
+import { isLargeResult, LARGE_INPUT_LENGTH } from '../lib/large-document';
 import {
   collectContainerPaths,
   escapeText,
@@ -6,22 +8,23 @@ import {
   unescapeText,
   type ParseResult,
 } from '../lib/parse';
-import { SAMPLE } from '../lib/sample';
+import { isSampleId, SAMPLE, SAMPLE_OPTIONS } from '../lib/sample';
 import { captureActiveTabScrollPositions } from '../lib/tab-scroll';
 import { toast } from '../lib/toast';
 import {
   applyParseResult,
+  createDefaultTabs,
   createInitialTab,
   createJsonTab,
   createTabId,
   getActiveTab,
   getNextTabTitle,
+  INITIAL_TAB_ID,
   updateJsonTab,
 } from './tab-state';
 import type { DeepBraceState, JsonTabsSlice } from './types';
 
 const AUTO_PARSE_DELAY = 300;
-const autoParseTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 const notifyResult = (result: ParseResult) => {
   if (result.ok && result.isDegraded) {
@@ -36,20 +39,45 @@ const notifyResult = (result: ParseResult) => {
 };
 
 export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice> = (set, get) => {
+  const autoParseTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  const parseTasks = new Map<string, ParseTask>();
   const cancelAutoParse = (id: string) => {
     clearTimeout(autoParseTimers.get(id));
     autoParseTimers.delete(id);
+    parseTasks.get(id)?.cancel();
+    parseTasks.delete(id);
   };
 
   const patchTab = (id: string, updater: Parameters<typeof updateJsonTab>[2]) =>
     set(state => ({ tabs: updateJsonTab(state.tabs, id, updater) }));
 
-  const parseTab = (id: string, isQuiet = false) => {
+  const parseTab = (id: string, isQuiet = false, shouldPreserveView = false) => {
+    cancelAutoParse(id);
     const tab = get().tabs.find(item => item.id === id);
     if (!tab) return;
-    const result = parseInput(tab.input);
-    patchTab(id, current => applyParseResult(current, result));
-    if (!isQuiet) notifyResult(result);
+    const apply = (result: ParseResult) => {
+      patchTab(id, current => {
+        const parsed = applyParseResult(current, result);
+        return shouldPreserveView
+          ? { ...parsed, collapsed: tab.collapsed, touched: tab.touched }
+          : parsed;
+      });
+      if (!isQuiet) notifyResult(result);
+    };
+    if (tab.input.length < LARGE_INPUT_LENGTH) {
+      apply(parseInput(tab.input));
+      return;
+    }
+    const epoch = get().resetEpoch;
+    patchTab(id, current => ({ ...current, isParsing: true }));
+    const task = startBackgroundParse(tab.input, result => {
+      if (parseTasks.get(id) !== task) return;
+      parseTasks.delete(id);
+      const current = get().tabs.find(item => item.id === id);
+      if (!current || current.input !== tab.input || get().resetEpoch !== epoch) return;
+      apply(result);
+    });
+    parseTasks.set(id, task);
   };
 
   const rewrite = (transform: (data: unknown) => string, successMessage: string) => {
@@ -57,7 +85,7 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
     cancelAutoParse(tab.id);
     const result = parseInput(tab.input);
     if (!result.ok) {
-      patchTab(tab.id, current => ({ ...current, result, isDirty: false }));
+      patchTab(tab.id, current => ({ ...current, result, isDirty: false, isParsing: false }));
       notifyResult(result);
       return false;
     }
@@ -77,16 +105,46 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
     toast.success(successMessage);
   };
 
+  const closeTabs = (ids: string[]) => {
+    const idsToClose = new Set(ids);
+    const currentState = get();
+    const existingTabs = currentState.tabs.filter(tab => idsToClose.has(tab.id));
+    if (existingTabs.length === 0) return;
+    if (idsToClose.has(currentState.activeTabId)) captureActiveTabScrollPositions();
+    for (const tab of existingTabs) cancelAutoParse(tab.id);
+
+    set(state => {
+      const tabs = state.tabs.filter(tab => !idsToClose.has(tab.id));
+      if (tabs.length === 0) {
+        const tab = createInitialTab('');
+        return { tabs: [tab], activeTabId: tab.id };
+      }
+      if (!idsToClose.has(state.activeTabId)) return { tabs };
+
+      const activeIndex = state.tabs.findIndex(tab => tab.id === state.activeTabId);
+      const nextActiveTab =
+        state.tabs.slice(activeIndex + 1).find(tab => !idsToClose.has(tab.id)) ??
+        state.tabs
+          .slice(0, activeIndex)
+          .toReversed()
+          .find(tab => !idsToClose.has(tab.id));
+      return { tabs, activeTabId: nextActiveTab?.id ?? tabs[0].id };
+    });
+  };
+
   return {
-    tabs: [createInitialTab(SAMPLE)],
-    activeTabId: 'json-tab-1',
+    tabs: createDefaultTabs(SAMPLE),
+    activeTabId: INITIAL_TAB_ID,
+
+    cancelPendingParses: () => {
+      for (const id of new Set([...autoParseTimers.keys(), ...parseTasks.keys()]))
+        cancelAutoParse(id);
+    },
 
     bootstrap: () => {
-      set(state => ({
-        tabs: state.tabs.map(tab =>
-          tab.input.trim() ? applyParseResult(tab, parseInput(tab.input)) : tab,
-        ),
-      }));
+      for (const tab of get().tabs) {
+        if (tab.input.trim()) parseTab(tab.id, true, !tab.isDirty);
+      }
     },
 
     setActiveTab: activeTabId => {
@@ -96,45 +154,52 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
       }
     },
 
-    openTab: (input = '', title) => {
+    openTab: (input = '', title, insertIndex) => {
       captureActiveTabScrollPositions();
       const id = createTabId();
       set(state => {
-        const nextTitle = title?.trim() || getNextTabTitle(state.tabs);
-        const baseTab = createJsonTab(input, nextTitle, id);
-        const tab = input.trim() ? applyParseResult(baseTab, parseInput(input)) : baseTab;
-        const activeIndex = state.tabs.findIndex(item => item.id === state.activeTabId);
-        const insertAt = activeIndex < 0 ? state.tabs.length : activeIndex + 1;
+        const customTitle = title?.trim();
+        const nextTitle = customTitle || getNextTabTitle(state.tabs);
+        const baseTab = createJsonTab(input, nextTitle, id, true, Boolean(customTitle));
+        const tab =
+          input.trim() && input.length < LARGE_INPUT_LENGTH
+            ? applyParseResult(baseTab, parseInput(input))
+            : baseTab;
+        const insertAt =
+          typeof insertIndex === 'number'
+            ? Math.min(Math.max(insertIndex, 0), state.tabs.length)
+            : (() => {
+                const activeIndex = state.tabs.findIndex(item => item.id === state.activeTabId);
+                return activeIndex < 0 ? state.tabs.length : activeIndex + 1;
+              })();
         const tabs = [...state.tabs.slice(0, insertAt), tab, ...state.tabs.slice(insertAt)];
         return { tabs, activeTabId: id };
       });
+      if (input.length >= LARGE_INPUT_LENGTH) parseTab(id, true);
     },
 
-    closeTab: id => {
-      const currentState = get();
-      if (!currentState.tabs.some(tab => tab.id === id)) return;
-      if (currentState.activeTabId === id) captureActiveTabScrollPositions();
-      cancelAutoParse(id);
-      set(state => {
-        const index = state.tabs.findIndex(tab => tab.id === id);
-        if (index < 0) return state;
-        if (state.tabs.length === 1) {
-          const tab = createInitialTab('');
-          return { tabs: [tab], activeTabId: tab.id };
-        }
-        const tabs = state.tabs.filter(tab => tab.id !== id);
-        const activeTabId =
-          state.activeTabId === id ? tabs[Math.min(index, tabs.length - 1)].id : state.activeTabId;
-        return { tabs, activeTabId };
-      });
+    renameTab: (id, title) => {
+      const nextTitle = title.trim();
+      if (!nextTitle || !get().tabs.some(tab => tab.id === id)) return false;
+      patchTab(id, tab =>
+        tab.title === nextTitle && tab.hasCustomTitle
+          ? tab
+          : { ...tab, title: nextTitle, hasCustomTitle: true },
+      );
+      return true;
     },
 
-    restoreTab: (tab, target) => {
-      captureActiveTabScrollPositions();
+    closeTab: id => closeTabs([id]),
+    closeTabs,
+
+    restoreTab: (tab, target, shouldActivate = true) => {
+      if (shouldActivate && get().activeTabId !== tab.id) {
+        void captureActiveTabScrollPositions();
+      }
       const shouldRestore = !get().tabs.some(item => item.id === tab.id);
       set(state => {
         if (state.tabs.some(item => item.id === tab.id)) {
-          return { activeTabId: tab.id };
+          return shouldActivate ? { activeTabId: tab.id } : state;
         }
         const nextIndex = target.nextTabId
           ? state.tabs.findIndex(item => item.id === target.nextTabId)
@@ -149,20 +214,20 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
               ? previousIndex + 1
               : Math.min(target.index, state.tabs.length);
         const tabs = [...state.tabs.slice(0, insertAt), tab, ...state.tabs.slice(insertAt)];
-        return { tabs, activeTabId: tab.id };
+        return { tabs, activeTabId: shouldActivate ? tab.id : state.activeTabId };
       });
-      if (shouldRestore && tab.isDirty) {
+      if (shouldRestore && (tab.isDirty || tab.isParsing)) {
         autoParseTimers.set(
           tab.id,
-          setTimeout(() => parseTab(tab.id, true), AUTO_PARSE_DELAY),
+          setTimeout(() => parseTab(tab.id, true, !tab.isDirty), AUTO_PARSE_DELAY),
         );
       }
     },
 
     editInput: input => {
       const id = get().activeTabId;
-      patchTab(id, tab => ({ ...tab, input, isDirty: true }));
-      clearTimeout(autoParseTimers.get(id));
+      cancelAutoParse(id);
+      patchTab(id, tab => ({ ...tab, input, isDirty: true, isParsing: false }));
       autoParseTimers.set(
         id,
         setTimeout(() => parseTab(id, true), AUTO_PARSE_DELAY),
@@ -189,11 +254,32 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
       return true;
     },
 
-    loadSample: () => {
+    loadSample: (sampleId = 'default') => {
+      if (!isSampleId(sampleId)) return;
       const id = get().activeTabId;
       cancelAutoParse(id);
-      patchTab(id, tab => applyParseResult({ ...tab, input: SAMPLE }, parseInput(SAMPLE)));
-      toast.info('已载入示例');
+      if (sampleId === 'default') {
+        patchTab(id, tab => applyParseResult({ ...tab, input: SAMPLE }, parseInput(SAMPLE)));
+        toast.info('已载入示例');
+        return;
+      }
+      const originalInput = getActiveTab(get()).input;
+      const epoch = get().resetEpoch;
+      patchTab(id, tab => ({ ...tab, isParsing: true }));
+      const task = startBackgroundParse({ sample: sampleId }, (result, sampleInput) => {
+        if (parseTasks.get(id) !== task) return;
+        parseTasks.delete(id);
+        const current = get().tabs.find(tab => tab.id === id);
+        if (!current || current.input !== originalInput || get().resetEpoch !== epoch) return;
+        if (!result.ok || sampleInput === undefined) {
+          patchTab(id, tab => ({ ...tab, isParsing: false }));
+          toast.danger(result.ok ? '示例生成失败，请重试' : result.message);
+          return;
+        }
+        patchTab(id, tab => applyParseResult({ ...tab, input: sampleInput }, result));
+        toast.info(`已载入${SAMPLE_OPTIONS.find(option => option.id === sampleId)!.label}`);
+      });
+      parseTasks.set(id, task);
     },
 
     clear: () => {
@@ -204,6 +290,7 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
         input: '',
         result: null,
         isDirty: false,
+        isParsing: false,
         collapsed: new Set<string>(),
         touched: new Set<string>(),
       }));
@@ -235,7 +322,10 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
       const id = get().activeTabId;
       patchTab(id, tab => {
         if (!tab.result?.ok) return tab;
-        const collapsed = collectContainerPaths(tab.result.data, 'all');
+        const collapsed =
+          tab.input.length >= LARGE_INPUT_LENGTH || isLargeResult(tab.result)
+            ? new Set(['[]'])
+            : collectContainerPaths(tab.result.data, 'all');
         const touched = new Set(tab.touched);
         for (const key of collapsed) touched.add(key);
         return { ...tab, collapsed, touched };

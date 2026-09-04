@@ -1,14 +1,14 @@
 import JSON5 from 'json5';
 
-export type RootType = 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
+type RootType = 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null';
 
-export interface TreeStats {
+interface TreeStats {
   nodes: number;
   maxDepth: number;
   rootType: RootType;
 }
 
-export interface ParseOk {
+interface ParseOk {
   ok: true;
   data: unknown;
   stats: TreeStats;
@@ -16,7 +16,7 @@ export interface ParseOk {
   isDegraded?: boolean;
 }
 
-export interface ParseError {
+interface ParseError {
   ok: false;
   message: string;
   line?: number;
@@ -25,7 +25,7 @@ export interface ParseError {
 
 export type ParseResult = ParseOk | ParseError;
 
-export function rootTypeOf(value: unknown): RootType {
+function rootTypeOf(value: unknown): RootType {
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'array';
   switch (typeof value) {
@@ -45,16 +45,17 @@ export function rootTypeOf(value: unknown): RootType {
 function statsOf(data: unknown): TreeStats {
   let nodes = 0;
   let maxDepth = 0;
-  const walk = (value: unknown, depth: number) => {
+  const pending = [{ value: data, depth: 1 }];
+  while (pending.length > 0) {
+    const { value, depth } = pending.pop()!;
     nodes += 1;
     if (depth > maxDepth) maxDepth = depth;
     if (Array.isArray(value)) {
-      for (const item of value) walk(item, depth + 1);
+      for (const item of value) pending.push({ value: item, depth: depth + 1 });
     } else if (value && typeof value === 'object') {
-      for (const item of Object.values(value)) walk(item, depth + 1);
+      for (const item of Object.values(value)) pending.push({ value: item, depth: depth + 1 });
     }
-  };
-  walk(data, 1);
+  }
   return { nodes, maxDepth, rootType: rootTypeOf(data) };
 }
 
@@ -133,7 +134,13 @@ export function parseInput(text: string): ParseResult {
     return { ok: false, message: '输入为空' };
   }
   try {
-    const data = JSON5.parse(text);
+    // 标准 JSON 使用原生快路径；JSON5 语法和错误定位仍由原解析器兜底。
+    let data: unknown;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = JSON5.parse(text);
+    }
     return { ok: true, data, stats: statsOf(data) };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -154,6 +161,9 @@ export function parseInput(text: string): ParseResult {
 
 /** string value 只有能被原生 JSON 严格解析为对象或数组时才允许打开为新标签 */
 export const isStrictJson = (text: string): boolean => {
+  // 普通字符串不可能解析成容器，避免每个叶子都走一次抛异常的 JSON.parse。
+  const first = text.trimStart()[0];
+  if (first !== '{' && first !== '[' && first !== '"' && first !== '\\') return false;
   try {
     const value: unknown = JSON.parse(text);
     return (

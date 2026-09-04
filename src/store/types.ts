@@ -1,14 +1,19 @@
+import type { CodeFont } from '../lib/code-font';
 import type { IndentSize } from '../lib/indent';
 import type { ParseResult } from '../lib/parse';
+import type { SampleId } from '../lib/sample';
+import type { ShortcutModifiers } from '../lib/shortcuts';
 import type { TabScrollSnapshot } from '../lib/tab-scroll';
 import type { TreeTheme } from '../lib/tree-theme';
 
 export type JsonTab = {
   id: string;
   title: string;
+  hasCustomTitle: boolean;
   input: string;
   result: ParseResult | null;
   isDirty: boolean;
+  isParsing: boolean;
   collapsed: Set<string>;
   touched: Set<string>;
   shouldWrap: boolean;
@@ -24,10 +29,15 @@ export type JsonTabsSlice = {
   tabs: JsonTab[];
   activeTabId: string;
   bootstrap: () => void;
+  cancelPendingParses: () => void;
   setActiveTab: (id: string) => void;
-  openTab: (input?: string, title?: string) => void;
+  /** insertIndex 指定时插入到该下标(越界时收敛到首尾),未指定时插入到当前激活标签之后 */
+  openTab: (input?: string, title?: string, insertIndex?: number) => void;
+  renameTab: (id: string, title: string) => boolean;
   closeTab: (id: string) => void;
-  restoreTab: (tab: JsonTab, target: JsonTabRestoreTarget) => void;
+  closeTabs: (ids: string[]) => void;
+  /** 批量恢复时可禁用逐项激活,全部恢复后再统一选择活动标签。 */
+  restoreTab: (tab: JsonTab, target: JsonTabRestoreTarget, shouldActivate?: boolean) => void;
   editInput: (value: string) => void;
   parse: (isQuiet?: boolean) => void;
   /** 以下变换类 action 返回是否成功（用于触发图标反馈动画） */
@@ -35,7 +45,7 @@ export type JsonTabsSlice = {
   minify: () => boolean;
   escape: () => boolean;
   unescape: () => boolean;
-  loadSample: () => void;
+  loadSample: (sampleId?: SampleId) => void;
   clear: () => void;
   toggleWrap: () => void;
   toggleCollapse: (key: string) => void;
@@ -43,12 +53,16 @@ export type JsonTabsSlice = {
   collapseAll: () => void;
 };
 
-export type PreferencesSlice = {
+type PreferencesSlice = {
+  shortcutModifiers: ShortcutModifiers;
+  setShortcutModifiers: (value: ShortcutModifiers) => void;
   isDark: boolean;
+  codeFont: CodeFont;
   indentSize: IndentSize;
   treeTheme: TreeTheme;
   shouldShowFullLongStrings: boolean;
   toggleTheme: () => void;
+  setCodeFont: (value: CodeFont) => void;
   setIndentSize: (value: IndentSize) => void;
   setTreeTheme: (value: TreeTheme) => void;
   setShouldShowFullLongStrings: (value: boolean) => void;
@@ -56,9 +70,11 @@ export type PreferencesSlice = {
 
 /** 重置前状态的完整快照,用于 Toast 撤销恢复 */
 export type ResetSnapshot = {
+  shortcutModifiers: ShortcutModifiers;
   tabs: JsonTab[];
   activeTabId: string;
   isDark: boolean;
+  codeFont: CodeFont;
   indentSize: IndentSize;
   treeTheme: TreeTheme;
   shouldShowFullLongStrings: boolean;
@@ -67,10 +83,10 @@ export type ResetSnapshot = {
   splitLayout: string | null;
 };
 
-export type AppResetSlice = {
+type AppResetSlice = {
   /** 重置代数:每次重置/撤销自增,作为工作区容器 key 驱动整棵子树重挂载 */
   resetEpoch: number;
-  /** 清空全部数据恢复出厂默认:仅保留示例标签页,偏好回到默认值,滚动/分栏记忆一并清除 */
+  /** 清空全部数据恢复出厂默认:恢复示例和空白标签,偏好回到默认值,滚动/分栏记忆一并清除 */
   resetAll: () => Promise<void>;
   /** 撤销重置:恢复快照里的标签页、偏好、滚动与分栏布局 */
   restoreResetSnapshot: (snapshot: ResetSnapshot) => Promise<void>;

@@ -258,12 +258,15 @@ describe('structured IndexedDB storage', () => {
 
     try {
       useStore.getState().setShouldShowFullLongStrings(false);
+      useStore.getState().setCodeFont('source-code-pro');
       await originalFlush();
       const stateBeforeReset = useStore.getState();
       const snapshot = {
+        shortcutModifiers: stateBeforeReset.shortcutModifiers,
         tabs: stateBeforeReset.tabs,
         activeTabId: stateBeforeReset.activeTabId,
         isDark: stateBeforeReset.isDark,
+        codeFont: stateBeforeReset.codeFont,
         indentSize: stateBeforeReset.indentSize,
         treeTheme: stateBeforeReset.treeTheme,
         shouldShowFullLongStrings: stateBeforeReset.shouldShowFullLongStrings,
@@ -285,7 +288,10 @@ describe('structured IndexedDB storage', () => {
       await resetPromise;
       await expect(
         getIndexedDbValue<Record<string, unknown>>(INDEXED_DB_STORES.appState, 'current'),
-      ).resolves.toMatchObject({ shouldShowFullLongStrings: true });
+      ).resolves.toMatchObject({
+        codeFont: 'jetbrains-mono',
+        shouldShowFullLongStrings: true,
+      });
 
       flushSpy.mockImplementation(async () => {
         await restoreGate.promise;
@@ -305,7 +311,10 @@ describe('structured IndexedDB storage', () => {
       await restorePromise;
       await expect(
         getIndexedDbValue<Record<string, unknown>>(INDEXED_DB_STORES.appState, 'current'),
-      ).resolves.toMatchObject({ shouldShowFullLongStrings: false });
+      ).resolves.toMatchObject({
+        codeFont: 'source-code-pro',
+        shouldShowFullLongStrings: false,
+      });
     } finally {
       resetGate.resolve();
       restoreGate.resolve();

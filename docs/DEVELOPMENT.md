@@ -221,6 +221,31 @@ useEffect(() => {
   使旧任务失效；绑定 DOM 的滚动恢复在元素卸载或身份变化时取消。
 - DOM 操作只用于 CodeMirror、PanelGroup 等第三方集成或专门 adapter；普通组件不得用 DOM 作为
   跨刷新状态来源。
+- 性能缓存以真实依赖为边界：Tree 复用未变化的解析结果，CodeMirror 扩展仅在配置变化时重建。
+  解析结果按不可变对象图使用；大纲行数使用对象身份的 WeakMap 缓存，不原地修改解析结果，
+  不将派生缓存持久化，也不通过强引用长期保留旧文档。验证缓存时同时覆盖数据替换和配置更新。
+  标准 JSON 优先使用原生解析，失败后由 JSON5 保留扩展语法与错误行列；性能优化不得缩减语法支持。
+- 大输入自动解析与启动恢复使用 `background-parse.ts` 创建独占 Worker；任务完成、取消、失败或
+  超时必须释放资源。按标签和请求身份提交结果，编辑、关闭、重置、撤销重置时取消旧任务；
+  不允许失败后回退为主线程同步大解析。`isParsing` 为瞬时状态，不作为持久化恢复来源；它与
+  `isDirty` 分开，后台恢复期间不能误清除已持久化的折叠状态。
+- 示例选项集中在 `sample.ts`；`large-sample.ts` 的大数据仅由 Worker 按需生成、序列化并解析，
+  不在模块初始化或组件渲染时构造，也不以大型静态 JSON 文件打包。示例生成复用解析任务的标签、
+  请求身份与取消边界；成功后原子替换请求标签的输入和结果，失败保留原内容，不持久化生成请求。
+- 大文档阈值、文本预览长度与深度上限集中在 `large-document.ts`。输入长度至少 262,144 个
+  JavaScript 字符、解析节点超过 5,000 个或深度超过 40，任一条件满足即启用树虚拟化。
+  `tree-rows.ts` 迭代生成当前展开的大纲行，`virtual-tree.tsx` 使用 TanStack Virtual 只挂载
+  视口附近的动态高度行；`tree-node.tsx` 共享节点内容与交互，小文档仍使用递归树及折叠动画。
+  虚拟列表的占位高度和行位移由库同步更新，React 不重复写入这两个样式；避免批处理期间旧高度
+  截断末尾定位。Home / End 通过滚动适配器在测量稳定后定位，用户滚动或卸载可中止恢复。
+  原始输入与复制不截断；长值与键名预览上限为 500 字符，树深度上限为 40。
+  虚拟行使用节点路径的稳定键，大纲行号按完整子树计算，不使用视口索引或 DOM counter 计数。
+  滚动统一通过 `tab-scroll.ts` 适配器管理，以节点路径、大纲行号与行内偏移恢复；首次恢复先测量
+  锚点行，再应用偏移，字体或换行变化后重新测量，卸载时清理监听与恢复帧。
+  派生行、尺寸缓存不持久化。原生选区和浏览器查找无法覆盖未挂载树行，完整内容使用编辑器或复制。
+  虚拟化只限制 DOM 数量，不意味着解析对象、展开行模型和尺寸元数据的内存为常数。
+  性能验收必须使用真实剪贴板粘贴，并覆盖滚动到末尾、动态行高、折叠、标签切换及刷新定位，
+  不以 `fill` 或 Store 更新耗时代替原生粘贴链路。
 
 ### 5.3 React 状态与 Zustand
 
@@ -238,8 +263,11 @@ const isDark = useStore(state => state.isDark);
   状态变化不会触发重渲染。
 - action 负责表达用户意图；组件不得复制同一业务状态变换。
 - 解析结果、`isDirty`、动画状态、计时器和第三方实例等可重建或瞬时数据不得作为恢复来源。当前
-  `prepareTabForStorage` 为保持 `JsonTab` 形状会写入 `null` / `false` / 空集合占位，hydration
-  必须忽略并重建这些值；设计新 schema 时优先从持久化类型中彻底省略瞬时字段。
+  `prepareTabForStorage` 为保持 `JsonTab` 形状会为解析结果与脏标记写入 `null` / `false` 占位，
+  hydration 必须重建这些值；设计新 schema 时优先从持久化类型中彻底省略瞬时字段。
+- `collapsed` / `touched` 是与已解析内容绑定的节点路径集合，允许跨刷新保留折叠状态及展开动画。
+  输入处于 `isDirty` 时，持久化快照必须清空两者，避免自动解析前刷新把旧树状态套到新内容；
+  此过程不得修改仍供当前页面旧树渲染使用的集合。
 
 ## 6. IndexedDB、布局与滚动持久化
 
@@ -265,6 +293,9 @@ const isDark = useStore(state => state.isDark);
   `main.tsx`，同一次底层失败仍可能产生两类日志，属于下文受控例外。
 - 数据库收到 `versionchange` 时关闭连接；升级被其他页面阻塞时必须可诊断，不得永久等待。
 - `persistVersion` 是 app-state adapter 的保留字段，业务状态不得使用同名字段。
+- `localStorage` 只用于无需加入工作区快照、必须在启动时同步读取的微型 UI 标识；当前仅保存用户是否
+  明确选择“不再提示”标签新手引导。此类 key 必须集中定义在 `src/lib/storage.ts`，不得保存标签、
+  偏好、布局、滚动或用户输入，也不参与“重置所有数据”及其撤销。
 
 ### 6.2 新增持久化偏好检查表
 
@@ -280,8 +311,10 @@ const isDark = useStore(state => state.isDark);
 8. 自动化测试和浏览器刷新、重置、撤销测试。
 9. 顶层能力发生变化时同步双语 README；尚未完成或仍待验收时同步 `docs/ROADMAP.md`。
 
-新增标签字段还必须同步检查 `createInitialTab` / `createJsonTab`、`restoreJsonTab` 和
-`prepareTabForStorage`，明确该字段是持久状态还是可重建状态。
+新增标签字段还必须同步检查 `createDefaultTabs` / `createInitialTab` / `createJsonTab`、
+`restoreJsonTab` 和 `prepareTabForStorage`，明确该字段是持久状态还是可重建状态。首次启动、
+持久化降级和“重置所有数据”必须复用 `createDefaultTabs`，关闭到最后一个标签时的保护状态由
+`createInitialTab` 单独负责。
 
 ### 6.3 分栏与滚动
 
@@ -290,6 +323,8 @@ const isDark = useStore(state => state.isDark);
 - 滚动位置使用 `[tabId, area]` 作为记录身份；新增滚动区域时必须定义稳定 `area`、缓存生命周期、
   hydration、清理和 reset / undo 行为。
 - 恢复滚动时暂停旧元素写回，等待布局和内容稳定后 clamp 到有效范围；用户主动滚动应中断旧恢复。
+- 标签恢复命令仅在实际切换活动标签时冻结旧面板；批量恢复先还原标签，再统一选择活动标签，
+  不得依赖批处理中未提交到 DOM 的中间激活状态解除冻结。
 - 禁止使用固定等待若干帧的方式假定动画结束。若布局有动画，应检查几何稳定性，并设置最大等待
   时间，防止恢复任务永久占用。
 - 标签关闭后的孤立记录清理、撤销关闭和多页面并发策略属于产品行为；变更前先更新规划和测试，
@@ -341,6 +376,15 @@ const isDark = useStore(state => state.isDark);
 - 可点击父节点中的行内按钮必须处理冒泡，避免同时触发折叠、选择或打开行为。
 - 新增或修改的核心操作必须同时支持键盘；新增快捷键要处理 IME、重复按键、Ctrl / Meta 冲突和
   弹层聚焦。
+- 快捷键定义集中在 `shortcuts.ts`，使用物理 `event.code` 与全部修饰键精确匹配；默认
+  Alt/Option + Shift。统一修饰键偏好必须经过校验、结构化持久化，并覆盖重置 / 撤销。
+  `ShortcutKbd`、提示文字和 `aria-keyshortcuts` 必须响应同一偏好，禁止硬编码组合。
+  当前 React Aria 过滤的 `aria-keyshortcuts` 通过 `useShortcutLabels` 返回的 callback ref
+  补到真实元素；验收要检查浏览器 DOM，而不是只检查 JSX 属性。
+- 全局快捷键在 dialog、alertdialog、listbox 和 menu 内暂停；不能用浏览器合成按键测试声称
+  可以拦截系统保留组合。编辑器聚焦命令调用现有 EditorView 的 `focus()`，保留输入和选区。
+- 跨组件弹层 / 焦点命令通过 `workspace-commands.ts` 瞬时分发，组件使用
+  `useWorkspaceCommand` 订阅并清理；不把 DOM、弹层开关或焦点请求写入持久化 Store。
 - 新增或修改的非必要动效必须在 `prefers-reduced-motion: reduce` 下关闭或显著简化。
 - 新窗口链接必须带 `noopener,noreferrer`。
 
@@ -351,10 +395,10 @@ const isDark = useStore(state => state.isDark);
 | 动作     | 最小宽度 |
 | -------- | -------: |
 | GitHub   |    340px |
-| 页面主题 |    480px |
+| 明暗模式 |    480px |
 | 设置     |    560px |
 | 快捷键   |    600px |
-| 语法主题 |    680px |
+| 主题     |    680px |
 | 缩进     |    800px |
 | 示例     |    860px |
 
@@ -370,6 +414,10 @@ const isDark = useStore(state => state.isDark);
 
 当前 `<768px` 使用上下工作区，`>=768px` 使用可拖拽左右分栏；单个面板内容宽度不超过 520px 时，
 面板动作隐藏文字但保留图标和可访问名称。
+Logo 右侧「大文档优化」亮点在 `>=1280px` 显示，悬停或键盘聚焦展示后台解析、按需渲染和完整
+复制说明；既有其他亮点保持 `>=1536px` 显示。亮点优先让位于产品名与工具，不改变动作收纳阈值。
+亮点统一使用同等强调的胶囊标签、小图标与间距，每项支持悬停或键盘聚焦查看说明；标签样式与文案
+集中维护，不为各项添加独立状态或重复的 Tooltip 实现。
 
 ### 7.4 样式边界
 
@@ -474,8 +522,6 @@ git diff --check
   阈值后再整体分目录。
 - `src/store/tab-slice.ts` 仍编排少量 Toast 和滚动副作用；不得继续堆叠新的跨层流程，复杂用户命令
   应放入 `*-actions.ts`。
-- 自动解析 timer 当前没有在 reset 时统一清空；修改重置或解析调度时必须使旧任务按 `tabId` 失效，
-  不得让重置前任务提交到新工作区。
 - 设置 Modal 当前仍用 Footer 承载即时生效的重置入口，确认文案也与 8 秒撤销行为冲突；不得复制
   这一写法，统一调整由 `PLAN-002` 跟踪。
 - app-state 与滚动持久化已有显式串行队列，reset / undo 的完成 Promise 也等待分栏的清理或恢复
@@ -489,7 +535,6 @@ git diff --check
   IndexedDB 整体不可用时可能重复 warning；调整失败处理时应收敛为一次有上下文的启动报告。
 - `ResetSnapshot` 当前直接引用滚动 adapter 类型，并用分栏库的字符串作为布局快照；继续新增基础设施
   状态前应先建立 Store 自有 DTO，避免扩大耦合。
-- `JSON5.parse` 的一条路径仍继承第三方 `any` 返回类型；修改解析链路时收敛为 `unknown` 后再守卫。
 - 少量滚动捕获调用依赖“同步更新内存、后台落库”语义但未用 `void` 明示返回 Promise；修改调用点时
   必须明确等待或显式忽略，并处理最终 rejection。
 - 响应式阈值目前分布于 TypeScript media query、Tailwind 和 CSS container query；修改任何阈值都
