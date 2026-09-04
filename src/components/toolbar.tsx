@@ -124,7 +124,7 @@ export const Toolbar = () => {
           <Dropdown>
             <Dropdown.Trigger
               aria-label="选择示例"
-              className="flex h-8 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm outline-none hover:bg-default focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex h-8 shrink-0 items-center gap-1.5 rounded-xl px-2 text-sm outline-none hover:bg-default"
             >
               <Sparkles size={15} className="shrink-0" />
               <span>示例</span>
