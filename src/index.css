@@ -350,6 +350,18 @@ body {
 .tree-line--toggle {
   cursor: pointer;
 }
+.tree-line--search-active {
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+.tree-search-highlight {
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--color-accent) 42%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 18%, transparent);
+  color: inherit;
+}
+.tree-line--search-active .tree-search-highlight {
+  background: color-mix(in oklab, var(--color-accent) 58%, transparent);
+}
 /* 文本 token 精确呈现文字选择的 I 光标,行空白与标点保持默认 */
 .tree-token-key,
 .tree-token-index,
@@ -399,9 +411,135 @@ body {
   container-type: inline-size;
 }
 
+/* 树搜索常驻挂载以播放完整退场：关闭后延迟隐藏并禁用交互，不改变树滚动区域尺寸。 */
+.tree-search-popover {
+  transform: translateY(-5px);
+  transform-origin: top right;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 120ms ease-in,
+    transform 140ms cubic-bezier(0.4, 0, 1, 1),
+    visibility 0s linear 140ms;
+  will-change: transform, opacity;
+}
+.tree-search-popover[data-open='true'] {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 160ms ease-out,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s;
+}
+.tree-search-drag-handle {
+  user-select: none;
+}
+.tree-search-input-group [data-slot='select-trigger'],
+.tree-search-input-group [data-slot='toggle-button'],
+.tree-search-input-group [data-slot='button'] {
+  color: #18181b;
+}
+.tree-search-input-group [data-slot='search-field-search-icon'],
+.tree-search-input-group [data-slot='select-default-indicator'] {
+  color: #71717a;
+}
+.dark .tree-search-input-group {
+  background: #27272a;
+  color: #f4f4f5;
+}
+.dark .tree-search-input-group [data-slot='select-trigger'],
+.dark .tree-search-input-group [data-slot='toggle-button'],
+.dark .tree-search-input-group [data-slot='button'] {
+  color: #f4f4f5;
+}
+.dark .tree-search-input-group [data-slot='search-field-search-icon'],
+.dark .tree-search-input-group [data-slot='select-default-indicator'] {
+  color: #a1a1aa;
+}
+.tree-search-scope .select__trigger {
+  align-items: center;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  line-height: 1;
+}
+.tree-search-scope .select__value {
+  display: flex;
+  height: 12px;
+  align-items: center;
+  gap: 0;
+  font-size: 11px;
+  line-height: 1;
+}
+.tree-search-scope .select__value .list-box-item__indicator {
+  display: none;
+}
+.tree-search-scope .select__indicator {
+  align-self: center;
+  display: block;
+  flex: none;
+  opacity: 0.55;
+}
+.tree-search-mobile-navigation {
+  display: none;
+}
+.tree-search-result-controls {
+  display: contents;
+}
+
+@media (max-width: 639px) {
+  .tree-search-popover {
+    transform-origin: top center;
+  }
+}
+
 @container (max-width: 520px) {
   .pane-action-label {
     display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .tree-search-input-group {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 0;
+    padding-inline: 4px;
+    padding-block: 4px;
+  }
+  .tree-search-input-group [data-slot='search-field-search-icon'],
+  .tree-search-desktop-navigation {
+    display: none;
+  }
+  .tree-search-mobile-navigation {
+    display: flex;
+  }
+  .tree-search-scope {
+    width: 44px;
+  }
+  .tree-search-status {
+    max-width: none;
+    flex: 1;
+  }
+  .tree-search-result-controls {
+    order: 10;
+    display: flex;
+    flex-basis: 100%;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+  .tree-search-option-button,
+  .tree-search-navigation-button,
+  .tree-search-close-button,
+  .tree-search-clear-button,
+  .tree-search-drag-handle {
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
   }
 }
 
@@ -566,6 +704,11 @@ body {
   animation: icon-feedback-minify 380ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
 }
 @media (prefers-reduced-motion: reduce) {
+  .tree-search-popover,
+  .tree-search-popover[data-open='true'] {
+    transform: none;
+    transition: none;
+  }
   .tree-children {
     transition: none;
   }

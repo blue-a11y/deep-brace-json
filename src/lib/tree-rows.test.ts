@@ -52,6 +52,16 @@ describe('virtual tree rows', () => {
     expect(rows).toHaveLength(TREE_PREVIEW_DEPTH * 2 + 1);
     expect(rows.at(-1)?.lineNumber).toBe(20001);
   });
+  it('opens only the requested ancestor chain beyond collapsed and depth limits', () => {
+    let data: unknown = 'target';
+    for (let index = 0; index < TREE_PREVIEW_DEPTH + 2; index += 1) data = [data];
+    const path = Array.from({ length: TREE_PREVIEW_DEPTH + 2 }, () => 0);
+    const forcedOpenPaths = new Set(
+      Array.from({ length: path.length }, (_, depth) => JSON.stringify(path.slice(0, depth))),
+    );
+    const rows = buildTreeRows(data, new Set(['[]', '[0]']), forcedOpenPaths);
+    expect(rows.some(row => row.path.length === path.length && row.value === 'target')).toBe(true);
+  });
   it.each([null, false, 42, 'hello', [], {}])('handles a one-line root %j', data => {
     expect(buildTreeRows(data, new Set())).toHaveLength(1);
   });

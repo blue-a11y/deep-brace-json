@@ -16,6 +16,7 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 - **Sample picker**: keep the ordinary JSON5 example or load large documents of about 1 MB (2,000 records) and 10 MB (20,000 records). The desktop button and overflow menu offer the same choices. Large samples are generated and parsed on demand in a cancellable Worker, replace only the current tab, and persist like normal input; generation failures keep the existing content
 - **Transform**: format, minify, escape and unescape (repeatable — stack or peel escape layers one at a time)
 - **Collapsible tree preview** with outline-style stable line numbers, an adaptive line-number column, full-row hover, per-line copy
+- **Structured search and path navigation** across the complete parsed result by key, value or path, with contains matching and optional case sensitivity. Exact matched text is highlighted, and Enter / Shift+Enter moves between results; locating a folded or unmounted virtual row temporarily opens its ancestors and scrolls to it, while closing search restores the original fold state. The floating search panel is draggable, keyboard-movable and remembers its position across reloads. Each node menu can copy the full value, JSONPath or RFC 6901 JSON Pointer. Large documents build their search index in a dedicated Worker so typing stays responsive
 - **Large-paste protection**: inputs of at least 262,144 characters parse in a cancellable Worker. Large previews (that input size, over 5,000 nodes, or depth over 40) use dynamic-height tree virtualization: scroll directly through the document while only nearby rows are mounted. Node anchors restore position across tabs and reloads; wrapping, fonts and folding retain stable outline numbers. Small documents keep their existing fold animations. Strings and keys preview up to 500 characters, while the editor and copy retain complete data. Preview depth is capped at 40; deeper data remains in the editor. Native selection and browser Find only cover mounted tree rows; use the editor or copy buttons for the complete content
 - **Nested JSON extraction**: string values that parse as objects/arrays get a one-click `Parse` button to open in a new tab
 - **Multi-tab workspace** starts new users with a sample and a blank tab, with right-click rename, close and bulk-close actions; tab titles, input, wrapping, active tab, editor scroll and tree scroll are persisted in structured IndexedDB
@@ -47,6 +48,7 @@ Defaults are listed below. Tab commands act on the active tab; bulk closes retai
 | New / Close tab                      | `Shift+Alt+N` / `Shift+Alt+W` |
 | Previous / Next tab                  | `Shift+Alt+[` / `Shift+Alt+]` |
 | Toggle wrap / Fold all               | `Shift+Alt+L` / `Shift+Alt+X` |
+| Search tree nodes                    | `Shift+Alt+G`                 |
 | Focus editor (keep selection)        | `Shift+Alt+I`                 |
 | Rename active tab                    | `Shift+Alt+R`                 |
 | Add tab to left / right              | `Shift+Alt+A` / `Shift+Alt+D` |

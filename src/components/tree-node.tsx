@@ -11,10 +11,17 @@ import { LARGE_VALUE_PREVIEW_LENGTH, TREE_PREVIEW_DEPTH } from '../lib/large-doc
 import { isStrictJson, pathKey, type NodePath } from '../lib/parse';
 import { getTreeLineCount } from '../lib/tree-metrics';
 import { getTreeEntries } from '../lib/tree-rows';
+import {
+  findTextMatchRanges,
+  type TextMatchRange,
+  type TreeSearchOptions,
+} from '../lib/tree-search';
 import { useStore } from '../store/use-store';
 import { Tip } from './tip';
 import { TreeActionButton } from './tree-action-button';
 import { TreeCopyButton } from './tree-copy-button';
+import type { TreePathMenuTarget } from './tree-path-menu';
+import { TreePathMenuButton } from './tree-path-menu-button';
 
 const PUNCTUATION_CLASS_NAME = 'tree-token-punctuation';
 /** 行内文本 token 的点击不冒泡到行容器:单击/双击选中复制都不应触发展开状态切换 */
@@ -22,31 +29,64 @@ const handleTokenClick = (event: MouseEvent<HTMLSpanElement>) => {
   event.stopPropagation();
 };
 
+const HighlightedText = ({ text, ranges }: { text: string; ranges: TextMatchRange[] }) => {
+  if (ranges.length === 0) return text;
+  const parts: ReactNode[] = [];
+  let offset = 0;
+  for (const range of ranges) {
+    if (range.start > offset) parts.push(text.slice(offset, range.start));
+    parts.push(
+      <span key={`${range.start}:${range.end}`} className="tree-search-highlight">
+        {text.slice(range.start, range.end)}
+      </span>,
+    );
+    offset = range.end;
+  }
+  if (offset < text.length) parts.push(text.slice(offset));
+  return parts;
+};
+
+const getHighlightRanges = (text: string, options?: TreeSearchOptions) =>
+  options ? findTextMatchRanges(text, options) : [];
+
 /* ---------- 叶子值：类型语义色 ---------- */
 
 const LeafValue = ({
   value,
   shouldShowFullLongStrings,
   isLargeDocument = false,
+  highlightOptions,
 }: {
   value: unknown;
   shouldShowFullLongStrings: boolean;
   isLargeDocument?: boolean;
+  highlightOptions?: TreeSearchOptions;
 }) => {
   if (value === null) {
-    return <span className="tree-token-null italic">null</span>;
+    return (
+      <span className="tree-token-null italic">
+        <HighlightedText text="null" ranges={getHighlightRanges('null', highlightOptions)} />
+      </span>
+    );
   }
   switch (typeof value) {
     case 'string': {
       const stringValue = value as string;
       if (isLargeDocument && stringValue.length > LARGE_VALUE_PREVIEW_LENGTH) {
+        const previewString = JSON.stringify(
+          stringValue.slice(0, LARGE_VALUE_PREVIEW_LENGTH),
+        ).slice(1, -1);
         return (
           <span
             className="tree-token-string break-all"
             title="大文档仅预览前 500 字符；编辑器与复制保留完整内容"
           >
-            {JSON.stringify(stringValue.slice(0, LARGE_VALUE_PREVIEW_LENGTH))}…（共{' '}
-            {stringValue.length} 字符）
+            &quot;
+            <HighlightedText
+              text={previewString}
+              ranges={getHighlightRanges(previewString, highlightOptions)}
+            />
+            &quot;…（共 {stringValue.length} 字符）
           </span>
         );
       }
@@ -56,7 +96,14 @@ const LeafValue = ({
       const displayedString =
         shouldShowFullLongStrings || !isLong ? escapedString : `${escapedString.slice(0, 120)}…`;
       const renderedValue = (
-        <span className="tree-token-string break-all">"{displayedString}"</span>
+        <span className="tree-token-string break-all">
+          &quot;
+          <HighlightedText
+            text={displayedString}
+            ranges={getHighlightRanges(displayedString, highlightOptions)}
+          />
+          &quot;
+        </span>
       );
       if (shouldShowFullLongStrings || !isLong) return renderedValue;
       return (
@@ -72,9 +119,23 @@ const LeafValue = ({
       );
     }
     case 'number':
-      return <span className="tree-token-number">{String(value)}</span>;
+      return (
+        <span className="tree-token-number">
+          <HighlightedText
+            text={String(value)}
+            ranges={getHighlightRanges(String(value), highlightOptions)}
+          />
+        </span>
+      );
     case 'boolean':
-      return <span className="tree-token-boolean">{String(value)}</span>;
+      return (
+        <span className="tree-token-boolean">
+          <HighlightedText
+            text={String(value)}
+            ranges={getHighlightRanges(String(value), highlightOptions)}
+          />
+        </span>
+      );
     default:
       return <span className="text-foreground/60">{String(value)}</span>;
   }
@@ -85,23 +146,40 @@ const LeafValue = ({
 const KeyLabel = ({
   label,
   isLargeDocument = false,
+  highlightOptions,
 }: {
   label: string;
   isLargeDocument?: boolean;
+  highlightOptions?: TreeSearchOptions;
 }) => {
   const displayed =
     isLargeDocument && label.length > LARGE_VALUE_PREVIEW_LENGTH
       ? `${label.slice(0, LARGE_VALUE_PREVIEW_LENGTH)}…`
       : label;
-  return <span className="tree-token-key shrink-0">"{displayed}"</span>;
+  return (
+    <span className="tree-token-key shrink-0">
+      &quot;
+      <HighlightedText text={displayed} ranges={getHighlightRanges(displayed, highlightOptions)} />
+      &quot;
+    </span>
+  );
 };
 
 /** 数组条目索引:JSON 数组无键名,以弱化索引标记位置(0 基,与 JS 语义一致);冒号属结构标点,不在文本保护区内 */
-const ArrayIndexLabel = ({ index }: { index: number }) => {
+const ArrayIndexLabel = ({
+  index,
+  highlightOptions,
+}: {
+  index: number;
+  highlightOptions?: TreeSearchOptions;
+}) => {
+  const text = String(index);
   return (
     <>
       <span className="contents" onClick={handleTokenClick}>
-        <span className="tree-token-index shrink-0 tabular-nums">{index}</span>
+        <span className="tree-token-index shrink-0 tabular-nums">
+          <HighlightedText text={text} ranges={getHighlightRanges(text, highlightOptions)} />
+        </span>
       </span>
       <span className={`shrink-0 ${PUNCTUATION_CLASS_NAME}`}>:</span>
     </>
@@ -146,6 +224,11 @@ type TreeNodeProps = {
   /** 每层内容缩进像素值,与 tree-body 的 --tree-indent-size 同源 */
   indent?: number;
   isVirtualRow?: boolean;
+  forcedOpenPaths?: Set<string>;
+  searchMatchKeys?: Set<string>;
+  activeSearchKey?: string;
+  searchOptions?: TreeSearchOptions;
+  onOpenPathMenu: (target: TreePathMenuTarget) => void;
 };
 
 /** 行盒外扩为整行:负 margin 抵消 depth 层缩进、padding 原位补回内容位置,hover 背景即整行。
@@ -178,10 +261,32 @@ export const TreeNode = ({
   depth = 0,
   indent = 4,
   isVirtualRow = false,
+  forcedOpenPaths,
+  searchMatchKeys,
+  activeSearchKey,
+  searchOptions,
+  onOpenPathMenu,
 }: TreeNodeProps): ReactNode => {
   const isArray = Array.isArray(value);
   const isObject = !isArray && value !== null && typeof value === 'object';
   const entries = getTreeEntries(value);
+  const nodeKey = pathKey(path);
+  const isSearchMatch = searchMatchKeys?.has(nodeKey) ?? false;
+  const isActiveSearchMatch = nodeKey === activeSearchKey;
+  const searchClassName = isActiveSearchMatch
+    ? 'tree-line--search-active'
+    : isSearchMatch
+      ? 'tree-line--search-match'
+      : '';
+  const keyHighlightOptions =
+    isSearchMatch && searchOptions && searchOptions.scope !== 'value' ? searchOptions : undefined;
+  const valueHighlightOptions =
+    isSearchMatch &&
+    searchOptions &&
+    searchOptions.scope !== 'key' &&
+    searchOptions.scope !== 'path'
+      ? searchOptions
+      : undefined;
   const rowStyle = isVirtualRow
     ? { paddingLeft: `calc(var(--tree-gutter-width) + ${depth * (20 + indent)}px)` }
     : fullRowStyle(depth, indent);
@@ -196,27 +301,36 @@ export const TreeNode = ({
       isStrictJson(value);
     return (
       <div
+        data-node-key={nodeKey}
         style={rowStyle}
-        className="tree-line group flex items-baseline gap-1.5 rounded px-0.5 font-mono text-[13px] leading-6 hover:bg-foreground/5"
+        className={`tree-line group flex items-baseline gap-1.5 rounded px-0.5 font-mono text-[13px] leading-6 hover:bg-foreground/5 ${searchClassName}`}
       >
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
             <span className="contents" onClick={handleTokenClick}>
-              <KeyLabel label={label} isLargeDocument={isVirtualRow} />
+              <KeyLabel
+                label={label}
+                isLargeDocument={isVirtualRow}
+                highlightOptions={keyHighlightOptions}
+              />
             </span>
             <span className={`shrink-0 ${PUNCTUATION_CLASS_NAME}`}>:</span>
           </>
         )}
-        {arrayIndex !== undefined && <ArrayIndexLabel index={arrayIndex} />}
+        {arrayIndex !== undefined && (
+          <ArrayIndexLabel index={arrayIndex} highlightOptions={keyHighlightOptions} />
+        )}
         {canParse && <ParseStringButton value={value} title={embeddedJsonTitle} />}
         <LeafValue
           value={value}
           shouldShowFullLongStrings={shouldShowFullLongStrings}
           isLargeDocument={isVirtualRow}
+          highlightOptions={valueHighlightOptions}
         />
         {hasTrailingComma && <Comma />}
         <TreeCopyButton value={value} />
+        <TreePathMenuButton path={path} value={value} onOpen={onOpenPathMenu} />
       </div>
     );
   }
@@ -227,31 +341,40 @@ export const TreeNode = ({
   if (entries.length === 0) {
     return (
       <div
+        data-node-key={nodeKey}
         style={rowStyle}
-        className="tree-line flex items-baseline gap-1.5 px-0.5 font-mono text-[13px] leading-6"
+        className={`tree-line group flex items-baseline gap-1.5 rounded px-0.5 font-mono text-[13px] leading-6 hover:bg-foreground/5 ${searchClassName}`}
       >
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
             <span className="contents" onClick={handleTokenClick}>
-              <KeyLabel label={label} isLargeDocument={isVirtualRow} />
+              <KeyLabel
+                label={label}
+                isLargeDocument={isVirtualRow}
+                highlightOptions={keyHighlightOptions}
+              />
             </span>
             <span className={PUNCTUATION_CLASS_NAME}>:</span>
           </>
         )}
-        {arrayIndex !== undefined && <ArrayIndexLabel index={arrayIndex} />}
+        {arrayIndex !== undefined && (
+          <ArrayIndexLabel index={arrayIndex} highlightOptions={keyHighlightOptions} />
+        )}
         <span className={PUNCTUATION_CLASS_NAME}>
           {openingBracket}
           {closingBracket}
         </span>
         {hasTrailingComma && <Comma />}
+        <TreeCopyButton value={value} />
+        <TreePathMenuButton path={path} value={value} onOpen={onOpenPathMenu} />
       </div>
     );
   }
 
-  const nodeKey = pathKey(path);
-  const isDepthLimited = isVirtualRow && depth >= TREE_PREVIEW_DEPTH;
-  const isOpen = !collapsed.has(nodeKey) && !isDepthLimited;
+  const isForcedOpen = forcedOpenPaths?.has(nodeKey) ?? false;
+  const isDepthLimited = isVirtualRow && depth >= TREE_PREVIEW_DEPTH && !isForcedOpen;
+  const isOpen = (!collapsed.has(nodeKey) || isForcedOpen) && !isDepthLimited;
   const lineCount = getTreeLineCount(value);
   const summary = isArray
     ? `${entries.length} 项`
@@ -283,8 +406,9 @@ export const TreeNode = ({
   return (
     <div className="font-mono text-[13px] leading-6">
       <div
+        data-node-key={nodeKey}
         style={rowStyle}
-        className="tree-line tree-line--toggle group flex items-baseline gap-1.5 rounded px-0.5 hover:bg-foreground/5"
+        className={`tree-line tree-line--toggle group flex items-baseline gap-1.5 rounded px-0.5 hover:bg-foreground/5 ${searchClassName}`}
         onClick={handleToggleRow}
       >
         {/* 箭头绝对定位固定在根节点箭头列(不随缩进漂移),行内 w-4 占位维持内容对齐 */}
@@ -320,12 +444,18 @@ export const TreeNode = ({
         {label !== null && (
           <>
             <span className="contents" onClick={handleTokenClick}>
-              <KeyLabel label={label} isLargeDocument={isVirtualRow} />
+              <KeyLabel
+                label={label}
+                isLargeDocument={isVirtualRow}
+                highlightOptions={keyHighlightOptions}
+              />
             </span>
             <span className={PUNCTUATION_CLASS_NAME}>:</span>
           </>
         )}
-        {arrayIndex !== undefined && <ArrayIndexLabel index={arrayIndex} />}
+        {arrayIndex !== undefined && (
+          <ArrayIndexLabel index={arrayIndex} highlightOptions={keyHighlightOptions} />
+        )}
         <span className={PUNCTUATION_CLASS_NAME}>{openingBracket}</span>
         {!isOpen && (
           <>
@@ -335,6 +465,7 @@ export const TreeNode = ({
           </>
         )}
         <TreeCopyButton value={value} />
+        <TreePathMenuButton path={path} value={value} onOpen={onOpenPathMenu} />
       </div>
       {/* 未挂载的折叠子树:counter 占位补足行数,保证其后行号与展开时一致 */}
       {!isVirtualRow && !isOpen && !touched.has(nodeKey) && (
@@ -366,6 +497,11 @@ export const TreeNode = ({
               onToggle={onToggle}
               depth={depth + 1}
               indent={indent}
+              forcedOpenPaths={forcedOpenPaths}
+              searchMatchKeys={searchMatchKeys}
+              activeSearchKey={activeSearchKey}
+              searchOptions={searchOptions}
+              onOpenPathMenu={onOpenPathMenu}
             />
           ))}
         </TreeChildren>

@@ -13,6 +13,7 @@ import {
   clearTabScrollPositions,
   restoreTabScrollSnapshot,
 } from '../lib/tab-scroll';
+import { isTreeSearchPosition } from '../lib/tree-search-position';
 import { DEFAULT_TREE_THEME, TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree-theme';
 import { createTabSlice } from './tab-slice';
 import {
@@ -34,6 +35,7 @@ type PersistedDeepBraceState = Pick<
   | 'indentSize'
   | 'treeTheme'
   | 'shouldShowFullLongStrings'
+  | 'treeSearchPosition'
   | 'shortcutModifiers'
 >;
 
@@ -85,6 +87,9 @@ const mergePersistedState = (persistedState: unknown, currentState: DeepBraceSta
       typeof persisted.shouldShowFullLongStrings === 'boolean'
         ? persisted.shouldShowFullLongStrings
         : currentState.shouldShowFullLongStrings,
+    treeSearchPosition: isTreeSearchPosition(persisted.treeSearchPosition)
+      ? persisted.treeSearchPosition
+      : null,
   };
 };
 
@@ -101,6 +106,7 @@ export const useStore = create<DeepBraceState>()(
       indentSize: DEFAULT_INDENT_SIZE,
       treeTheme: DEFAULT_TREE_THEME,
       shouldShowFullLongStrings: true,
+      treeSearchPosition: null,
       toggleTheme: () => {
         const isDark = !get().isDark;
         set({ isDark });
@@ -118,6 +124,9 @@ export const useStore = create<DeepBraceState>()(
       },
       setShouldShowFullLongStrings: shouldShowFullLongStrings => {
         set({ shouldShowFullLongStrings });
+      },
+      setTreeSearchPosition: treeSearchPosition => {
+        set({ treeSearchPosition });
       },
 
       resetEpoch: 0,
@@ -145,6 +154,7 @@ export const useStore = create<DeepBraceState>()(
           indentSize: DEFAULT_INDENT_SIZE,
           treeTheme: DEFAULT_TREE_THEME,
           shouldShowFullLongStrings: true,
+          treeSearchPosition: null,
           resetEpoch: state.resetEpoch + 1,
         }));
         await Promise.all([clearPersistence, appStateStorage.flush()]);
@@ -170,6 +180,7 @@ export const useStore = create<DeepBraceState>()(
           indentSize: snapshot.indentSize,
           treeTheme: snapshot.treeTheme,
           shouldShowFullLongStrings: snapshot.shouldShowFullLongStrings,
+          treeSearchPosition: snapshot.treeSearchPosition,
           resetEpoch: state.resetEpoch + 1,
         }));
         if (snapshot.tabs.some(tab => tab.isDirty || tab.isParsing)) get().bootstrap();
@@ -191,6 +202,7 @@ export const useStore = create<DeepBraceState>()(
         indentSize: state.indentSize,
         treeTheme: state.treeTheme,
         shouldShowFullLongStrings: state.shouldShowFullLongStrings,
+        treeSearchPosition: state.treeSearchPosition,
       }),
     },
   ),

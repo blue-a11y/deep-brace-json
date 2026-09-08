@@ -10,6 +10,7 @@ type PersistedAppState = {
   activeTabId?: string;
   codeFont?: string;
   shouldShowFullLongStrings?: boolean;
+  treeSearchPosition?: { x: number; y: number } | null;
   tabs?: Array<{ id?: string; input?: string; title?: string; hasCustomTitle?: boolean }>;
   treeTheme?: string;
 };
@@ -258,6 +259,14 @@ test('统一修饰键即时同步、刷新保存，并随重置和撤销恢复',
     'aria-keyshortcuts',
     'Meta+Shift+H',
   );
+  const searchTree = page.locator('button[aria-label="搜索树节点"]');
+  await expect(searchTree).toHaveAttribute('aria-keyshortcuts', 'Meta+Shift+G');
+  await page.keyboard.press('Meta+Shift+g');
+  await expect(
+    page.getByRole('searchbox', { name: '搜索键、值或路径', exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press('Meta+Shift+g');
+  await expect(page.getByRole('search', { name: '搜索树节点', exact: true })).toBeHidden();
   const tabs = page.getByRole('tablist', { name: '已打开的 JSON' }).getByRole('tab');
   await tabs.first().focus();
   await page.keyboard.press('Alt+Shift+n');

@@ -16,6 +16,7 @@ const SHORTCUTS = {
   closeOtherTabs: { code: 'KeyO', key: 'O' },
   toggleWrap: { code: 'KeyL', key: 'L' },
   toggleCollapse: { code: 'KeyX', key: 'X' },
+  searchTree: { code: 'KeyG', key: 'G' },
   openTheme: { code: 'KeyT', key: 'T' },
   openSettings: { code: 'KeyS', key: 'S' },
   openShortcuts: { code: 'KeyH', key: 'H' },
@@ -70,6 +71,7 @@ export const SHORTCUT_GROUPS = [
   {
     title: '树形预览',
     items: [
+      { id: 'searchTree', label: '搜索树节点' },
       { id: 'toggleWrap', label: '切换自动换行' },
       { id: 'toggleCollapse', label: '折叠 / 展开全部' },
     ],
