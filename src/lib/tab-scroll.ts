@@ -358,6 +358,10 @@ const bindScrollPosition = (tabId: string, area: TabScrollArea, adapter: ScrollA
   };
   return Object.assign(dispose, {
     save,
+    interrupt: () => {
+      isUserInteractionPending = true;
+      if (isRestoring) interruptRestore();
+    },
     scrollToEdge: (edge: 'start' | 'end') =>
       startRestore({
         ...readPosition(adapter),

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -15,6 +16,7 @@ import {
   Eye,
   FoldVertical,
   OctagonAlert,
+  Search,
   Trash2,
   UnfoldVertical,
   WrapText,
@@ -29,10 +31,14 @@ import { bindTreeTabScrollPosition } from '../lib/tab-scroll';
 import { toast } from '../lib/toast';
 import { getTreeLineCount } from '../lib/tree-metrics';
 import { useShortcutLabels } from '../lib/use-shortcut-labels';
+import { useWorkspaceCommand } from '../lib/use-workspace-command';
 import { selectActiveTab, useStore } from '../store/use-store';
-import { ShortcutHint } from './shortcut-hint';
+import { ShortcutHint, ShortcutKbd } from './shortcut-hint';
 import { Tip } from './tip';
 import { TreeNode } from './tree-node';
+import { TreePathMenu, type TreePathMenuTarget } from './tree-path-menu';
+import { TreeSearchBar } from './tree-search-bar';
+import { useTreeSearch } from './use-tree-search';
 import { VirtualTree } from './virtual-tree';
 
 const COPY_FEEDBACK_DURATION_MS = 1500;
@@ -72,12 +78,38 @@ export const TreeView = () => {
   const indentSize = useStore(state => state.indentSize);
   const treeTheme = useStore(state => state.treeTheme);
   const shouldShowFullLongStrings = useStore(state => state.shouldShowFullLongStrings);
+  const treeSearchPosition = useStore(state => state.treeSearchPosition);
+  const handleTreeSearchPositionChange = useStore(state => state.setTreeSearchPosition);
   const handleClear = useStore(state => state.clear);
   const handleToggleWrap = useStore(state => state.toggleWrap);
   const handleToggleNode = useStore(state => state.toggleCollapse);
   const handleExpandAll = useStore(state => state.expandAll);
   const handleCollapseAll = useStore(state => state.collapseAll);
   const isLargeDocument = activeTab.input.length >= LARGE_INPUT_LENGTH || isLargeResult(result);
+  const [pathMenuTarget, setPathMenuTarget] = useState<TreePathMenuTarget | null>(null);
+  const handleOpenPathMenu = useCallback((target: TreePathMenuTarget) => {
+    setPathMenuTarget(target);
+  }, []);
+  const handlePathMenuOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) setPathMenuTarget(null);
+  }, []);
+  const treeSearch = useTreeSearch({
+    tabId: activeTab.id,
+    input: activeTab.input,
+    data,
+    collapsed,
+    isLargeDocument,
+  });
+  const treePaneRef = useRef<HTMLElement>(null);
+  const handleCloseSearch = () => {
+    treeSearch.handleClose();
+    treePaneRef.current?.focus({ preventScroll: true });
+  };
+  const handleToggleSearch = () => {
+    if (treeSearch.isOpen) handleCloseSearch();
+    else treeSearch.handleOpen();
+  };
+  useWorkspaceCommand('toggleTreeSearch', handleToggleSearch);
   // 输入去抖期间仍展示同一份解析结果，不让旧树随每次击键、Toast 或主题开关重渲染。
   const treeContent = useMemo(
     () => (
@@ -85,14 +117,31 @@ export const TreeView = () => {
         label={null}
         value={data}
         path={[]}
-        collapsed={collapsed}
+        collapsed={treeSearch.effectiveCollapsed}
         touched={touched}
         shouldShowFullLongStrings={shouldShowFullLongStrings}
         onToggle={handleToggleNode}
         indent={indentSize * TREE_INDENT_PIXEL_RATIO}
+        forcedOpenPaths={treeSearch.forcedOpenPaths}
+        searchMatchKeys={treeSearch.searchMatchKeys}
+        activeSearchKey={treeSearch.activeEntry?.key}
+        searchOptions={treeSearch.searchOptions}
+        onOpenPathMenu={handleOpenPathMenu}
       />
     ),
-    [data, collapsed, touched, shouldShowFullLongStrings, handleToggleNode, indentSize],
+    [
+      data,
+      treeSearch.effectiveCollapsed,
+      treeSearch.forcedOpenPaths,
+      treeSearch.searchMatchKeys,
+      treeSearch.activeEntry?.key,
+      treeSearch.searchOptions,
+      touched,
+      shouldShowFullLongStrings,
+      handleToggleNode,
+      handleOpenPathMenu,
+      indentSize,
+    ],
   );
   const [isCopied, setIsCopied] = useState(false);
   const copyFeedbackTimerRef = useRef<number | null>(null);
@@ -107,6 +156,15 @@ export const TreeView = () => {
     return element ? bindTreeTabScrollPosition(activeTab.id, element) : undefined;
   }, [activeTab.id, isLargeDocument]);
 
+  useLayoutEffect(() => {
+    if (isLargeDocument || !treeSearch.activeEntry) return;
+    const element = treeScrollRef.current;
+    const activeRow = Array.from(
+      element?.querySelectorAll<HTMLElement>('[data-node-key]') ?? [],
+    ).find(row => row.dataset.nodeKey === treeSearch.activeEntry?.key);
+    activeRow?.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }, [isLargeDocument, treeSearch.activeEntry, treeSearch.effectiveCollapsed]);
+
   useEffect(
     () => () => {
       if (copyFeedbackTimerRef.current !== null) {
@@ -115,6 +173,8 @@ export const TreeView = () => {
     },
     [],
   );
+
+  useEffect(() => setPathMenuTarget(null), [activeTab.id, data]);
 
   const handleCopy = async () => {
     try {
@@ -138,12 +198,37 @@ export const TreeView = () => {
   if (!result?.ok || !stats) return null;
 
   return (
-    <section aria-label="树形预览" className="pane-responsive-actions flex h-full min-h-0 flex-col">
+    <section
+      ref={treePaneRef}
+      tabIndex={-1}
+      aria-label="树形预览"
+      className="pane-responsive-actions relative flex h-full min-h-0 flex-col outline-none"
+    >
       <PaneHeader
         title="树形预览"
         notice={isLargeDocument ? LARGE_DOCUMENT_NOTICE : undefined}
         extra={
           <>
+            <Tip
+              ariaKeyShortcuts={getAriaShortcut('searchTree')}
+              label={<ShortcutHint shortcut="searchTree">搜索键、值或路径</ShortcutHint>}
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label="搜索树节点"
+                aria-keyshortcuts={getAriaShortcut('searchTree')}
+                ref={element => {
+                  getShortcutRef('searchTree')(element);
+                }}
+                aria-pressed={treeSearch.isOpen}
+                onPress={handleToggleSearch}
+              >
+                <Search size={14} />
+                <span className="pane-action-label">搜索</span>
+                <ShortcutKbd shortcut="searchTree" variant="light" />
+              </Button>
+            </Tip>
             <Tip label={isCopied ? '已复制' : '复制内容'}>
               <Button size="sm" variant="ghost" onPress={handleCopy}>
                 <span className="relative inline-grid place-items-center">
@@ -224,12 +309,32 @@ export const TreeView = () => {
           </>
         }
       />
+      <TreeSearchBar
+        anchorRef={treePaneRef}
+        isOpen={treeSearch.isOpen}
+        focusRequest={treeSearch.focusRequest}
+        query={treeSearch.query}
+        scope={treeSearch.scope}
+        isCaseSensitive={treeSearch.isCaseSensitive}
+        status={treeSearch.status}
+        total={treeSearch.result.total}
+        currentIndex={treeSearch.currentIndex}
+        navigableCount={treeSearch.result.matches.length}
+        position={treeSearchPosition}
+        onQueryChange={treeSearch.setQuery}
+        onScopeChange={treeSearch.setScope}
+        onCaseSensitiveChange={treeSearch.setIsCaseSensitive}
+        onPrevious={treeSearch.handlePrevious}
+        onNext={treeSearch.handleNext}
+        onClose={handleCloseSearch}
+        onPositionChange={handleTreeSearchPositionChange}
+      />
       {isLargeDocument ? (
         <VirtualTree
           key={activeTab.id}
           tabId={activeTab.id}
           data={data}
-          collapsed={collapsed}
+          collapsed={treeSearch.effectiveCollapsed}
           touched={touched}
           shouldWrap={shouldWrap}
           shouldShowFullLongStrings={shouldShowFullLongStrings}
@@ -237,6 +342,11 @@ export const TreeView = () => {
           theme={treeTheme}
           style={treeStyle}
           onToggle={handleToggleNode}
+          forcedOpenPaths={treeSearch.forcedOpenPaths}
+          searchMatchKeys={treeSearch.searchMatchKeys}
+          activeSearchKey={treeSearch.activeEntry?.key}
+          searchOptions={treeSearch.searchOptions}
+          onOpenPathMenu={handleOpenPathMenu}
         />
       ) : (
         <div
@@ -250,6 +360,7 @@ export const TreeView = () => {
           {treeContent}
         </div>
       )}
+      <TreePathMenu target={pathMenuTarget} onOpenChange={handlePathMenuOpenChange} />
     </section>
   );
 };

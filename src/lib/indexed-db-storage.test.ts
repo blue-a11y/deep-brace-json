@@ -259,6 +259,7 @@ describe('structured IndexedDB storage', () => {
     try {
       useStore.getState().setShouldShowFullLongStrings(false);
       useStore.getState().setCodeFont('source-code-pro');
+      useStore.getState().setTreeSearchPosition({ x: 120, y: 84 });
       await originalFlush();
       const stateBeforeReset = useStore.getState();
       const snapshot = {
@@ -270,6 +271,7 @@ describe('structured IndexedDB storage', () => {
         indentSize: stateBeforeReset.indentSize,
         treeTheme: stateBeforeReset.treeTheme,
         shouldShowFullLongStrings: stateBeforeReset.shouldShowFullLongStrings,
+        treeSearchPosition: stateBeforeReset.treeSearchPosition,
         scroll: new Map(),
         splitLayout: null,
       };
@@ -291,6 +293,7 @@ describe('structured IndexedDB storage', () => {
       ).resolves.toMatchObject({
         codeFont: 'jetbrains-mono',
         shouldShowFullLongStrings: true,
+        treeSearchPosition: null,
       });
 
       flushSpy.mockImplementation(async () => {
@@ -314,6 +317,7 @@ describe('structured IndexedDB storage', () => {
       ).resolves.toMatchObject({
         codeFont: 'source-code-pro',
         shouldShowFullLongStrings: false,
+        treeSearchPosition: { x: 120, y: 84 },
       });
     } finally {
       resetGate.resolve();

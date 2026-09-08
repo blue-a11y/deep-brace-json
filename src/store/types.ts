@@ -4,6 +4,7 @@ import type { ParseResult } from '../lib/parse';
 import type { SampleId } from '../lib/sample';
 import type { ShortcutModifiers } from '../lib/shortcuts';
 import type { TabScrollSnapshot } from '../lib/tab-scroll';
+import type { TreeSearchPosition } from '../lib/tree-search-position';
 import type { TreeTheme } from '../lib/tree-theme';
 
 export type JsonTab = {
@@ -61,11 +62,13 @@ type PreferencesSlice = {
   indentSize: IndentSize;
   treeTheme: TreeTheme;
   shouldShowFullLongStrings: boolean;
+  treeSearchPosition: TreeSearchPosition | null;
   toggleTheme: () => void;
   setCodeFont: (value: CodeFont) => void;
   setIndentSize: (value: IndentSize) => void;
   setTreeTheme: (value: TreeTheme) => void;
   setShouldShowFullLongStrings: (value: boolean) => void;
+  setTreeSearchPosition: (value: TreeSearchPosition | null) => void;
 };
 
 /** 重置前状态的完整快照,用于 Toast 撤销恢复 */
@@ -78,6 +81,7 @@ export type ResetSnapshot = {
   indentSize: IndentSize;
   treeTheme: TreeTheme;
   shouldShowFullLongStrings: boolean;
+  treeSearchPosition: TreeSearchPosition | null;
   scroll: TabScrollSnapshot;
   /** 分栏面板宽度的原始持久化值,撤销时还原;重置前不存在则为 null */
   splitLayout: string | null;

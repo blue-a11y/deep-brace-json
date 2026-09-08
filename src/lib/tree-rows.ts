@@ -27,7 +27,11 @@ export type TreeRow = {
 };
 
 /** 扁平化当前展开的节点，不为折叠后代创建行；行号按完整文档计算。 */
-export const buildTreeRows = (data: unknown, collapsed: Set<string>): TreeRow[] => {
+export const buildTreeRows = (
+  data: unknown,
+  collapsed: Set<string>,
+  forcedOpenPaths: Set<string> = new Set(),
+): TreeRow[] => {
   const rows: TreeRow[] = [];
   const stack: TreeRow[] = [
     {
@@ -44,7 +48,12 @@ export const buildTreeRows = (data: unknown, collapsed: Set<string>): TreeRow[] 
   while (stack.length) {
     const row = stack.pop()!;
     rows.push(row);
-    if (row.isClosing || collapsed.has(row.key) || row.depth >= TREE_PREVIEW_DEPTH) continue;
+    if (
+      row.isClosing ||
+      (collapsed.has(row.key) && !forcedOpenPaths.has(row.key)) ||
+      (row.depth >= TREE_PREVIEW_DEPTH && !forcedOpenPaths.has(row.key))
+    )
+      continue;
     const entries = getTreeEntries(row.value);
     if (!entries.length) continue;
     let lineNumber = row.lineNumber + getTreeLineCount(row.value) - 1;

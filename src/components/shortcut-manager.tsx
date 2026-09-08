@@ -30,6 +30,7 @@ const shortcutHandlers: Record<ShortcutId, () => void> = {
   openTheme: () => dispatchWorkspaceCommand('openTheme'),
   openSettings: () => dispatchWorkspaceCommand('openSettings'),
   openShortcuts: () => dispatchWorkspaceCommand('openShortcuts'),
+  searchTree: () => dispatchWorkspaceCommand('toggleTreeSearch'),
   toggleTheme: () => useStore.getState().toggleTheme(),
   insertTabLeft: () => openTabRelative(useStore.getState().activeTabId, 'left'),
   insertTabRight: () => openTabRelative(useStore.getState().activeTabId, 'right'),

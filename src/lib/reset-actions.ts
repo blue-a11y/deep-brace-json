@@ -17,6 +17,7 @@ export const resetAllWithUndo = () => {
     indentSize,
     treeTheme,
     shouldShowFullLongStrings,
+    treeSearchPosition,
     shortcutModifiers,
   } = useStore.getState();
   // 冻结并把实时滚动位置写入记忆后拍快照,保证撤销时连滚动位置一起还原
@@ -30,6 +31,7 @@ export const resetAllWithUndo = () => {
     indentSize,
     treeTheme,
     shouldShowFullLongStrings,
+    treeSearchPosition,
     scroll: captureTabScrollSnapshot(),
     splitLayout: capturePanelLayoutSnapshot(),
   };

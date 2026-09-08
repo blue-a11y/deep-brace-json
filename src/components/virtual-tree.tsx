@@ -3,8 +3,10 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { LARGE_VALUE_PREVIEW_LENGTH } from '../lib/large-document';
 import { bindVirtualTreeTabScrollPosition } from '../lib/tab-scroll';
 import { buildTreeRows, findTreeRowIndex } from '../lib/tree-rows';
+import type { TreeSearchOptions } from '../lib/tree-search';
 import { useStore } from '../store/use-store';
 import { TreeNode } from './tree-node';
+import type { TreePathMenuTarget } from './tree-path-menu';
 
 type VirtualTreeProps = {
   tabId: string;
@@ -17,6 +19,11 @@ type VirtualTreeProps = {
   theme: string;
   style: CSSProperties;
   onToggle: (key: string) => void;
+  forcedOpenPaths: Set<string>;
+  searchMatchKeys: Set<string>;
+  activeSearchKey?: string;
+  searchOptions?: TreeSearchOptions;
+  onOpenPathMenu: (target: TreePathMenuTarget) => void;
 };
 
 export const VirtualTree = ({
@@ -30,13 +37,21 @@ export const VirtualTree = ({
   theme,
   style,
   onToggle,
+  forcedOpenPaths,
+  searchMatchKeys,
+  activeSearchKey,
+  searchOptions,
+  onOpenPathMenu,
 }: VirtualTreeProps) => {
   const elementRef = useRef<HTMLDivElement>(null);
   const bindingRef = useRef<ReturnType<typeof bindVirtualTreeTabScrollPosition> | null>(null);
   const shouldStickToEndRef = useRef(false);
   const endFrameRef = useRef<number | null>(null);
   const codeFont = useStore(state => state.codeFont);
-  const rows = useMemo(() => buildTreeRows(data, collapsed), [data, collapsed]);
+  const rows = useMemo(
+    () => buildTreeRows(data, collapsed, forcedOpenPaths),
+    [data, collapsed, forcedOpenPaths],
+  );
   const indices = useMemo(() => new Map(rows.map((row, index) => [row.key, index])), [rows]);
   const getItemKey = useCallback((index: number) => rows[index].key, [rows]);
   const virtualizer = useVirtualizer({
@@ -158,6 +173,27 @@ export const VirtualTree = ({
   // 虚拟尺寸通知与 DOM 提交不是同一时刻；提交后保存真实行位置，避免缓存领先 DOM。
   useLayoutEffect(() => bindingRef.current?.save());
 
+  useLayoutEffect(() => {
+    if (!activeSearchKey) return;
+    const index = indices.get(activeSearchKey);
+    if (index === undefined) return;
+    // 搜索结果与强制展开路径会在同一帧改变 rows；下一帧再滚动，确保 virtualizer
+    // 已提交最新 count / measurements，避免大文档首次命中仍停在顶部。
+    const animationFrame = requestAnimationFrame(() => {
+      shouldStickToEndRef.current = false;
+      pendingAnchorRef.current = null;
+      bindingRef.current?.interrupt();
+      const element = elementRef.current;
+      const item = virtualizer.measurementsCache[index];
+      if (!element || !item) return;
+      element.scrollTop = Math.max(0, item.start - (element.clientHeight - item.size) / 2);
+      // 某些 Chromium 后台标签不会为 scrollTop 立即派发 scroll；显式同步观察器，
+      // 确保虚拟范围随编程式定位更新。真实滚动事件到达时会被 virtualizer 去重。
+      element.dispatchEvent(new Event('scroll'));
+    });
+    return () => cancelAnimationFrame(animationFrame);
+  }, [activeSearchKey, indices, virtualizer]);
+
   return (
     <div
       ref={elementRef}
@@ -183,6 +219,7 @@ export const VirtualTree = ({
         }
       }}
       className={`tree-body tree-virtual min-h-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
+      data-active-search-key={activeSearchKey}
       data-tree-theme={theme}
       style={style}
     >
@@ -232,6 +269,11 @@ export const VirtualTree = ({
                   shouldShowFullLongStrings={shouldShowFullLongStrings}
                   indent={indent}
                   isVirtualRow
+                  forcedOpenPaths={forcedOpenPaths}
+                  searchMatchKeys={searchMatchKeys}
+                  activeSearchKey={activeSearchKey}
+                  searchOptions={searchOptions}
+                  onOpenPathMenu={onOpenPathMenu}
                 />
               )}
             </div>
