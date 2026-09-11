@@ -14,6 +14,78 @@ type SyntaxColors = {
 };
 
 const TOKEN_COLORS: Record<TreeTheme, Record<EditorThemeMode, SyntaxColors>> = {
+  github: {
+    light: {
+      key: '#0550ae',
+      string: '#116329',
+      number: '#953800',
+      boolean: '#8250df',
+      null: '#57606a',
+      punctuation: '#6e7781',
+    },
+    dark: {
+      key: '#79c0ff',
+      string: '#a5d6ff',
+      number: '#ffa657',
+      boolean: '#d2a8ff',
+      null: '#8b949e',
+      punctuation: '#8b949e',
+    },
+  },
+  catppuccin: {
+    light: {
+      key: '#8839ef',
+      string: '#407226',
+      number: '#a64e05',
+      boolean: '#1e66f5',
+      null: '#6c6f85',
+      punctuation: '#7c7f93',
+    },
+    dark: {
+      key: '#cba6f7',
+      string: '#a6e3a1',
+      number: '#fab387',
+      boolean: '#89b4fa',
+      null: '#a6adc8',
+      punctuation: '#9399b2',
+    },
+  },
+  ayu: {
+    light: {
+      key: '#00749e',
+      string: '#587900',
+      number: '#a85c00',
+      boolean: '#8056bd',
+      null: '#6b727b',
+      punctuation: '#787b80',
+    },
+    dark: {
+      key: '#73d0ff',
+      string: '#bae67e',
+      number: '#ffad66',
+      boolean: '#d4bfff',
+      null: '#a6abb5',
+      punctuation: '#8a9199',
+    },
+  },
+  gruvbox: {
+    light: {
+      key: '#076678',
+      string: '#79740e',
+      number: '#8f3f71',
+      boolean: '#9d0006',
+      null: '#665c54',
+      punctuation: '#7c6f64',
+    },
+    dark: {
+      key: '#83a598',
+      string: '#b8bb26',
+      number: '#d3869b',
+      boolean: '#fb4934',
+      null: '#bdae93',
+      punctuation: '#a89984',
+    },
+  },
   default: {
     light: {
       key: '#0369a1',

@@ -64,7 +64,7 @@ const LeafValue = ({
 }) => {
   if (value === null) {
     return (
-      <span className="tree-token-null italic">
+      <span className="tree-token-null">
         <HighlightedText text="null" ranges={getHighlightRanges('null', highlightOptions)} />
       </span>
     );
@@ -109,7 +109,7 @@ const LeafValue = ({
       return (
         <Tip
           label={
-            <span className="-mr-2 block max-h-[min(50dvh,24rem)] max-w-md overflow-y-auto overscroll-contain break-all pr-px text-justify [text-justify:inter-character]">
+            <span className="code-text-style -mr-2 block max-h-[min(50dvh,24rem)] max-w-md overflow-y-auto overscroll-contain break-all pr-px text-justify font-mono [text-justify:inter-character]">
               {escapedString}
             </span>
           }

@@ -59,12 +59,16 @@ type PreferencesSlice = {
   setShortcutModifiers: (value: ShortcutModifiers) => void;
   isDark: boolean;
   codeFont: CodeFont;
+  isCodeBold: boolean;
+  isCodeItalic: boolean;
   indentSize: IndentSize;
   treeTheme: TreeTheme;
   shouldShowFullLongStrings: boolean;
   treeSearchPosition: TreeSearchPosition | null;
   toggleTheme: () => void;
   setCodeFont: (value: CodeFont) => void;
+  setIsCodeBold: (value: boolean) => void;
+  setIsCodeItalic: (value: boolean) => void;
   setIndentSize: (value: IndentSize) => void;
   setTreeTheme: (value: TreeTheme) => void;
   setShouldShowFullLongStrings: (value: boolean) => void;
@@ -78,6 +82,8 @@ export type ResetSnapshot = {
   activeTabId: string;
   isDark: boolean;
   codeFont: CodeFont;
+  isCodeBold: boolean;
+  isCodeItalic: boolean;
   indentSize: IndentSize;
   treeTheme: TreeTheme;
   shouldShowFullLongStrings: boolean;

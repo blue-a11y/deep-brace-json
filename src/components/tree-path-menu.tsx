@@ -1,4 +1,4 @@
-import type { Key } from 'react';
+import { useLayoutEffect, type Key } from 'react';
 import { Dropdown } from '@heroui/react';
 import { Braces, Copy, Route } from 'lucide-react';
 import { serializeForCopy } from '../lib/indent';
@@ -12,6 +12,7 @@ export type TreePathMenuTarget = {
   value: unknown;
   x: number;
   y: number;
+  trigger: HTMLButtonElement;
 };
 
 type TreePathMenuProps = {
@@ -20,6 +21,18 @@ type TreePathMenuProps = {
 };
 
 export const TreePathMenu = ({ target, onOpenChange }: TreePathMenuProps) => {
+  useLayoutEffect(() => {
+    if (!target) return;
+    const row = target.trigger.closest<HTMLElement>('.tree-line');
+    // 菜单在 Portal 中，显式保留所属行状态；避免开关菜单使整棵树重渲染。
+    row?.setAttribute('data-menu-open', 'true');
+    target.trigger.setAttribute('aria-expanded', 'true');
+    return () => {
+      row?.removeAttribute('data-menu-open');
+      target.trigger.setAttribute('aria-expanded', 'false');
+    };
+  }, [target]);
+
   const handleAction = async (key: Key) => {
     if (!target) return;
     const text =

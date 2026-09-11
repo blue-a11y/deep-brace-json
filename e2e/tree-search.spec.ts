@@ -292,6 +292,57 @@ test('支持路径搜索和标准路径复制', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('/a~1b/~0key');
 });
 
+for (const isLargeDocument of [false, true]) {
+  test(`节点菜单打开时保留原行 hover，关闭后清理（${isLargeDocument ? '虚拟树' : '普通树'}）`, async ({
+    page,
+  }) => {
+    const editor = page.getByRole('textbox', { name: 'JSON 编辑器', exact: true });
+    const tree = page.getByRole('region', { name: '树形预览内容', exact: true });
+    await editor.fill(
+      JSON.stringify({
+        target: { child: 1 },
+        other: 'value',
+        padding: isLargeDocument ? 'x'.repeat(262144) : '',
+      }),
+    );
+    await expect(tree.locator('.tree-token-key').filter({ hasText: 'target' })).toBeVisible();
+    if (isLargeDocument) await expect(tree).toHaveClass(/tree-virtual/);
+    const row = tree
+      .locator('.tree-line')
+      .filter({ has: page.locator('.tree-token-key', { hasText: 'target' }) })
+      .first();
+    const button = row.getByRole('button', { name: '节点复制选项', exact: true });
+    await row.hover();
+    const hoverBackground = await row.evaluate(
+      element => getComputedStyle(element).backgroundColor,
+    );
+    expect(hoverBackground).not.toBe('rgba(0, 0, 0, 0)');
+    await button.click();
+    const menu = page.getByRole('menu', { name: '节点复制选项', exact: true });
+    await menu.getByRole('menuitem', { name: '复制 JSONPath', exact: true }).hover();
+    await expect(row).toHaveCSS('background-color', hoverBackground);
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await expect(tree.locator('[data-menu-open="true"]')).toHaveCount(1);
+    await expect(button).toHaveCSS('opacity', '1');
+    await expect(row.getByRole('button', { name: '复制', exact: true })).toHaveCSS('opacity', '1');
+    await page.keyboard.press('Escape');
+    await expect(menu).toHaveCount(0);
+    await page.mouse.move(2, 2);
+    await expect(row).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    // Escape 恢复的键盘焦点仍应保留焦点反馈；移走焦点后才恢复隐藏按钮。
+    await editor.focus();
+    await expect(button).toHaveCSS('opacity', '0');
+    await row.hover();
+    await button.click();
+    await menu.getByRole('menuitem', { name: '复制 JSONPath', exact: true }).click();
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('$.target');
+    await page.mouse.move(2, 2);
+    await expect(row).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(tree.locator('[data-menu-open="true"]')).toHaveCount(0);
+  });
+}
+
 test('大文档 Worker 搜索可定位未挂载节点并临时展开祖先', async ({ page }) => {
   test.setTimeout(30000);
   const workerUrls: string[] = [];

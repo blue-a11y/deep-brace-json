@@ -11,13 +11,21 @@ import { panelLayoutStorage } from './lib/panel-layout-storage';
 import { STORAGE_KEYS } from './lib/storage';
 import { toastQueue } from './lib/toast';
 import { useMediaQuery } from './lib/use-media-query';
-import { applyCodeFont, applyTheme, selectActiveTab, useStore } from './store/use-store';
+import {
+  applyCodeFont,
+  applyCodeStyle,
+  applyTheme,
+  selectActiveTab,
+  useStore,
+} from './store/use-store';
 
 const App = () => {
   const activeTab = useStore(selectActiveTab);
   const { id: activeTabId, input, result } = activeTab;
   const isDark = useStore(state => state.isDark);
   const codeFont = useStore(state => state.codeFont);
+  const isCodeBold = useStore(state => state.isCodeBold);
+  const isCodeItalic = useStore(state => state.isCodeItalic);
   const bootstrap = useStore(state => state.bootstrap);
   const resetEpoch = useStore(state => state.resetEpoch);
 
@@ -31,6 +39,7 @@ const App = () => {
 
   // 代码字体同步到 <html>，供 CodeMirror、树形预览和错误内容共享。
   useEffect(() => applyCodeFont(codeFont), [codeFont]);
+  useEffect(() => applyCodeStyle(isCodeBold, isCodeItalic), [isCodeBold, isCodeItalic]);
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
 

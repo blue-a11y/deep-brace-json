@@ -220,7 +220,10 @@ for (const { rows, width, pretty } of [
       'false',
     );
     await expect(tree.getByText('"paste-row-0"', { exact: true })).toHaveCount(0);
-    await expect(tree.locator('[data-node-key="[1]"]')).toHaveAttribute('data-line-number', '8');
+    await expect(tree.locator('.virtual-tree-row[data-node-key="[1]"]')).toHaveAttribute(
+      'data-line-number',
+      '8',
+    );
     await page.keyboard.press('Enter');
     await expect(tree.getByText('"paste-row-0"', { exact: true })).toHaveCount(1);
     await expect(tree.getByRole('button', { name: /继续展示/ })).toHaveCount(0);

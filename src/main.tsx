@@ -5,7 +5,7 @@ import App from './app.tsx';
 import { hydratePanelLayoutStorage } from './lib/panel-layout-storage';
 import { hydrateTabScrollStorage } from './lib/tab-scroll';
 import { waitForWorkspaceStyles } from './lib/workspace-styles';
-import { applyCodeFont, applyTheme, useStore } from './store/use-store';
+import { applyCodeFont, applyCodeStyle, applyTheme, useStore } from './store/use-store';
 
 const renderApp = () => {
   createRoot(document.getElementById('root')!).render(
@@ -30,6 +30,7 @@ const initializeApp = async () => {
   }
   applyTheme(useStore.getState().isDark);
   applyCodeFont(useStore.getState().codeFont);
+  applyCodeStyle(useStore.getState().isCodeBold, useStore.getState().isCodeItalic);
   renderApp();
 };
 

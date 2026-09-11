@@ -15,6 +15,12 @@
   --font-roboto-mono: 'Roboto Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --font-ubuntu-mono: 'Ubuntu Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --font-inconsolata: 'Inconsolata', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-space-mono: 'Space Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-red-hat-mono: 'Red Hat Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-courier-prime: 'Courier Prime', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-noto-sans-mono: 'Noto Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --code-font-weight: 400;
+  --code-font-style: normal;
 }
 
 html[data-code-font='jetbrains-mono'] {
@@ -45,6 +51,47 @@ html[data-code-font='inconsolata'] {
   --font-mono: var(--font-inconsolata);
 }
 
+html[data-code-font='space-mono'] {
+  --font-mono: var(--font-space-mono);
+}
+
+html[data-code-font='red-hat-mono'] {
+  --font-mono: var(--font-red-hat-mono);
+}
+
+html[data-code-font='courier-prime'] {
+  --font-mono: var(--font-courier-prime);
+}
+
+html[data-code-font='noto-sans-mono'] {
+  --font-mono: var(--font-noto-sans-mono);
+}
+
+html[data-code-bold='true'] {
+  --code-font-weight: 700;
+}
+
+html[data-code-italic='true'] {
+  --code-font-style: italic;
+}
+
+/* 仅调整代码文本，工具栏、行号和操作按钮保持原来的字形。 */
+.cm-content,
+.tree-line,
+.code-text-style {
+  font-weight: var(--code-font-weight);
+  font-style: var(--code-font-style);
+}
+
+.tree-line::before,
+.tree-line button {
+  font-style: normal;
+}
+
+.tree-line::before {
+  font-weight: 400;
+}
+
 html,
 body,
 #root {
@@ -58,6 +105,24 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 骨架保持静态；图标在工作区挂载时独立入场，不等待文字动效或改变布局占位。 */
+@media (prefers-reduced-motion: no-preference) {
+  .brand-symbol-animated {
+    animation: brand-symbol-enter 650ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+@keyframes brand-symbol-enter {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* 标签列表会裁切横向溢出，HeroUI 的外部焦点环因此只剩左右两条竖线。
@@ -320,6 +385,70 @@ body {
   --tree-token-null: #565f89;
   --tree-token-punctuation: rgb(169 177 214 / 50%);
 }
+.tree-body[data-tree-theme='github'] {
+  --tree-token-key: #0550ae;
+  --tree-token-string: #116329;
+  --tree-token-number: #953800;
+  --tree-token-boolean: #8250df;
+  --tree-token-null: #57606a;
+  --tree-token-punctuation: #6e7781;
+}
+.dark .tree-body[data-tree-theme='github'] {
+  --tree-token-key: #79c0ff;
+  --tree-token-string: #a5d6ff;
+  --tree-token-number: #ffa657;
+  --tree-token-boolean: #d2a8ff;
+  --tree-token-null: #8b949e;
+  --tree-token-punctuation: #8b949e;
+}
+.tree-body[data-tree-theme='catppuccin'] {
+  --tree-token-key: #8839ef;
+  --tree-token-string: #407226;
+  --tree-token-number: #a64e05;
+  --tree-token-boolean: #1e66f5;
+  --tree-token-null: #6c6f85;
+  --tree-token-punctuation: #7c7f93;
+}
+.dark .tree-body[data-tree-theme='catppuccin'] {
+  --tree-token-key: #cba6f7;
+  --tree-token-string: #a6e3a1;
+  --tree-token-number: #fab387;
+  --tree-token-boolean: #89b4fa;
+  --tree-token-null: #a6adc8;
+  --tree-token-punctuation: #9399b2;
+}
+.tree-body[data-tree-theme='ayu'] {
+  --tree-token-key: #00749e;
+  --tree-token-string: #587900;
+  --tree-token-number: #a85c00;
+  --tree-token-boolean: #8056bd;
+  --tree-token-null: #6b727b;
+  --tree-token-punctuation: #787b80;
+}
+.dark .tree-body[data-tree-theme='ayu'] {
+  --tree-token-key: #73d0ff;
+  --tree-token-string: #bae67e;
+  --tree-token-number: #ffad66;
+  --tree-token-boolean: #d4bfff;
+  --tree-token-null: #a6abb5;
+  --tree-token-punctuation: #8a9199;
+}
+.tree-body[data-tree-theme='gruvbox'] {
+  --tree-token-key: #076678;
+  --tree-token-string: #79740e;
+  --tree-token-number: #8f3f71;
+  --tree-token-boolean: #9d0006;
+  --tree-token-null: #665c54;
+  --tree-token-punctuation: #7c6f64;
+}
+.dark .tree-body[data-tree-theme='gruvbox'] {
+  --tree-token-key: #83a598;
+  --tree-token-string: #b8bb26;
+  --tree-token-number: #d3869b;
+  --tree-token-boolean: #fb4934;
+  --tree-token-null: #bdae93;
+  --tree-token-punctuation: #a89984;
+}
 .tree-token-key {
   color: var(--tree-token-key);
 }
@@ -383,7 +512,14 @@ body {
   user-select: none;
   pointer-events: none;
 }
-.tree-line:hover::before {
+.tree-line[data-menu-open='true'] {
+  background-color: color-mix(in oklab, var(--color-foreground) 5%, transparent);
+}
+.tree-line[data-menu-open='true'] > button {
+  opacity: 1;
+}
+.tree-line:hover::before,
+.tree-line[data-menu-open='true']::before {
   color: color-mix(in oklab, var(--color-foreground) 55%, transparent);
 }
 /* 行号透明过渡:counter 跳变(折叠释放/展开占用)时,仅折叠点之后的行号淡出再淡入 */

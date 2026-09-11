@@ -4,10 +4,11 @@ import {
   ListBox,
   Modal,
   Select,
+  Switch,
   useOverlayState,
   type UseOverlayStateReturn,
 } from '@heroui/react';
-import { Palette, Type } from 'lucide-react';
+import { Bold, CaseSensitive, Italic, Palette, Type } from 'lucide-react';
 import { CODE_FONT_OPTIONS, type CodeFont } from '../lib/code-font';
 import { TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree-theme';
 import { useShortcutLabels } from '../lib/use-shortcut-labels';
@@ -31,6 +32,10 @@ export const ThemeSettings = ({
   const handleTreeThemeChange = useStore(state => state.setTreeTheme);
   const codeFont = useStore(state => state.codeFont);
   const handleCodeFontChange = useStore(state => state.setCodeFont);
+  const isCodeBold = useStore(state => state.isCodeBold);
+  const isCodeItalic = useStore(state => state.isCodeItalic);
+  const handleCodeBoldChange = useStore(state => state.setIsCodeBold);
+  const handleCodeItalicChange = useStore(state => state.setIsCodeItalic);
 
   const handleTreeThemeSelectionChange = (nextValue: Key | Key[] | null) => {
     if (
@@ -96,7 +101,7 @@ export const ThemeSettings = ({
                       <Select.Value />
                       <Select.Indicator />
                     </Select.Trigger>
-                    <Select.Popover>
+                    <Select.Popover className="max-h-72 overflow-y-auto">
                       <ListBox>
                         {TREE_THEME_OPTIONS.map(option => (
                           <ListBox.Item
@@ -132,7 +137,7 @@ export const ThemeSettings = ({
                       <Select.Value />
                       <Select.Indicator />
                     </Select.Trigger>
-                    <Select.Popover>
+                    <Select.Popover className="max-h-72 overflow-y-auto">
                       <ListBox>
                         {CODE_FONT_OPTIONS.map(option => (
                           <ListBox.Item
@@ -149,6 +154,49 @@ export const ThemeSettings = ({
                       </ListBox>
                     </Select.Popover>
                   </Select>
+                </section>
+                <section className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_190px] sm:items-center">
+                  <div className="min-w-0">
+                    <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <CaseSensitive className="size-4 shrink-0 text-muted" />
+                      字形
+                    </h3>
+                    <p className="mt-1 pl-6 text-xs leading-5 text-muted">粗体与斜体可同时开启</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <Switch
+                      aria-label="代码粗体"
+                      isSelected={isCodeBold}
+                      onChange={handleCodeBoldChange}
+                      size="sm"
+                    >
+                      <Switch.Content className="gap-2">
+                        <span className="flex items-center gap-1 text-xs">
+                          <Bold className="size-3.5" />
+                          粗体
+                        </span>
+                        <Switch.Control>
+                          <Switch.Thumb />
+                        </Switch.Control>
+                      </Switch.Content>
+                    </Switch>
+                    <Switch
+                      aria-label="代码斜体"
+                      isSelected={isCodeItalic}
+                      onChange={handleCodeItalicChange}
+                      size="sm"
+                    >
+                      <Switch.Content className="gap-2">
+                        <span className="flex items-center gap-1 text-xs">
+                          <Italic className="size-3.5" />
+                          斜体
+                        </span>
+                        <Switch.Control>
+                          <Switch.Thumb />
+                        </Switch.Control>
+                      </Switch.Content>
+                    </Switch>
+                  </div>
                 </section>
               </div>
             </Modal.Body>

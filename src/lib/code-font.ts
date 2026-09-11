@@ -6,6 +6,10 @@ export const CODE_FONT_OPTIONS = [
   { value: 'roboto-mono', label: 'Roboto Mono' },
   { value: 'ubuntu-mono', label: 'Ubuntu Mono' },
   { value: 'inconsolata', label: 'Inconsolata' },
+  { value: 'space-mono', label: 'Space Mono' },
+  { value: 'red-hat-mono', label: 'Red Hat Mono' },
+  { value: 'courier-prime', label: 'Courier Prime' },
+  { value: 'noto-sans-mono', label: 'Noto Sans Mono' },
 ] as const;
 
 export type CodeFont = (typeof CODE_FONT_OPTIONS)[number]['value'];

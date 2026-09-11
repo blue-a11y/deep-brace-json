@@ -12,6 +12,10 @@ describe('代码字体选项', () => {
       'Roboto Mono',
       'Ubuntu Mono',
       'Inconsolata',
+      'Space Mono',
+      'Red Hat Mono',
+      'Courier Prime',
+      'Noto Sans Mono',
     ]);
   });
 

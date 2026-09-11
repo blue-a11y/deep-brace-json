@@ -268,6 +268,8 @@ describe('structured IndexedDB storage', () => {
         activeTabId: stateBeforeReset.activeTabId,
         isDark: stateBeforeReset.isDark,
         codeFont: stateBeforeReset.codeFont,
+        isCodeBold: stateBeforeReset.isCodeBold,
+        isCodeItalic: stateBeforeReset.isCodeItalic,
         indentSize: stateBeforeReset.indentSize,
         treeTheme: stateBeforeReset.treeTheme,
         shouldShowFullLongStrings: stateBeforeReset.shouldShowFullLongStrings,

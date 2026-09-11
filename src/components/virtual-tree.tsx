@@ -48,6 +48,8 @@ export const VirtualTree = ({
   const shouldStickToEndRef = useRef(false);
   const endFrameRef = useRef<number | null>(null);
   const codeFont = useStore(state => state.codeFont);
+  const isCodeBold = useStore(state => state.isCodeBold);
+  const isCodeItalic = useStore(state => state.isCodeItalic);
   const rows = useMemo(
     () => buildTreeRows(data, collapsed, forcedOpenPaths),
     [data, collapsed, forcedOpenPaths],
@@ -160,7 +162,7 @@ export const VirtualTree = ({
     };
   }, [tabId]);
 
-  const measurementConfig = `${shouldWrap}:${codeFont}:${indent}:${shouldShowFullLongStrings}`;
+  const measurementConfig = `${shouldWrap}:${codeFont}:${isCodeBold}:${isCodeItalic}:${indent}:${shouldShowFullLongStrings}`;
   const previousMeasurementConfigRef = useRef(measurementConfig);
   useLayoutEffect(() => {
     if (previousMeasurementConfigRef.current === measurementConfig) return;

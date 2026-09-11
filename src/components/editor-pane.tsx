@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { json } from '@codemirror/lang-json';
 import { foldGutter } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
@@ -57,6 +57,9 @@ export const EditorPane = () => {
   const input = activeTab.input;
   const isDark = useStore(state => state.isDark);
   const treeTheme = useStore(state => state.treeTheme);
+  const codeFont = useStore(state => state.codeFont);
+  const isCodeBold = useStore(state => state.isCodeBold);
+  const isCodeItalic = useStore(state => state.isCodeItalic);
   const handleInputChange = useStore(state => state.editInput);
   const format = useStore(state => state.format);
   const minify = useStore(state => state.minify);
@@ -91,6 +94,9 @@ export const EditorPane = () => {
   };
 
   useEffect(() => () => editorScrollCleanupRef.current?.(), []);
+  useLayoutEffect(() => {
+    editorRef.current?.requestMeasure();
+  }, [codeFont, isCodeBold, isCodeItalic]);
 
   return (
     <section className="pane-responsive-actions flex h-full min-h-0 flex-col">

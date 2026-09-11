@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-for (const width of [375, 639, 640, 859, 860, 1280]) {
+for (const width of [375, 639, 640, 859, 860, 1279, 1280, 1535, 1536]) {
   test(`骨架与工作区品牌字形一致且不依赖外部字体 ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -58,11 +58,30 @@ for (const width of [375, 639, 640, 859, 860, 1280]) {
         ),
       ).toBe(true);
       const skeletonBrand = await readBrand();
+      const skeletonFeatures = await page
+        .locator('.startup-feature-placeholder:visible')
+        .evaluateAll(elements =>
+          elements.map(element => {
+            const { x, y, width, height } = element.getBoundingClientRect();
+            return { x, y, width, height };
+          }),
+        );
+      expect(skeletonFeatures).toHaveLength(width >= 1536 ? 5 : width >= 1280 ? 1 : 0);
       await page.screenshot({ path: `/tmp/deepbrace-brand-skeleton-${width}.png` });
       releaseEntry();
       await expect(page.getByRole('textbox', { name: 'JSON 编辑器' })).toBeVisible();
       const workspaceBrand = await readBrand();
       expect(workspaceBrand).toEqual(skeletonBrand);
+      const workspaceFeatures = await page
+        .getByRole('group', { name: '产品亮点', includeHidden: true })
+        .locator(':scope > div:visible')
+        .evaluateAll(elements =>
+          elements.map(element => {
+            const { x, y, width, height } = element.getBoundingClientRect();
+            return { x, y, width, height };
+          }),
+        );
+      expect(workspaceFeatures).toEqual(skeletonFeatures);
       await expect(page.locator('.shuffle-parent')).toHaveCount(0);
     } finally {
       releaseEntry();
@@ -125,7 +144,7 @@ for (const { width, colorScheme } of [
       await expect(skeleton.locator('.startup-pane')).toHaveCount(2);
       await expect(skeleton).toHaveCSS(
         'background-color',
-        colorScheme === 'dark' ? 'rgb(24, 24, 27)' : 'rgb(245, 245, 245)',
+        colorScheme === 'dark' ? 'oklch(0.12 0.005 285.823)' : 'oklch(0.9702 0 0)',
       );
       const panes = await skeleton.locator('.startup-pane').evaluateAll(elements =>
         elements.map(element => {
@@ -150,6 +169,9 @@ for (const { width, colorScheme } of [
         'animation-name',
         'startup-pulse',
       );
+      await expect(skeleton.locator('.brand-symbol')).toHaveCSS('animation-name', 'none');
+      await expect(skeleton.locator('.brand-symbol')).toHaveCSS('opacity', '1');
+      await expect(skeleton.locator('.brand-wordmark')).toBeVisible();
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.screenshot({ path: `/tmp/deepbrace-skeleton-${width}-${colorScheme}.png` });
       await page.keyboard.press('Tab');
@@ -240,6 +262,49 @@ for (const width of [375, 1280]) {
       expect(issues).toEqual([]);
     });
   }
+}
+
+for (const width of [375, 1280]) {
+  test(`Logo 图标入场独立于文字动效，不推动布局且不因交互重播 ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.route(/\/animated-brand[^/]*\.(tsx|js)(\?.*)?$/, route => route.abort('failed'));
+    await page.addInitScript(() => {
+      document.addEventListener('animationstart', event => {
+        if (!(event.target instanceof Element) || event.animationName !== 'brand-symbol-enter')
+          return;
+        const animation = event.target.getAnimations()[0];
+        animation.pause();
+        animation.currentTime = 0;
+      });
+    });
+    await page.goto('/');
+    const symbol = page.locator('.workspace-toolbar .brand-symbol');
+    const wordmark = page.locator('.brand-wordmark');
+    await expect(symbol).toHaveCSS('animation-name', 'brand-symbol-enter');
+    await expect(symbol).toHaveCSS('opacity', '0');
+    const wordmarkBounds = await wordmark.boundingBox();
+    await symbol.evaluate(element => {
+      element.getAnimations()[0].currentTime = 400;
+    });
+    expect(await symbol.evaluate(element => element.getBoundingClientRect().width)).toBeGreaterThan(
+      28,
+    );
+    await page.locator('button[aria-label="新建标签"]').click();
+    expect(await symbol.evaluate(element => element.getAnimations()[0].currentTime)).toBe(400);
+    expect(await wordmark.boundingBox()).toEqual(wordmarkBounds);
+    await symbol.evaluate(async element => {
+      const animation = element.getAnimations()[0];
+      animation.play();
+      await animation.finished;
+    });
+    await expect(symbol).toHaveCSS('transform', 'none');
+    await expect(symbol).toHaveCSS('opacity', '1');
+    expect(await symbol.evaluate(element => element.getBoundingClientRect().width)).toBe(28);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(symbol).toHaveCSS('animation-name', 'none');
+    await expect(symbol).toBeVisible();
+  });
 }
 
 test('品牌动效延迟或下载失败时保留静态品牌，不阻塞编辑器', async ({ page }) => {

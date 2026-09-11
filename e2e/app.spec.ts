@@ -593,7 +593,8 @@ test('废弃的 localStorage 主题不会影响首帧', async ({ page }) => {
   const mainModuleRequested = new Promise<void>(resolve => {
     markMainModuleRequested = resolve;
   });
-  await page.route('**/src/main.tsx', async route => {
+  const mainModulePattern = /\/(src\/main\.tsx|assets\/index-[^/]+\.js)(\?.*)?$/;
+  await page.route(mainModulePattern, async route => {
     markMainModuleRequested();
     await mainModuleGate;
     await route.continue();
@@ -610,7 +611,7 @@ test('废弃的 localStorage 主题不会影响首帧', async ({ page }) => {
   }
 
   await expect(page.getByRole('textbox', { name: 'JSON 编辑器', exact: true })).toBeVisible();
-  await page.unroute('**/src/main.tsx');
+  await page.unroute(mainModulePattern);
 });
 
 test('编辑 JSON5 后可以继续解析嵌套对象', async ({ page }) => {

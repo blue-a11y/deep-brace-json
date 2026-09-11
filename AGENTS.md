@@ -18,6 +18,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   IndexedDB、UI、测试与交付标准的完整规范。
 - React 组件统一使用 `const PascalCase = () =>` 声明；该约束不要求普通工具函数全部改成
   `const`。
+- 深浅色模式仅持久化到 localStorage，供骨架首帧与工作区共用；不得在 IndexedDB 中重复保存。
+  该例外不扩展到代码配色、字体或其他工作区数据，切换、重置与撤销必须同步这一来源。
 - 真实浏览器集成测试统一使用 Playwright；交互、响应式、持久化和刷新恢复变更执行与影响范围对应
   的 E2E 用例，不能以 Vitest、lint 或 build 代替。局部变更不默认要求运行全部 E2E。
 - 修改大文档粘贴或后台解析时验证真实剪贴板路径，并按标签和请求身份提交；编辑、关闭、重置时取消

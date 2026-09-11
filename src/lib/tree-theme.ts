@@ -6,6 +6,10 @@ export const TREE_THEME_OPTIONS = [
   { value: 'nord', label: 'Nord' },
   { value: 'solarized', label: 'Solarized' },
   { value: 'tokyo-night', label: 'Tokyo Night' },
+  { value: 'github', label: 'GitHub' },
+  { value: 'catppuccin', label: 'Catppuccin' },
+  { value: 'ayu', label: 'Ayu' },
+  { value: 'gruvbox', label: 'Gruvbox' },
 ] as const;
 
 export type TreeTheme = (typeof TREE_THEME_OPTIONS)[number]['value'];

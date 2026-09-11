@@ -31,7 +31,7 @@ export const Brand = () => {
 
   return (
     <>
-      <div className="brand-symbol grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground text-xs font-bold text-background">
+      <div className="brand-symbol brand-symbol-animated grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground text-xs font-bold text-background">
         {'{ }'}
       </div>
       <span className="brand-slot">

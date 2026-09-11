@@ -7,7 +7,7 @@ import { clearPanelLayoutStorage, restorePanelLayoutSnapshot } from '../lib/pane
 import { parseInput } from '../lib/parse';
 import { SAMPLE } from '../lib/sample';
 import { DEFAULT_SHORTCUT_MODIFIERS, isShortcutModifiers } from '../lib/shortcuts';
-import { STORAGE_KEYS } from '../lib/storage';
+import { getInitialIsDark, readColorMode, STORAGE_KEYS, writeColorMode } from '../lib/storage';
 import {
   captureActiveTabScrollPositions,
   clearTabScrollPositions,
@@ -30,8 +30,9 @@ type PersistedDeepBraceState = Pick<
   DeepBraceState,
   | 'tabs'
   | 'activeTabId'
-  | 'isDark'
   | 'codeFont'
+  | 'isCodeBold'
+  | 'isCodeItalic'
   | 'indentSize'
   | 'treeTheme'
   | 'shouldShowFullLongStrings'
@@ -46,10 +47,16 @@ const appStateStorage = createIndexedDbPersistStorage<PersistedDeepBraceState>(
 export const applyTheme = (isDark: boolean) => {
   document.documentElement.classList.toggle('dark', isDark);
   document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+  writeColorMode(isDark);
 };
 
 export const applyCodeFont = (codeFont: CodeFont) => {
   document.documentElement.dataset.codeFont = codeFont;
+};
+
+export const applyCodeStyle = (isCodeBold: boolean, isCodeItalic: boolean) => {
+  document.documentElement.dataset.codeBold = String(isCodeBold);
+  document.documentElement.dataset.codeItalic = String(isCodeItalic);
 };
 
 const isIndentSize = (value: unknown): value is IndentSize =>
@@ -59,6 +66,7 @@ const isTreeTheme = (value: unknown): value is TreeTheme =>
   TREE_THEME_OPTIONS.some(option => option.value === value);
 
 const mergePersistedState = (persistedState: unknown, currentState: DeepBraceState) => {
+  const colorMode = readColorMode();
   const persisted =
     persistedState && typeof persistedState === 'object'
       ? (persistedState as Partial<PersistedDeepBraceState>)
@@ -79,8 +87,10 @@ const mergePersistedState = (persistedState: unknown, currentState: DeepBraceSta
       : DEFAULT_SHORTCUT_MODIFIERS,
     tabs,
     activeTabId,
-    isDark: typeof persisted.isDark === 'boolean' ? persisted.isDark : currentState.isDark,
+    isDark: colorMode === null ? currentState.isDark : colorMode === 'dark',
     codeFont: isCodeFont(persisted.codeFont) ? persisted.codeFont : currentState.codeFont,
+    isCodeBold: typeof persisted.isCodeBold === 'boolean' ? persisted.isCodeBold : false,
+    isCodeItalic: typeof persisted.isCodeItalic === 'boolean' ? persisted.isCodeItalic : false,
     indentSize: isIndentSize(persisted.indentSize) ? persisted.indentSize : currentState.indentSize,
     treeTheme: isTreeTheme(persisted.treeTheme) ? persisted.treeTheme : currentState.treeTheme,
     shouldShowFullLongStrings:
@@ -93,6 +103,19 @@ const mergePersistedState = (persistedState: unknown, currentState: DeepBraceSta
   };
 };
 
+const partializeState = (state: DeepBraceState): PersistedDeepBraceState => ({
+  shortcutModifiers: state.shortcutModifiers,
+  tabs: state.tabs.map(prepareTabForStorage),
+  activeTabId: state.activeTabId,
+  codeFont: state.codeFont,
+  isCodeBold: state.isCodeBold,
+  isCodeItalic: state.isCodeItalic,
+  indentSize: state.indentSize,
+  treeTheme: state.treeTheme,
+  shouldShowFullLongStrings: state.shouldShowFullLongStrings,
+  treeSearchPosition: state.treeSearchPosition,
+});
+
 export const useStore = create<DeepBraceState>()(
   persist(
     (set, get, store) => ({
@@ -101,8 +124,10 @@ export const useStore = create<DeepBraceState>()(
       setShortcutModifiers: shortcutModifiers => {
         if (isShortcutModifiers(shortcutModifiers)) set({ shortcutModifiers });
       },
-      isDark: false,
+      isDark: getInitialIsDark(),
       codeFont: DEFAULT_CODE_FONT,
+      isCodeBold: false,
+      isCodeItalic: false,
       indentSize: DEFAULT_INDENT_SIZE,
       treeTheme: DEFAULT_TREE_THEME,
       shouldShowFullLongStrings: true,
@@ -115,6 +140,14 @@ export const useStore = create<DeepBraceState>()(
       setCodeFont: codeFont => {
         set({ codeFont });
         applyCodeFont(codeFont);
+      },
+      setIsCodeBold: isCodeBold => {
+        set({ isCodeBold });
+        applyCodeStyle(isCodeBold, get().isCodeItalic);
+      },
+      setIsCodeItalic: isCodeItalic => {
+        set({ isCodeItalic });
+        applyCodeStyle(get().isCodeBold, isCodeItalic);
       },
       setIndentSize: indentSize => {
         set({ indentSize });
@@ -142,6 +175,7 @@ export const useStore = create<DeepBraceState>()(
         ]);
         applyTheme(false);
         applyCodeFont(DEFAULT_CODE_FONT);
+        applyCodeStyle(false, false);
         const tabs = createDefaultTabs(SAMPLE).map(tab =>
           tab.input.trim() ? applyParseResult(tab, parseInput(tab.input)) : tab,
         );
@@ -151,6 +185,8 @@ export const useStore = create<DeepBraceState>()(
           shortcutModifiers: DEFAULT_SHORTCUT_MODIFIERS,
           isDark: false,
           codeFont: DEFAULT_CODE_FONT,
+          isCodeBold: false,
+          isCodeItalic: false,
           indentSize: DEFAULT_INDENT_SIZE,
           treeTheme: DEFAULT_TREE_THEME,
           shouldShowFullLongStrings: true,
@@ -171,12 +207,15 @@ export const useStore = create<DeepBraceState>()(
         ]);
         applyTheme(snapshot.isDark);
         applyCodeFont(snapshot.codeFont);
+        applyCodeStyle(snapshot.isCodeBold, snapshot.isCodeItalic);
         set(state => ({
           tabs: snapshot.tabs,
           shortcutModifiers: snapshot.shortcutModifiers,
           activeTabId: snapshot.activeTabId,
           isDark: snapshot.isDark,
           codeFont: snapshot.codeFont,
+          isCodeBold: snapshot.isCodeBold,
+          isCodeItalic: snapshot.isCodeItalic,
           indentSize: snapshot.indentSize,
           treeTheme: snapshot.treeTheme,
           shouldShowFullLongStrings: snapshot.shouldShowFullLongStrings,
@@ -191,19 +230,22 @@ export const useStore = create<DeepBraceState>()(
       name: STORAGE_KEYS.appState,
       storage: appStateStorage,
       skipHydration: true,
-      version: 1,
+      version: 2,
+      migrate: (persistedState): PersistedDeepBraceState => {
+        // 仅迁移旧明暗值；新 localStorage 选择优先，其余字段继续按既有规则校验。
+        if (
+          readColorMode() === null &&
+          persistedState &&
+          typeof persistedState === 'object' &&
+          'isDark' in persistedState &&
+          typeof persistedState.isDark === 'boolean'
+        ) {
+          writeColorMode(persistedState.isDark);
+        }
+        return partializeState(mergePersistedState(persistedState, useStore.getInitialState()));
+      },
       merge: mergePersistedState,
-      partialize: state => ({
-        shortcutModifiers: state.shortcutModifiers,
-        tabs: state.tabs.map(prepareTabForStorage),
-        activeTabId: state.activeTabId,
-        isDark: state.isDark,
-        codeFont: state.codeFont,
-        indentSize: state.indentSize,
-        treeTheme: state.treeTheme,
-        shouldShowFullLongStrings: state.shouldShowFullLongStrings,
-        treeSearchPosition: state.treeSearchPosition,
-      }),
+      partialize: partializeState,
     },
   ),
 );

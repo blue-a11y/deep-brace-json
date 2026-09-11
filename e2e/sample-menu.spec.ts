@@ -132,6 +132,10 @@ for (const width of [1280, 375]) {
       const noticeText = '大文档预览 · 按需渲染，长值仅预览前 500 字符；复制保留完整内容';
       const notice = pane.getByRole('button', { name: noticeText, exact: true });
       await expect(notice).toBeVisible();
+      expect(await pane.evaluate(element => element.scrollWidth > element.clientWidth)).toBe(false);
+      await expect(pane.locator('button[aria-label="搜索树节点"] kbd')).toBeVisible({
+        visible: width > 520,
+      });
       const titleBounds = (await pane.getByText('树形预览', { exact: true }).boundingBox())!;
       const noticeBounds = (await notice.boundingBox())!;
       expect(Math.abs(titleBounds.y - noticeBounds.y)).toBeLessThan(2);
@@ -165,7 +169,7 @@ for (const width of [1280, 375]) {
       expect(await tree.locator('*').count()).toBeLessThan(3000);
       await tree.focus();
       await page.keyboard.press('Home');
-      const firstRow = tree.locator('[data-node-key="[0]"]');
+      const firstRow = tree.locator('.virtual-tree-row[data-node-key="[0]"]');
       const chevron = firstRow.getByRole('button', { name: '折叠节点 [0]', exact: true });
       await expect(chevron).toBeVisible();
       const expectGuideSpacing = async () => {

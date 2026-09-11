@@ -226,7 +226,7 @@ export const TreeView = () => {
               >
                 <Search size={14} />
                 <span className="pane-action-label">搜索</span>
-                <ShortcutKbd shortcut="searchTree" variant="light" />
+                <ShortcutKbd shortcut="searchTree" variant="light" className="pane-action-label" />
               </Button>
             </Tip>
             <Tip label={isCopied ? '已复制' : '复制内容'}>
@@ -397,7 +397,9 @@ export const ErrorPane = ({
             <OctagonAlert size={15} />
             解析失败
           </div>
-          <p className="mt-2 break-all font-mono text-xs leading-5 text-red-500/90">{message}</p>
+          <p className="code-text-style mt-2 break-all font-mono text-xs leading-5 text-red-500/90">
+            {message}
+          </p>
           {line !== undefined && column !== undefined && (
             <p className="mt-2 text-xs text-foreground/60">
               位置：第 {line} 行 · 第 {column} 列

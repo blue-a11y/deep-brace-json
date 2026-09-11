@@ -99,7 +99,7 @@ for (const width of [375, 767, 768, 859, 860, 1280, 1536]) {
 }
 
 for (const width of [375, 1280]) {
-  test(`品牌动效接入不重新挂载或缩放已显示图标 ${width}px`, async ({ page }) => {
+  test(`文字动效接入不重新挂载图标或重播图标入场 ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.route('https://fonts.googleapis.com/**', route =>
@@ -116,6 +116,12 @@ for (const width of [375, 1280]) {
     try {
       await page.goto('/', { waitUntil: 'domcontentloaded' });
       await expect(page.getByRole('textbox', { name: 'JSON 编辑器' })).toBeVisible();
+      // 图标已有独立入场动画；等待它自然结束，再验收文字动效不会改变图标。
+      await page
+        .locator('.brand-symbol')
+        .evaluate(element =>
+          Promise.all(element.getAnimations().map(animation => animation.finished)),
+        );
       await startLayoutCapture(page);
       const icon = await page.locator('.brand-symbol').elementHandle();
       releaseAnimation();
