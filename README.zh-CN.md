@@ -32,32 +32,33 @@
 
 ## 文档
 
-- [项目开发规范](docs/DEVELOPMENT.md):记录架构、命名、React、持久化、UI、测试与交付约定
+- [项目开发规范](docs/DEVELOPMENT.md):记录架构、命名、React、持久化、UI、验证与交付约定
 - [开发规划](docs/ROADMAP.md):记录进行中工作、待验证事项与质量门禁
 
 ## 快捷键
 
 顶部键盘按钮（或溢出菜单中的入口）打开紧凑的快捷键面板，可统一组合 Ctrl、Alt/Option、Cmd/Meta 和 Shift 修饰键，也可全部取消后使用单键快捷键。修改立即同步到全部快捷键及提示，保存到 IndexedDB，并参与重置和撤销。这是同时按下的组合键，不是依次按下的前导键。
 
-默认组合如下。标签操作作用于当前标签，批量关闭仍可撤销。包含 Ctrl、Alt/Option 或 Cmd/Meta 的快捷键在编辑器聚焦时同样可用；单键和仅 Shift 的快捷键在编辑器及其他输入区域内暂停，所有全局快捷键在对话框和菜单内暂停。系统或浏览器保留组合可能优先执行；自定义组合发生冲突时，请保留默认组合或使用按钮。
+默认不需要修饰键，快捷键如下。旧版内置 Alt+Shift 默认值会迁移为单键，自定义组合保持不变。标签操作作用于当前标签，批量关闭仍可撤销。包含 Ctrl、Alt/Option 或 Cmd/Meta 的快捷键在编辑器聚焦时同样可用；不含这些命令修饰键的快捷键在编辑器及其他输入区域内暂停，所有全局快捷键在对话框和菜单内暂停。Home / End 将树形预览滚动到顶部 / 底部。系统或浏览器保留按键可能优先执行；自定义组合发生冲突时可使用按钮。
 
-| 操作                       | 快捷键                                |
-| -------------------------- | ------------------------------------- |
-| 格式化 / 压缩              | `Shift+Alt+F` / `Shift+Alt+M`         |
-| 转义 / 反转义              | `Shift+Alt+E` / `Shift+Alt+U`         |
-| 新建 / 关闭标签            | `Shift+Alt+N` / `Shift+Alt+W`         |
-| 上一个 / 下一个标签        | `Shift+Alt+[` / `Shift+Alt+]`         |
-| 切换换行 / 折叠展开        | `Shift+Alt+L` / `Shift+Alt+X`         |
-| 搜索树节点                 | `Shift+Alt+K`                         |
-| 复制 / 清空当前内容        | `Shift+Alt+C` / `Shift+Alt+Backspace` |
-| 聚焦编辑器（保留选区）     | `Shift+Alt+I`                         |
-| 退出编辑器聚焦（保留选区） | `Esc`                                 |
-| 重命名当前标签             | `Shift+Alt+R`                         |
-| 向左 / 向右添加标签        | `Shift+Alt+A` / `Shift+Alt+D`         |
-| 关闭左侧 / 右侧全部        | `Shift+Alt+J` / `Shift+Alt+P`         |
-| 关闭其它全部               | `Shift+Alt+O`                         |
-| 配色与字体 / 切换明暗      | `Shift+Alt+T` / `Shift+Alt+B`         |
-| 全局设置 / 快捷键面板      | `Shift+Alt+S` / `Shift+Alt+H`         |
+| 操作                       | 快捷键            |
+| -------------------------- | ----------------- |
+| 格式化 / 压缩              | `F` / `M`         |
+| 转义 / 反转义              | `E` / `U`         |
+| 新建 / 关闭标签            | `N` / `W`         |
+| 上一个 / 下一个标签        | `[` / `]`         |
+| 切换换行 / 折叠展开        | `L` / `X`         |
+| 搜索树节点                 | `K`               |
+| 复制 / 清空当前内容        | `C` / `Backspace` |
+| 树形预览顶部 / 底部        | `Home` / `End`    |
+| 聚焦编辑器（保留选区）     | `I`               |
+| 退出编辑器聚焦（保留选区） | `Esc`             |
+| 重命名当前标签             | `R`               |
+| 向左 / 向右添加标签        | `A` / `D`         |
+| 关闭左侧 / 右侧全部        | `J` / `P`         |
+| 关闭其它全部               | `O`               |
+| 配色与字体 / 切换明暗      | `T` / `B`         |
+| 全局设置 / 快捷键面板      | `S` / `H`         |
 
 Mac 上的 Backspace 显示为 `⌫`。单键模式下先按 `Esc` 退出编辑器聚焦，再按它清空当前内容。
 
@@ -68,21 +69,19 @@ pnpm install
 pnpm dev
 ```
 
-测试、生产构建与代码检查:
+生产构建与代码检查:
 
 ```bash
-pnpm test
-pnpm test:unit
 pnpm build
 pnpm lint
 pnpm format
 ```
 
-`pnpm test` 和 `pnpm test:unit` 均运行 Vitest 单元测试;涉及浏览器行为的变更按需手工验收。`pnpm lint` 检查文件与标识符命名、运行 oxlint 并校验 Prettier 格式;当前 oxlint warning 不会让命令失败。`pnpm format` 一键格式化支持且未忽略的文件。
+涉及浏览器行为的变更按需手工验收。`pnpm lint` 检查文件与标识符命名、运行 oxlint 并校验 Prettier 格式;当前 oxlint warning 不会让命令失败。`pnpm format` 一键格式化支持且未忽略的文件。
 
 ## 技术栈
 
-React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 · TanStack Virtual · IndexedDB · Vitest
+React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 · TanStack Virtual · IndexedDB
 
 ## 代码规范
 
@@ -93,8 +92,7 @@ React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 ·
 - Boolean 标识符使用 `is`、`has`、`can`、`should`、`does` 等语义前缀。
 - 组件内事件处理函数使用 `handleXxx`,回调 Props 使用 `onXxx`。
 - 避免 `s`、`v`、`cls`、`len` 等含义不清的缩写,使用完整语义名称。
-- 测试、类型声明等职责后缀使用点号分隔,例如 `tree-view.test.tsx`、`vite-env.d.ts`。
-- Vitest 单元测试与源码共置;浏览器行为按需手工验收。
+- 类型声明等约定后缀使用点号分隔,例如 `vite-env.d.ts`。
 - 代码格式化统一由 Prettier 处理(分号、单引号、100 列、import 排序),`pnpm format` 一键执行。
 - `pnpm lint` 检查文件与标识符命名、运行 oxlint 并校验 Prettier 格式;准确门禁边界见 `docs/DEVELOPMENT.md`。
 - 修改用户可见的顶层能力时,必须同步两版 README;未完成工作只记录在 `docs/ROADMAP.md`。

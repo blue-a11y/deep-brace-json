@@ -32,32 +32,33 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 
 ## Documentation
 
-- [Development guide](docs/DEVELOPMENT.md) — architecture, naming, React, persistence, UI, testing and delivery conventions
+- [Development guide](docs/DEVELOPMENT.md) — architecture, naming, React, persistence, UI, validation and delivery conventions
 - [Development roadmap](docs/ROADMAP.md) — work in progress, planned validation and quality gates
 
 ## Keyboard Shortcuts
 
 Press the keyboard button in the header (or its overflow menu) to view the compact shortcut panel and configure a shared combination of Ctrl, Alt/Option, Cmd/Meta and Shift. All modifiers can be turned off to use single-key shortcuts. Changes apply immediately to all shortcuts and hints, persist in IndexedDB, and participate in reset/undo. These are simultaneous modifier combinations, not sequential leader keys.
 
-Defaults are listed below. Tab commands act on the active tab; bulk closes retain undo. Shortcuts with Ctrl, Alt/Option or Cmd/Meta also work in the editor. Single-key and Shift-only shortcuts pause in editors and other input fields; all global shortcuts pause in dialogs and menus. System/browser-reserved combinations may take priority; keep the default combination or use the buttons if a custom combination conflicts.
+Defaults use no modifiers and are listed below. The former built-in Alt+Shift default migrates to single keys, while saved custom combinations remain unchanged. Tab commands act on the active tab; bulk closes retain undo. Shortcuts with Ctrl, Alt/Option or Cmd/Meta also work in the editor. Shortcuts without those command modifiers pause in editors and other input fields; all global shortcuts pause in dialogs and menus. Home / End scroll the tree preview to its top / bottom. System/browser-reserved combinations may take priority; use the buttons if a custom combination conflicts.
 
-| Action                               | Shortcut                              |
-| ------------------------------------ | ------------------------------------- |
-| Format / Minify                      | `Shift+Alt+F` / `Shift+Alt+M`         |
-| Escape / Unescape                    | `Shift+Alt+E` / `Shift+Alt+U`         |
-| New / Close tab                      | `Shift+Alt+N` / `Shift+Alt+W`         |
-| Previous / Next tab                  | `Shift+Alt+[` / `Shift+Alt+]`         |
-| Toggle wrap / Fold all               | `Shift+Alt+L` / `Shift+Alt+X`         |
-| Search tree nodes                    | `Shift+Alt+K`                         |
-| Copy / Clear current content         | `Shift+Alt+C` / `Shift+Alt+Backspace` |
-| Focus editor (keep selection)        | `Shift+Alt+I`                         |
-| Leave editor focus (keep selection)  | `Esc`                                 |
-| Rename active tab                    | `Shift+Alt+R`                         |
-| Add tab to left / right              | `Shift+Alt+A` / `Shift+Alt+D`         |
-| Close all to left / right            | `Shift+Alt+J` / `Shift+Alt+P`         |
-| Close other tabs                     | `Shift+Alt+O`                         |
-| Code theme & fonts / Light-dark mode | `Shift+Alt+T` / `Shift+Alt+B`         |
-| Settings / Shortcut panel            | `Shift+Alt+S` / `Shift+Alt+H`         |
+| Action                               | Shortcut          |
+| ------------------------------------ | ----------------- |
+| Format / Minify                      | `F` / `M`         |
+| Escape / Unescape                    | `E` / `U`         |
+| New / Close tab                      | `N` / `W`         |
+| Previous / Next tab                  | `[` / `]`         |
+| Toggle wrap / Fold all               | `L` / `X`         |
+| Search tree nodes                    | `K`               |
+| Copy / Clear current content         | `C` / `Backspace` |
+| Tree preview top / bottom            | `Home` / `End`    |
+| Focus editor (keep selection)        | `I`               |
+| Leave editor focus (keep selection)  | `Esc`             |
+| Rename active tab                    | `R`               |
+| Add tab to left / right              | `A` / `D`         |
+| Close all to left / right            | `J` / `P`         |
+| Close other tabs                     | `O`               |
+| Code theme & fonts / Light-dark mode | `T` / `B`         |
+| Settings / Shortcut panel            | `S` / `H`         |
 
 On Mac, Backspace is shown as `⌫`. In single-key mode, press `Esc` to leave the editor before using it to clear the current content.
 
@@ -68,21 +69,19 @@ pnpm install
 pnpm dev
 ```
 
-Test, build, lint and format:
+Build, lint and format:
 
 ```bash
-pnpm test
-pnpm test:unit
 pnpm build
 pnpm lint
 pnpm format
 ```
 
-`pnpm test` and `pnpm test:unit` run the Vitest unit suite. Browser behavior is checked manually when relevant to a change. `pnpm lint` checks file and identifier naming, runs oxlint, and validates Prettier formatting; current oxlint warnings do not fail the command. `pnpm format` formats supported, non-ignored files in one shot.
+Browser behavior is checked manually when relevant to a change. `pnpm lint` checks file and identifier naming, runs oxlint, and validates Prettier formatting; current oxlint warnings do not fail the command. `pnpm format` formats supported, non-ignored files in one shot.
 
 ## Tech Stack
 
-React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 · TanStack Virtual · IndexedDB · Vitest
+React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 · TanStack Virtual · IndexedDB
 
 ## Code Style
 
@@ -93,8 +92,7 @@ React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 ·
 - Boolean identifiers use semantic prefixes: `is`, `has`, `can`, `should`, `does`.
 - Event handlers inside components use `handleXxx`; callback props use `onXxx`.
 - Avoid unclear abbreviations such as `s`, `v`, `cls`, `len` — use full semantic names.
-- Responsibility suffixes are dot-separated, e.g. `tree-view.test.tsx`, `vite-env.d.ts`.
-- Vitest unit tests stay beside source files; browser acceptance is performed manually as needed.
+- Type declaration suffixes are dot-separated, e.g. `vite-env.d.ts`.
 - Formatting is handled by Prettier (semicolons, single quotes, 100 columns, import sorting) — run `pnpm format`.
 - `pnpm lint` checks file and identifier naming, runs oxlint, and validates Prettier formatting; see `docs/DEVELOPMENT.md` for its exact enforcement boundaries.
 - User-visible top-level capability changes must update both README language versions; unfinished work belongs in `docs/ROADMAP.md`.

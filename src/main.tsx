@@ -2,9 +2,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './app.tsx';
-import { hydratePanelLayoutStorage } from './lib/panel-layout-storage';
-import { hydrateTabScrollStorage } from './lib/tab-scroll';
-import { waitForWorkspaceStyles } from './lib/workspace-styles';
+import { waitForWorkspaceStyles } from './lib/layout/workspace-styles';
+import { hydratePanelLayoutStorage } from './lib/storage/panel-layout-storage';
+import { hydrateTabScrollStorage } from './lib/storage/tab-scroll';
 import { applyCodeFont, applyCodeStyle, applyTheme, useStore } from './store/use-store';
 
 const renderApp = () => {

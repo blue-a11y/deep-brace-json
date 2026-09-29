@@ -115,9 +115,9 @@ commit `6cb6a1a`（"Next.js 16 版(含 Toast 复刻实现)"）包含一个**行�
 
 ## 8. 当前项目状态
 
-架构为 **Vite 8 + React 19**，渲染继续使用 HeroUI 的 `<Toast.Provider />` 与 `ToastQueue`，但队列更新已不再是“官方代码零改动”：项目在 `src/lib/toast.ts` 中提供统一封装，将新增、关闭和清空操作串行接入 `document.startViewTransition`，并在更新回调中使用 `flushSync`；浏览器不支持 View Transition 时退化为同步更新。
+架构为 **Vite 8 + React 19**，渲染继续使用 HeroUI 的 `<Toast.Provider />` 与 `ToastQueue`，但队列更新已不再是“官方代码零改动”：项目在 `src/lib/workspace/toast.ts` 中提供统一封装，将新增、关闭和清空操作串行接入 `document.startViewTransition`，并在更新回调中使用 `flushSync`；浏览器不支持 View Transition 时退化为同步更新。
 
-当前队列最多同时显示 3 条 Toast，统一承载转换、复制、标签关闭撤销和重置撤销等反馈。§1–§7 保留为历史环境、根因链与替代方案记录；当前实际行为以源码和测试为准，当前开发计划见 [docs/ROADMAP.md](ROADMAP.md)。
+当前队列最多同时显示 3 条 Toast，统一承载转换、复制、标签关闭撤销和重置撤销等反馈。§1–§7 保留为历史环境、根因链与替代方案记录；当前实际行为以源码和浏览器验收为准，当前开发计划见 [docs/ROADMAP.md](ROADMAP.md)。
 
 带撤销按钮的 Toast 与普通 Toast 共用同一套 View Transition，不再通过
 `view-transition-name: none` 跳过动画；浏览器验收按需手工检查底部 Toast 的

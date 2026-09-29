@@ -1,11 +1,11 @@
-import type { CodeFont } from '../lib/code-font';
-import type { IndentSize } from '../lib/indent';
-import type { ParseResult } from '../lib/parse';
-import type { SampleId } from '../lib/sample';
-import type { ShortcutModifiers } from '../lib/shortcuts';
-import type { TabScrollSnapshot } from '../lib/tab-scroll';
-import type { TreeSearchPosition } from '../lib/tree-search-position';
-import type { TreeTheme } from '../lib/tree-theme';
+import type { IndentSize } from '../lib/parse/indent';
+import type { ParseResult } from '../lib/parse/parse';
+import type { SampleId } from '../lib/parse/sample';
+import type { ShortcutModifiers } from '../lib/shortcuts/shortcuts';
+import type { TabScrollSnapshot } from '../lib/storage/tab-scroll';
+import type { CodeFont } from '../lib/theme/code-font';
+import type { TreeSearchPosition } from '../lib/tree/tree-search-position';
+import type { TreeTheme } from '../lib/tree/tree-theme';
 
 export type JsonTab = {
   id: string;

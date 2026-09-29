@@ -4,8 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const sourceRoot = fileURLToPath(new URL('../src', import.meta.url));
 const directoryNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const fileNamePattern =
-  /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:d|module|spec|stories|test))?\.[a-z0-9]+$/;
+const fileNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:d|module|stories))?\.[a-z0-9]+$/;
 
 const invalidPaths = [];
 let checkedFiles = 0;

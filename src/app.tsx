@@ -1,17 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Toast } from '@heroui/react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { EditorPane } from './components/editor-pane';
-import { JsonTabs } from './components/json-tabs';
-import { ShortcutManager } from './components/shortcut-manager';
-import { StatusBar } from './components/status-bar';
-import { Toolbar } from './components/toolbar';
-import { EmptyPane, ErrorPane, TreeView } from './components/tree-view';
-import { WORKSPACE_PANEL_CONSTRAINTS } from './lib/panel-layout-config';
-import { panelLayoutStorage } from './lib/panel-layout-storage';
-import { STORAGE_KEYS } from './lib/storage';
-import { toastQueue } from './lib/toast';
-import { useMediaQuery } from './lib/use-media-query';
+import {
+  getPanelGroupElement,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
+  type ImperativePanelGroupHandle,
+} from 'react-resizable-panels';
+import { EditorPane } from './components/editor/editor-pane';
+import { StatusBar } from './components/shared/status-bar';
+import { ShortcutManager } from './components/shortcuts/shortcut-manager';
+import { JsonTabs } from './components/tabs/json-tabs';
+import { Toolbar } from './components/toolbar/toolbar';
+import { EmptyPane, ErrorPane, TreeView } from './components/tree/tree-view';
+import {
+  shouldSnapWorkspacePanelsToCenter,
+  WORKSPACE_PANEL_CONSTRAINTS,
+} from './lib/layout/panel-layout-config';
+import { useMediaQuery } from './lib/layout/use-media-query';
+import { panelLayoutStorage } from './lib/storage/panel-layout-storage';
+import { STORAGE_KEYS } from './lib/storage/storage';
+import { toastQueue } from './lib/workspace/toast';
 import {
   applyCodeFont,
   applyCodeStyle,
@@ -43,6 +52,24 @@ const App = () => {
   useEffect(() => applyCodeStyle(isCodeBold, isCodeItalic), [isCodeBold, isCodeItalic]);
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null);
+  const isPanelDraggingRef = useRef(false);
+  const [isPanelCenterSnapGuideVisible, setIsPanelCenterSnapGuideVisible] = useState(false);
+
+  const handlePanelLayout = (layout: number[]) => {
+    if (!isPanelDraggingRef.current) return;
+
+    const panelGroup = panelGroupRef.current;
+    if (!panelGroup) return;
+
+    const groupWidth = getPanelGroupElement(panelGroup.getId())?.getBoundingClientRect().width ?? 0;
+    const shouldSnapToCenter = shouldSnapWorkspacePanelsToCenter(layout, groupWidth);
+    setIsPanelCenterSnapGuideVisible(shouldSnapToCenter);
+
+    if (shouldSnapToCenter && layout[0] !== 50) {
+      panelGroup.setLayout([50, 50]);
+    }
+  };
 
   const paneClass = 'h-full overflow-hidden rounded-2xl bg-white dark:bg-foreground/5';
   const editorPane = (
@@ -75,10 +102,12 @@ const App = () => {
         <div className="flex min-h-0 flex-1 flex-col">
           {isDesktop ? (
             <PanelGroup
+              ref={panelGroupRef}
               direction="horizontal"
-              className="min-h-0 flex-1"
+              className="relative min-h-0 flex-1"
               autoSaveId={STORAGE_KEYS.splitLayout}
               storage={panelLayoutStorage}
+              onLayout={handlePanelLayout}
             >
               <Panel {...WORKSPACE_PANEL_CONSTRAINTS} className="p-1">
                 {editorPane}
@@ -86,12 +115,26 @@ const App = () => {
               <PanelResizeHandle
                 aria-label="调整编辑器与树形预览宽度"
                 className="group flex w-2 items-center justify-center outline-none"
+                onDragging={isDragging => {
+                  isPanelDraggingRef.current = isDragging;
+                  if (!isDragging) setIsPanelCenterSnapGuideVisible(false);
+                }}
               >
                 <div className="h-14 w-1 rounded-full bg-foreground/15 transition-colors group-hover:bg-primary/70 group-data-[resize-handle-state=drag]:bg-primary" />
               </PanelResizeHandle>
               <Panel {...WORKSPACE_PANEL_CONSTRAINTS} className="p-1">
                 {previewPane}
               </Panel>
+              <div
+                aria-hidden="true"
+                className={`pointer-events-none absolute left-1/2 top-1/2 z-10 h-[90%] w-0.5 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-100 motion-reduce:transition-none ${
+                  isPanelCenterSnapGuideVisible ? 'opacity-60' : 'opacity-0'
+                }`}
+                style={{
+                  backgroundImage:
+                    'repeating-linear-gradient(to bottom, var(--color-accent) 0 6px, transparent 6px 10px)',
+                }}
+              />
             </PanelGroup>
           ) : (
             <main key={activeTabId} className="flex min-h-0 flex-1 flex-col gap-3">
