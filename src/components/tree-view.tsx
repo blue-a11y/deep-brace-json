@@ -55,7 +55,7 @@ const PaneHeader = ({
   extra?: ReactNode;
 }) => {
   return (
-    <div className="flex min-h-10 min-w-0 shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
+    <div className="flex min-h-10 min-w-0 shrink-0 flex-wrap items-center gap-x-2 px-4 py-1 text-xs text-foreground/55">
       <Eye size={13} className="shrink-0" />
       <span className="shrink-0 whitespace-nowrap font-medium">{title}</span>
       {notice && (
@@ -63,7 +63,9 @@ const PaneHeader = ({
           <span className="block truncate">{notice}</span>
         </Tip>
       )}
-      <div className="panel-header-actions ml-auto flex shrink-0 items-center gap-0.5">{extra}</div>
+      <div className="panel-header-actions ml-auto flex min-w-0 flex-wrap justify-end gap-0.5">
+        {extra}
+      </div>
     </div>
   );
 };
@@ -177,6 +179,7 @@ export const TreeView = () => {
   useEffect(() => setPathMenuTarget(null), [activeTab.id, data]);
 
   const handleCopy = async () => {
+    if (!result?.ok) return;
     try {
       await navigator.clipboard.writeText(serializeForCopy(data, indentSize));
       setIsCopied(true);
@@ -192,6 +195,7 @@ export const TreeView = () => {
       /* 剪贴板不可用时静默 */
     }
   };
+  useWorkspaceCommand('copyTree', handleCopy);
 
   const handleToggleAll = collapsed.size > 0 ? handleExpandAll : handleCollapseAll;
 
@@ -226,11 +230,26 @@ export const TreeView = () => {
               >
                 <Search size={14} />
                 <span className="pane-action-label">搜索</span>
-                <ShortcutKbd shortcut="searchTree" variant="light" className="pane-action-label" />
+                <ShortcutKbd
+                  shortcut="searchTree"
+                  variant="default"
+                  className="pane-action-shortcut"
+                />
               </Button>
             </Tip>
-            <Tip label={isCopied ? '已复制' : '复制内容'}>
-              <Button size="sm" variant="ghost" onPress={handleCopy}>
+            <Tip
+              ariaKeyShortcuts={getAriaShortcut('copyTree')}
+              label={
+                <ShortcutHint shortcut="copyTree">{isCopied ? '已复制' : '复制内容'}</ShortcutHint>
+              }
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-keyshortcuts={getAriaShortcut('copyTree')}
+                ref={getShortcutRef('copyTree')}
+                onPress={handleCopy}
+              >
                 <span className="relative inline-grid place-items-center">
                   <Copy
                     size={14}
@@ -242,12 +261,27 @@ export const TreeView = () => {
                   />
                 </span>
                 <span className="pane-action-label">{isCopied ? '已复制' : '复制'}</span>
+                <ShortcutKbd
+                  shortcut="copyTree"
+                  variant="default"
+                  className="pane-action-shortcut"
+                />
               </Button>
             </Tip>
-            <Tip label="清空">
-              <Button size="sm" variant="ghost" onPress={handleClear}>
+            <Tip
+              ariaKeyShortcuts={getAriaShortcut('clear')}
+              label={<ShortcutHint shortcut="clear">清空</ShortcutHint>}
+            >
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-keyshortcuts={getAriaShortcut('clear')}
+                ref={getShortcutRef('clear')}
+                onPress={handleClear}
+              >
                 <Trash2 size={14} />
                 <span className="pane-action-label">清空</span>
+                <ShortcutKbd shortcut="clear" variant="default" className="pane-action-shortcut" />
               </Button>
             </Tip>
             <Tip
@@ -276,6 +310,11 @@ export const TreeView = () => {
                   />
                 </span>
                 <span className="pane-action-label">{shouldWrap ? '换行' : '不换行'}</span>
+                <ShortcutKbd
+                  shortcut="toggleWrap"
+                  variant="default"
+                  className="pane-action-shortcut"
+                />
               </Button>
             </Tip>
             <Tip
@@ -304,6 +343,11 @@ export const TreeView = () => {
                   />
                 </span>
                 <span className="pane-action-label">{collapsed.size > 0 ? '展开' : '折叠'}</span>
+                <ShortcutKbd
+                  shortcut="toggleCollapse"
+                  variant="default"
+                  className="pane-action-shortcut"
+                />
               </Button>
             </Tip>
           </>

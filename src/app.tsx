@@ -7,6 +7,7 @@ import { ShortcutManager } from './components/shortcut-manager';
 import { StatusBar } from './components/status-bar';
 import { Toolbar } from './components/toolbar';
 import { EmptyPane, ErrorPane, TreeView } from './components/tree-view';
+import { WORKSPACE_PANEL_CONSTRAINTS } from './lib/panel-layout-config';
 import { panelLayoutStorage } from './lib/panel-layout-storage';
 import { STORAGE_KEYS } from './lib/storage';
 import { toastQueue } from './lib/toast';
@@ -79,7 +80,7 @@ const App = () => {
               autoSaveId={STORAGE_KEYS.splitLayout}
               storage={panelLayoutStorage}
             >
-              <Panel defaultSize={50} minSize={20} className="p-1">
+              <Panel {...WORKSPACE_PANEL_CONSTRAINTS} className="p-1">
                 {editorPane}
               </Panel>
               <PanelResizeHandle
@@ -88,7 +89,7 @@ const App = () => {
               >
                 <div className="h-14 w-1 rounded-full bg-foreground/15 transition-colors group-hover:bg-primary/70 group-data-[resize-handle-state=drag]:bg-primary" />
               </PanelResizeHandle>
-              <Panel defaultSize={50} minSize={20} className="p-1">
+              <Panel {...WORKSPACE_PANEL_CONSTRAINTS} className="p-1">
                 {previewPane}
               </Panel>
             </PanelGroup>

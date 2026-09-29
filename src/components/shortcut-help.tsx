@@ -2,6 +2,7 @@ import { Button, Modal, useOverlayState, type UseOverlayStateReturn } from '@her
 import { Keyboard } from 'lucide-react';
 import {
   DEFAULT_SHORTCUT_MODIFIERS,
+  EDITOR_BLUR_SHORTCUT,
   isShortcutModifiers,
   MODIFIER_OPTIONS,
   SHORTCUT_GROUPS,
@@ -50,7 +51,10 @@ export const ShortcutHelp = ({
                 <Keyboard size={18} />
                 快捷键
               </Modal.Heading>
-              <p className="text-xs text-muted">同时按下修饰键和字母键，在编辑器中也可使用。</p>
+              <p className="text-xs text-muted">
+                可组合修饰键，也可全部取消后使用单字母快捷键。编辑器内按{' '}
+                {EDITOR_BLUR_SHORTCUT.label} 退出聚焦。
+              </p>
             </Modal.Header>
             <Modal.Body className="space-y-4">
               <section aria-label="快捷键修饰键" className="border-b border-default pb-3">
@@ -88,7 +92,7 @@ export const ShortcutHelp = ({
                   })}
                 </div>
                 <p id="shortcut-modifier-description" className="mt-2 text-xs leading-5 text-muted">
-                  至少保留 Ctrl、Alt / Option 或 Cmd / Meta 中的一项。所有操作同步更新并自动保存。
+                  修饰键可全部取消。单字母或仅 Shift 时，输入区域内暂停快捷键；修改自动保存。
                 </p>
                 <p className="mt-1 text-xs leading-5 text-muted">
                   系统或浏览器保留组合可能优先执行（如 Cmd/Ctrl + W

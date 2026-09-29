@@ -31,6 +31,8 @@ const shortcutHandlers: Record<ShortcutId, () => void> = {
   openSettings: () => dispatchWorkspaceCommand('openSettings'),
   openShortcuts: () => dispatchWorkspaceCommand('openShortcuts'),
   searchTree: () => dispatchWorkspaceCommand('toggleTreeSearch'),
+  copyTree: () => dispatchWorkspaceCommand('copyTree'),
+  clear: () => useStore.getState().clear(),
   toggleTheme: () => useStore.getState().toggleTheme(),
   insertTabLeft: () => openTabRelative(useStore.getState().activeTabId, 'left'),
   insertTabRight: () => openTabRelative(useStore.getState().activeTabId, 'right'),
@@ -53,12 +55,22 @@ const isOverlayTarget = (target: EventTarget | null) =>
   target instanceof Element &&
   Boolean(target.closest('[role="dialog"], [role="alertdialog"], [role="listbox"], [role="menu"]'));
 
+const isEditableTarget = (target: EventTarget | null) =>
+  target instanceof Element &&
+  (Boolean(
+    target.closest('input, textarea, select, [role="textbox"], [role="searchbox"], .cm-editor'),
+  ) ||
+    (target instanceof HTMLElement && target.isContentEditable));
+
 export const ShortcutManager = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented || event.repeat || event.isComposing) return;
       if (isOverlayTarget(event.target)) return;
-      const shortcut = findShortcut(event, useStore.getState().shortcutModifiers);
+      const modifiers = useStore.getState().shortcutModifiers;
+      if (!modifiers.ctrl && !modifiers.alt && !modifiers.meta && isEditableTarget(event.target))
+        return;
+      const shortcut = findShortcut(event, modifiers);
       if (!shortcut) return;
       event.preventDefault();
       event.stopPropagation();

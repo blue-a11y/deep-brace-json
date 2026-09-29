@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from './storage-keys.js';
+import { PANEL_LAYOUT_STORAGE_KEY, STORAGE_KEYS } from './storage-keys.js';
 
 export { STORAGE_KEYS } from './storage-keys.js';
 
@@ -31,7 +31,25 @@ export const getInitialIsDark = () => {
 };
 
 /** react-resizable-panels 会给 autoSaveId 加前缀后再交给 storage */
-export const getSplitLayoutStorageKey = () => `react-resizable-panels:${STORAGE_KEYS.splitLayout}`;
+export const getSplitLayoutStorageKey = () => PANEL_LAYOUT_STORAGE_KEY;
+
+export const readPanelLayout = () => {
+  try {
+    return window.localStorage.getItem(PANEL_LAYOUT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+export const writePanelLayout = (layout: string | null) => {
+  try {
+    if (layout === null) window.localStorage.removeItem(PANEL_LAYOUT_STORAGE_KEY);
+    else window.localStorage.setItem(PANEL_LAYOUT_STORAGE_KEY, layout);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export const isTabGuideDismissed = () => {
   try {

@@ -1,6 +1,12 @@
 /** 瞬时 UI 命令，不进入持久化状态；组件负责本地弹层与编辑器焦点。 */
 export type WorkspaceCommand =
-  'focusEditor' | 'renameTab' | 'openTheme' | 'openSettings' | 'openShortcuts' | 'toggleTreeSearch';
+  | 'focusEditor'
+  | 'renameTab'
+  | 'openTheme'
+  | 'openSettings'
+  | 'openShortcuts'
+  | 'toggleTreeSearch'
+  | 'copyTree';
 
 const commandTarget = new EventTarget();
 

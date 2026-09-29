@@ -140,9 +140,31 @@ body {
 
 /* 面板头操作按钮图标收小一档:HeroUI Button 以 `.button svg { size-4 }` 强制 16px,
    此处仅覆盖编辑器/树形预览头部为 14px(主工具栏保持 16px) */
+.panel-header-actions button {
+  gap: 6px;
+  padding-inline: 8px;
+}
 .panel-header-actions button svg {
   width: 14px;
   height: 14px;
+}
+.panel-header-actions .pane-action-shortcut {
+  height: 20px;
+  padding-inline: 6px;
+  font-size: 11px;
+}
+
+[data-workspace-pane='editor'] {
+  outline-color: transparent;
+}
+[data-workspace-pane='editor']:has(.cm-editor) {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-offset: -2px;
+  transition: outline-color 180ms ease;
+}
+[data-workspace-pane='editor']:has(.cm-editor.cm-focused) {
+  outline-color: color-mix(in oklab, var(--color-accent) 65%, transparent);
 }
 
 /* 窄屏工具栏允许控件分行，但禁止按钮和图标被 Flex 压缩变形。 */
@@ -196,6 +218,13 @@ body {
 }
 .cm-editor.cm-focused {
   outline: none;
+}
+[data-workspace-pane='editor'] .cm-editor .cm-cursor,
+[data-workspace-pane='editor'] .cm-editor .cm-dropCursor {
+  border-left-width: 2px;
+  border-radius: 1px;
+  margin-left: -1px;
+  box-shadow: 0 0 5px color-mix(in oklab, var(--color-accent) 45%, transparent);
 }
 .cm-scroller {
   font-family: var(--font-mono) !important;
@@ -480,16 +509,18 @@ body {
   cursor: pointer;
 }
 .tree-line--search-active {
-  box-shadow: inset 2px 0 0 var(--color-accent);
+  background: color-mix(in oklab, var(--color-accent) 10%, transparent);
 }
 .tree-search-highlight {
   border-radius: 2px;
-  background: color-mix(in oklab, var(--color-accent) 42%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 20%, transparent);
   box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 18%, transparent);
   color: inherit;
 }
 .tree-line--search-active .tree-search-highlight {
-  background: color-mix(in oklab, var(--color-accent) 58%, transparent);
+  background: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+  color: var(--accent-foreground);
 }
 /* 文本 token 精确呈现文字选择的 I 光标,行空白与标点保持默认 */
 .tree-token-key,
@@ -604,10 +635,10 @@ body {
 }
 .tree-search-scope .select__value {
   display: flex;
-  height: 12px;
+  height: 16px;
   align-items: center;
   gap: 0;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1;
 }
 .tree-search-scope .select__value .list-box-item__indicator {
@@ -840,6 +871,9 @@ body {
   animation: icon-feedback-minify 380ms var(--ease-smooth, cubic-bezier(0.22, 1, 0.36, 1));
 }
 @media (prefers-reduced-motion: reduce) {
+  [data-workspace-pane='editor']:has(.cm-editor) {
+    transition: none;
+  }
   .tree-search-popover,
   .tree-search-popover[data-open='true'] {
     transform: none;

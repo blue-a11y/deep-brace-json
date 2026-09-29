@@ -120,5 +120,5 @@ commit `6cb6a1a`（"Next.js 16 版(含 Toast 复刻实现)"）包含一个**行�
 当前队列最多同时显示 3 条 Toast，统一承载转换、复制、标签关闭撤销和重置撤销等反馈。§1–§7 保留为历史环境、根因链与替代方案记录；当前实际行为以源码和测试为准，当前开发计划见 [docs/ROADMAP.md](ROADMAP.md)。
 
 带撤销按钮的 Toast 与普通 Toast 共用同一套 View Transition，不再通过
-`view-transition-name: none` 跳过动画；Playwright 同时验证底部 Toast 的
+`view-transition-name: none` 跳过动画；浏览器验收按需手工检查底部 Toast 的
 `toast-slide-bottom-in`、`toast-slide-bottom-out` 以及撤销后的标签恢复。

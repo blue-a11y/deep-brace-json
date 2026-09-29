@@ -6,7 +6,7 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react';
-import { Braces, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
 import { LARGE_VALUE_PREVIEW_LENGTH, TREE_PREVIEW_DEPTH } from '../lib/large-document';
 import { isStrictJson, pathKey, type NodePath } from '../lib/parse';
 import { getTreeLineCount } from '../lib/tree-metrics';
@@ -200,7 +200,7 @@ const ParseStringButton = ({ value, title }: ParseStringButtonProps) => {
   return (
     <TreeActionButton onClick={handleParse}>
       Parse
-      <Braces size={10} />
+      <ArrowRight size={10} />
     </TreeActionButton>
   );
 };

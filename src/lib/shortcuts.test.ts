@@ -4,6 +4,7 @@ import {
   findShortcut,
   getAriaShortcut,
   getShortcutKey,
+  getShortcutLabel,
   isShortcutModifiers,
   SHORTCUT_GROUPS,
 } from './shortcuts';
@@ -28,7 +29,14 @@ describe('workspace shortcuts', () => {
     expect(new Set(keys).size).toBe(ids.length);
     for (const id of ids) {
       const key = getShortcutKey(id);
-      const code = key === '[' ? 'BracketLeft' : key === ']' ? 'BracketRight' : `Key${key}`;
+      const code =
+        key === '['
+          ? 'BracketLeft'
+          : key === ']'
+            ? 'BracketRight'
+            : key === 'Backspace'
+              ? 'Backspace'
+              : `Key${key}`;
       expect(findShortcut(keyEvent({ code }))).toBe(id);
     }
   });
@@ -36,6 +44,18 @@ describe('workspace shortcuts', () => {
   it('uses physical codes so Option-produced characters do not break shortcuts', () => {
     expect(findShortcut(keyEvent({ key: 'ˆ' }))).toBe('focusEditor');
     expect(getAriaShortcut('focusEditor')).toBe('Alt+Shift+I');
+  });
+
+  it('matches copy and Backspace with the shared modifier preference', () => {
+    const modifiers = { ctrl: false, alt: false, meta: false, shift: false };
+    const event = keyEvent({ altKey: false, shiftKey: false });
+    expect(findShortcut(keyEvent({ ...event, code: 'KeyC' }), modifiers)).toBe('copyTree');
+    expect(findShortcut(keyEvent({ ...event, code: 'Backspace' }), modifiers)).toBe('clear');
+    expect(findShortcut(keyEvent({ ...event, code: 'Delete' }), modifiers)).toBeNull();
+    expect(
+      findShortcut(keyEvent({ ...event, code: 'Backspace', metaKey: true }), modifiers),
+    ).toBeNull();
+    expect(getAriaShortcut('clear', modifiers)).toBe('Backspace');
   });
 
   it.each([
@@ -58,6 +78,33 @@ describe('workspace shortcuts', () => {
     expect(getAriaShortcut('renameTab', modifiers)).toBe('Meta+Shift+R');
   });
 
+  it('supports Cmd-only search without requiring Option or Shift', () => {
+    const modifiers = { ctrl: false, alt: false, meta: true, shift: false };
+    const event = keyEvent({ code: 'KeyK', altKey: false, metaKey: true, shiftKey: false });
+
+    expect(isShortcutModifiers(modifiers)).toBe(true);
+    expect(findShortcut(event, modifiers)).toBe('searchTree');
+    expect(findShortcut(keyEvent({ ...event, code: 'KeyP' }), modifiers)).toBe('closeTabsRight');
+    expect(findShortcut(keyEvent({ ...event, shiftKey: true }), modifiers)).toBeNull();
+    expect(findShortcut(keyEvent({ ...event, altKey: true }), modifiers)).toBeNull();
+    expect(getAriaShortcut('searchTree', modifiers)).toBe('Meta+K');
+  });
+
+  it.each([false, true])(
+    'matches search with optional Shift and no command modifiers: %s',
+    shift => {
+      const modifiers = { ctrl: false, alt: false, meta: false, shift };
+      const event = keyEvent({ code: 'KeyK', altKey: false, shiftKey: shift });
+
+      expect(isShortcutModifiers(modifiers)).toBe(true);
+      expect(findShortcut(event, modifiers)).toBe('searchTree');
+      expect(findShortcut(keyEvent({ ...event, ctrlKey: true }), modifiers)).toBeNull();
+      expect(findShortcut(keyEvent({ ...event, shiftKey: !shift }), modifiers)).toBeNull();
+      expect(getShortcutLabel('searchTree', modifiers)).toBe(shift ? 'Shift+K' : 'K');
+      expect(getAriaShortcut('searchTree', modifiers)).toBe(shift ? 'Shift+K' : 'K');
+    },
+  );
+
   it('does not treat AltGr text input as a Ctrl+Alt shortcut', () => {
     const modifiers = { ctrl: true, alt: true, meta: false, shift: false };
     expect(
@@ -72,9 +119,9 @@ describe('workspace shortcuts', () => {
     null,
     {},
     ['alt', 'shift'],
-    { ...DEFAULT_SHORTCUT_MODIFIERS, alt: false },
+    { ctrl: false, alt: false, meta: false },
     { ...DEFAULT_SHORTCUT_MODIFIERS, ctrl: 'true' },
-  ])('rejects invalid or typing-only modifier preferences: %j', value => {
+  ])('rejects incomplete or invalid modifier preferences: %j', value => {
     expect(isShortcutModifiers(value)).toBe(false);
   });
 });
