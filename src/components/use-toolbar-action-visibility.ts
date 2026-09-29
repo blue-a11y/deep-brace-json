@@ -1,3 +1,4 @@
+import { TOOLBAR_ACTION_MIN_WIDTH } from '../lib/toolbar-breakpoints';
 import { useMediaQuery } from '../lib/use-media-query';
 
 export type ToolbarActionVisibility = {
@@ -11,13 +12,15 @@ export type ToolbarActionVisibility = {
 };
 
 export const useToolbarActionVisibility = (): ToolbarActionVisibility => {
-  const shouldShowSample = useMediaQuery('(min-width: 860px)');
-  const shouldShowIndent = useMediaQuery('(min-width: 800px)');
-  const shouldShowAppearance = useMediaQuery('(min-width: 680px)');
-  const shouldShowShortcuts = useMediaQuery('(min-width: 600px)');
-  const shouldShowSettings = useMediaQuery('(min-width: 560px)');
-  const shouldShowTheme = useMediaQuery('(min-width: 480px)');
-  const shouldShowGithub = useMediaQuery('(min-width: 340px)');
+  const shouldShowSample = useMediaQuery(`(min-width: ${TOOLBAR_ACTION_MIN_WIDTH.sample}px)`);
+  const shouldShowIndent = useMediaQuery(`(min-width: ${TOOLBAR_ACTION_MIN_WIDTH.indent}px)`);
+  const shouldShowAppearance = useMediaQuery(
+    `(min-width: ${TOOLBAR_ACTION_MIN_WIDTH.appearance}px)`,
+  );
+  const shouldShowShortcuts = useMediaQuery(`(min-width: ${TOOLBAR_ACTION_MIN_WIDTH.shortcuts}px)`);
+  const shouldShowSettings = useMediaQuery(`(min-width: ${TOOLBAR_ACTION_MIN_WIDTH.settings}px)`);
+  const shouldShowTheme = useMediaQuery(`(min-width: ${TOOLBAR_ACTION_MIN_WIDTH.theme}px)`);
+  const shouldShowGithub = useMediaQuery(`(min-width: ${TOOLBAR_ACTION_MIN_WIDTH.github}px)`);
 
   return {
     shouldShowSample,

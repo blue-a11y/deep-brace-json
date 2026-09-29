@@ -10,13 +10,6 @@ import {
   putIndexedDbValue,
 } from './indexed-db-storage';
 import {
-  capturePanelLayoutSnapshot,
-  clearPanelLayoutStorage,
-  panelLayoutStorage,
-  restorePanelLayoutSnapshot,
-} from './panel-layout-storage';
-import { STORAGE_KEYS } from './storage';
-import {
   captureTabScrollSnapshot,
   clearTabScrollPositions,
   hydrateTabScrollStorage,
@@ -162,42 +155,6 @@ describe('structured IndexedDB storage', () => {
     expect(editorValue).not.toHaveProperty('tabId');
     expect(editorValue).not.toHaveProperty('area');
     expect(storedEntries).toHaveLength(2);
-  });
-
-  it('keeps panel layout JSON only at the component boundary', async () => {
-    const id = `react-resizable-panels:${STORAGE_KEYS.splitLayout}`;
-    const layouts = {
-      'panel-key': {
-        expandToSizes: {},
-        layout: [80, 20],
-      },
-    };
-    panelLayoutStorage.setItem(id, JSON.stringify(layouts));
-
-    await vi.waitFor(async () => {
-      const value = await getIndexedDbValue(INDEXED_DB_STORES.panelLayout, id);
-      expect(value).toStrictEqual(layouts);
-    });
-  });
-
-  it('switches the panel layout cache synchronously during reset and undo', async () => {
-    const id = `react-resizable-panels:${STORAGE_KEYS.splitLayout}`;
-    const snapshot = JSON.stringify({ workspace: { layout: [80, 20] } });
-    panelLayoutStorage.setItem(id, snapshot);
-
-    const clearPromise = clearPanelLayoutStorage();
-    expect(capturePanelLayoutSnapshot()).toBeNull();
-    expect(panelLayoutStorage.getItem(id)).toBeNull();
-    await clearPromise;
-    await expect(getIndexedDbValue(INDEXED_DB_STORES.panelLayout, id)).resolves.toBeNull();
-
-    const restorePromise = restorePanelLayoutSnapshot(snapshot);
-    expect(capturePanelLayoutSnapshot()).toBe(snapshot);
-    expect(panelLayoutStorage.getItem(id)).toBe(snapshot);
-    await restorePromise;
-    await expect(getIndexedDbValue(INDEXED_DB_STORES.panelLayout, id)).resolves.toStrictEqual(
-      JSON.parse(snapshot),
-    );
   });
 
   it('switches the scroll cache synchronously during reset and undo', async () => {

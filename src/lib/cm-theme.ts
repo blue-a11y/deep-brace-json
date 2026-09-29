@@ -222,7 +222,7 @@ const createEditorTheme = (theme: EditorThemeMode, colors: SyntaxColors) => {
     settings: {
       background: 'transparent',
       foreground: isDark ? '#d4d4d8' : '#27272a',
-      caret: colors.key,
+      caret: 'var(--color-accent)',
       selection: isDark ? '#7dd3fc22' : '#0369a122',
       selectionMatch: isDark ? '#7dd3fc33' : '#0369a133',
       lineHighlight: isDark ? '#ffffff08' : '#00000006',

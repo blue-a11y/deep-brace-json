@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { json } from '@codemirror/lang-json';
 import { foldGutter } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
@@ -6,11 +6,12 @@ import { Button } from '@heroui/react';
 import CodeMirror from '@uiw/react-codemirror';
 import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react';
 import { getCodeMirrorTheme } from '../lib/cm-theme';
+import { EDITOR_BLUR_SHORTCUT } from '../lib/shortcuts';
 import { bindEditorTabScrollPosition } from '../lib/tab-scroll';
 import { useShortcutLabels } from '../lib/use-shortcut-labels';
 import { useWorkspaceCommand } from '../lib/use-workspace-command';
 import { selectActiveTab, useStore } from '../store/use-store';
-import { ShortcutHint } from './shortcut-hint';
+import { ShortcutHint, ShortcutKbd } from './shortcut-hint';
 import { Tip } from './tip';
 
 /** 与 TreeView 同款 chevron:默认 ⌄/› 字形墨迹偏行底,换 SVG 在 24px 行内精确居中 */
@@ -47,7 +48,9 @@ export const EditorPane = () => {
   const extensions = useMemo(
     () => [
       ...JSON_EDITOR_EXTENSIONS,
-      EditorView.contentAttributes.of({ 'aria-keyshortcuts': focusShortcut }),
+      EditorView.contentAttributes.of({
+        'aria-keyshortcuts': `${focusShortcut} ${EDITOR_BLUR_SHORTCUT.key}`,
+      }),
     ],
     [focusShortcut],
   );
@@ -77,6 +80,25 @@ export const EditorPane = () => {
     editorScrollCleanupRef.current = bindEditorTabScrollPosition(activeTab.id, view);
   };
 
+  const handleEditorKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    const view = editorRef.current;
+    if (
+      !view?.hasFocus ||
+      event.key !== EDITOR_BLUR_SHORTCUT.key ||
+      event.defaultPrevented ||
+      event.repeat ||
+      event.nativeEvent.isComposing ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.metaKey ||
+      event.shiftKey
+    )
+      return;
+    event.preventDefault();
+    event.stopPropagation();
+    view.contentDOM.blur();
+  };
+
   const handleFormat = () => {
     if (format()) setFormatPulse(pulse => pulse + 1);
   };
@@ -99,11 +121,14 @@ export const EditorPane = () => {
   }, [codeFont, isCodeBold, isCodeItalic]);
 
   return (
-    <section className="pane-responsive-actions flex h-full min-h-0 flex-col">
-      <div className="flex shrink-0 items-center gap-2 px-4 py-1 text-xs text-foreground/55">
-        <FileJson size={13} />
-        <span className="font-medium">编辑器</span>
-        <div className="panel-header-actions ml-auto flex items-center gap-0.5">
+    <section
+      className="pane-responsive-actions flex h-full min-h-0 flex-col"
+      onKeyDownCapture={handleEditorKeyDown}
+    >
+      <div className="flex shrink-0 flex-wrap items-center gap-x-2 px-4 py-1 text-xs text-foreground/55">
+        <FileJson size={13} className="shrink-0" />
+        <span className="shrink-0 font-medium">编辑器</span>
+        <div className="panel-header-actions ml-auto flex min-w-0 flex-wrap justify-end gap-0.5">
           <Tip
             ariaKeyShortcuts={getAriaShortcut('format')}
             label={<ShortcutHint shortcut="format">格式化 · JSON5 → 标准 JSON</ShortcutHint>}
@@ -121,6 +146,7 @@ export const EditorPane = () => {
                 className={formatPulse > 0 ? 'icon-feedback-format' : undefined}
               />
               <span className="pane-action-label">格式化</span>
+              <ShortcutKbd shortcut="format" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
           <Tip
@@ -140,6 +166,7 @@ export const EditorPane = () => {
                 className={minifyPulse > 0 ? 'icon-feedback-minify' : undefined}
               />
               <span className="pane-action-label">压缩</span>
+              <ShortcutKbd shortcut="minify" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
           <Tip
@@ -163,6 +190,7 @@ export const EditorPane = () => {
                 className={escapePulse > 0 ? 'icon-feedback-wrap' : undefined}
               />
               <span className="pane-action-label">转义</span>
+              <ShortcutKbd shortcut="escape" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
           <Tip
@@ -184,6 +212,7 @@ export const EditorPane = () => {
                 className={unescapePulse > 0 ? 'icon-feedback-unwrap' : undefined}
               />
               <span className="pane-action-label">反转义</span>
+              <ShortcutKbd shortcut="unescape" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
         </div>

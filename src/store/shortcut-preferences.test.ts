@@ -13,7 +13,7 @@ describe('shortcut preference hydration', () => {
     undefined,
     null,
     {},
-    { ctrl: false, alt: false, meta: false, shift: true },
+    { ctrl: false, alt: false, meta: false },
     { ctrl: 'yes', alt: true, meta: false, shift: true },
   ])(
     'falls back to default modifiers for missing or invalid stored data: %j',
@@ -26,9 +26,13 @@ describe('shortcut preference hydration', () => {
     },
   );
 
-  it('restores a structured shared modifier preference', async () => {
+  it.each([
+    { ctrl: false, alt: false, meta: true, shift: true },
+    { ctrl: false, alt: false, meta: true, shift: false },
+    { ctrl: false, alt: false, meta: false, shift: false },
+    { ctrl: false, alt: false, meta: false, shift: true },
+  ])('restores a structured shared modifier preference: %j', async shortcutModifiers => {
     const { putIndexedDbValue, INDEXED_DB_STORES } = await import('../lib/indexed-db-storage');
-    const shortcutModifiers = { ctrl: false, alt: false, meta: true, shift: true };
     await putIndexedDbValue(INDEXED_DB_STORES.appState, 'current', { shortcutModifiers });
     const { useStore } = await import('./use-store');
     await useStore.persist.rehydrate();

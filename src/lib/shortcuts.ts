@@ -1,3 +1,5 @@
+export const EDITOR_BLUR_SHORTCUT = { key: 'Escape', label: 'Esc' } as const;
+
 const SHORTCUTS = {
   format: { code: 'KeyF', key: 'F' },
   minify: { code: 'KeyM', key: 'M' },
@@ -12,11 +14,13 @@ const SHORTCUTS = {
   insertTabLeft: { code: 'KeyA', key: 'A' },
   insertTabRight: { code: 'KeyD', key: 'D' },
   closeTabsLeft: { code: 'KeyJ', key: 'J' },
-  closeTabsRight: { code: 'KeyK', key: 'K' },
+  closeTabsRight: { code: 'KeyP', key: 'P' },
   closeOtherTabs: { code: 'KeyO', key: 'O' },
   toggleWrap: { code: 'KeyL', key: 'L' },
   toggleCollapse: { code: 'KeyX', key: 'X' },
-  searchTree: { code: 'KeyG', key: 'G' },
+  searchTree: { code: 'KeyK', key: 'K' },
+  copyTree: { code: 'KeyC', key: 'C' },
+  clear: { code: 'Backspace', key: 'Backspace' },
   openTheme: { code: 'KeyT', key: 'T' },
   openSettings: { code: 'KeyS', key: 'S' },
   openShortcuts: { code: 'KeyH', key: 'H' },
@@ -72,6 +76,8 @@ export const SHORTCUT_GROUPS = [
     title: '树形预览',
     items: [
       { id: 'searchTree', label: '搜索树节点' },
+      { id: 'copyTree', label: '复制内容' },
+      { id: 'clear', label: '清空当前内容' },
       { id: 'toggleWrap', label: '切换自动换行' },
       { id: 'toggleCollapse', label: '折叠 / 展开全部' },
     ],
@@ -99,18 +105,17 @@ export const DEFAULT_SHORTCUT_MODIFIERS: ShortcutModifiers = {
 export const isShortcutModifiers = (value: unknown): value is ShortcutModifiers => {
   if (!value || typeof value !== 'object') return false;
   const modifiers = value as Partial<ShortcutModifiers>;
-  return (
-    MODIFIER_OPTIONS.every(option => typeof modifiers[option.id] === 'boolean') &&
-    Boolean(modifiers.ctrl || modifiers.alt || modifiers.meta)
-  );
+  return MODIFIER_OPTIONS.every(option => typeof modifiers[option.id] === 'boolean');
 };
 
 export const getShortcutKey = (id: ShortcutId) => SHORTCUTS[id].key;
+export const getShortcutDisplayKey = (id: ShortcutId) =>
+  isMac && id === 'clear' ? '⌫' : getShortcutKey(id);
 
 export const getShortcutLabel = (id: ShortcutId, modifiers = DEFAULT_SHORTCUT_MODIFIERS) =>
   [
     ...MODIFIER_OPTIONS.filter(option => modifiers[option.id]).map(option => option.label),
-    SHORTCUTS[id].key,
+    getShortcutDisplayKey(id),
   ].join('+');
 
 export const getAriaShortcut = (id: ShortcutId, modifiers = DEFAULT_SHORTCUT_MODIFIERS) =>

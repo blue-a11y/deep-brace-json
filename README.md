@@ -27,7 +27,7 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 - **Feature highlights** beside the logo use matching icon tags with hover and keyboard-focus descriptions. The large-document tag appears from 1,280px, with the remaining capabilities from 1,536px; narrower screens prioritize the product name and tools
 - **Reset to defaults**: "Reset all data" in Settings restores factory state (sample tab + blank tab + default preferences + scroll & split layout) behind a confirm dialog; a toast offers full undo for 8 seconds
 - **Live status bar** with line, character and UTF-8 size metrics plus parse type, node count, depth and errors
-- **Progressive startup**: show a lightweight workspace skeleton before application JavaScript is ready, with responsive panes, matching light/dark styling and reduced-motion support. Light/dark mode is stored only in localStorage and applied before the first paint, falling back to the system preference when unset; code themes, fonts and workspace data remain in IndexedDB. Load settings, theme and shortcut dialogs with the workspace so opening them requires no additional script download. Shared layout dimensions and an inline brand-font subset align the skeleton with the default workspace without an external font request. Main styles download without blocking the skeleton; the workspace mounts once styles are ready, with a retry entry on failure. Other fonts do not block rendering; wordmark animation loads after the workspace mounts without resizing the logo, with a static fallback for reduced motion or download failures
+- **Progressive startup**: show a lightweight workspace skeleton before application JavaScript is ready, with responsive panes, matching light/dark styling and reduced-motion support. Desktop skeleton panes synchronously restore the saved split ratio from localStorage, using equal widths when no valid layout is available. Existing IndexedDB layouts migrate on the first workspace load. Light/dark mode is stored only in localStorage and applied before the first paint, falling back to the system preference when unset; split ratios also use localStorage; code themes, fonts, tabs and scroll positions remain in IndexedDB. Load settings, theme and shortcut dialogs with the workspace so opening them requires no additional script download. Shared layout dimensions and an inline brand-font subset align the skeleton with the default workspace without an external font request. Main styles download without blocking the skeleton; the workspace mounts once styles are ready, with a retry entry on failure. Other fonts do not block rendering; wordmark animation loads after the workspace mounts without resizing the logo, with a static fallback for reduced motion or download failures
 - **100% client-side** — your data never leaves the browser
 
 ## Documentation
@@ -37,25 +37,29 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 
 ## Keyboard Shortcuts
 
-Press the keyboard button in the header (or its overflow menu) to view the compact shortcut panel and configure a shared combination of Ctrl, Alt/Option, Cmd/Meta and Shift. At least one of Ctrl, Alt/Option or Cmd/Meta is required. Changes apply immediately to all shortcuts and hints, persist in IndexedDB, and participate in reset/undo. These are simultaneous modifier combinations, not sequential leader keys.
+Press the keyboard button in the header (or its overflow menu) to view the compact shortcut panel and configure a shared combination of Ctrl, Alt/Option, Cmd/Meta and Shift. All modifiers can be turned off to use single-key shortcuts. Changes apply immediately to all shortcuts and hints, persist in IndexedDB, and participate in reset/undo. These are simultaneous modifier combinations, not sequential leader keys.
 
-Defaults are listed below. Tab commands act on the active tab; bulk closes retain undo. Shortcuts also work in the editor, but are suspended in dialogs and menus to protect input. System/browser-reserved combinations may take priority; keep the default combination or use the buttons if a custom combination conflicts.
+Defaults are listed below. Tab commands act on the active tab; bulk closes retain undo. Shortcuts with Ctrl, Alt/Option or Cmd/Meta also work in the editor. Single-key and Shift-only shortcuts pause in editors and other input fields; all global shortcuts pause in dialogs and menus. System/browser-reserved combinations may take priority; keep the default combination or use the buttons if a custom combination conflicts.
 
-| Action                               | Shortcut                      |
-| ------------------------------------ | ----------------------------- |
-| Format / Minify                      | `Shift+Alt+F` / `Shift+Alt+M` |
-| Escape / Unescape                    | `Shift+Alt+E` / `Shift+Alt+U` |
-| New / Close tab                      | `Shift+Alt+N` / `Shift+Alt+W` |
-| Previous / Next tab                  | `Shift+Alt+[` / `Shift+Alt+]` |
-| Toggle wrap / Fold all               | `Shift+Alt+L` / `Shift+Alt+X` |
-| Search tree nodes                    | `Shift+Alt+G`                 |
-| Focus editor (keep selection)        | `Shift+Alt+I`                 |
-| Rename active tab                    | `Shift+Alt+R`                 |
-| Add tab to left / right              | `Shift+Alt+A` / `Shift+Alt+D` |
-| Close all to left / right            | `Shift+Alt+J` / `Shift+Alt+K` |
-| Close other tabs                     | `Shift+Alt+O`                 |
-| Code theme & fonts / Light-dark mode | `Shift+Alt+T` / `Shift+Alt+B` |
-| Settings / Shortcut panel            | `Shift+Alt+S` / `Shift+Alt+H` |
+| Action                               | Shortcut                              |
+| ------------------------------------ | ------------------------------------- |
+| Format / Minify                      | `Shift+Alt+F` / `Shift+Alt+M`         |
+| Escape / Unescape                    | `Shift+Alt+E` / `Shift+Alt+U`         |
+| New / Close tab                      | `Shift+Alt+N` / `Shift+Alt+W`         |
+| Previous / Next tab                  | `Shift+Alt+[` / `Shift+Alt+]`         |
+| Toggle wrap / Fold all               | `Shift+Alt+L` / `Shift+Alt+X`         |
+| Search tree nodes                    | `Shift+Alt+K`                         |
+| Copy / Clear current content         | `Shift+Alt+C` / `Shift+Alt+Backspace` |
+| Focus editor (keep selection)        | `Shift+Alt+I`                         |
+| Leave editor focus (keep selection)  | `Esc`                                 |
+| Rename active tab                    | `Shift+Alt+R`                         |
+| Add tab to left / right              | `Shift+Alt+A` / `Shift+Alt+D`         |
+| Close all to left / right            | `Shift+Alt+J` / `Shift+Alt+P`         |
+| Close other tabs                     | `Shift+Alt+O`                         |
+| Code theme & fonts / Light-dark mode | `Shift+Alt+T` / `Shift+Alt+B`         |
+| Settings / Shortcut panel            | `Shift+Alt+S` / `Shift+Alt+H`         |
+
+On Mac, Backspace is shown as `⌫`. In single-key mode, press `Esc` to leave the editor before using it to clear the current content.
 
 ## Getting Started
 
@@ -69,24 +73,16 @@ Test, build, lint and format:
 ```bash
 pnpm test
 pnpm test:unit
-pnpm test:e2e
-pnpm test:e2e:ui
 pnpm build
 pnpm lint
 pnpm format
 ```
 
-Before the first browser test run, install the matching Chromium binary:
-
-```bash
-pnpm exec playwright install chromium
-```
-
-`pnpm test` runs both the Vitest unit suite and Playwright browser integration suite; use `pnpm test:unit` or `pnpm test:e2e` for one layer, and `pnpm test:e2e:ui` for Playwright's interactive runner. `pnpm lint` checks file and identifier naming, runs oxlint, and validates Prettier formatting; current oxlint warnings do not fail the command. `pnpm format` formats supported, non-ignored files in one shot.
+`pnpm test` and `pnpm test:unit` run the Vitest unit suite. Browser behavior is checked manually when relevant to a change. `pnpm lint` checks file and identifier naming, runs oxlint, and validates Prettier formatting; current oxlint warnings do not fail the command. `pnpm format` formats supported, non-ignored files in one shot.
 
 ## Tech Stack
 
-React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 · TanStack Virtual · IndexedDB · Vitest · Playwright
+React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 · TanStack Virtual · IndexedDB · Vitest
 
 ## Code Style
 
@@ -98,7 +94,7 @@ React 19 · Vite 8 · HeroUI v3 · Tailwind CSS v4 · zustand · CodeMirror 6 ·
 - Event handlers inside components use `handleXxx`; callback props use `onXxx`.
 - Avoid unclear abbreviations such as `s`, `v`, `cls`, `len` — use full semantic names.
 - Responsibility suffixes are dot-separated, e.g. `tree-view.test.tsx`, `vite-env.d.ts`.
-- Vitest unit tests stay beside source files; Playwright browser integration tests live under `e2e/`.
+- Vitest unit tests stay beside source files; browser acceptance is performed manually as needed.
 - Formatting is handled by Prettier (semicolons, single quotes, 100 columns, import sorting) — run `pnpm format`.
 - `pnpm lint` checks file and identifier naming, runs oxlint, and validates Prettier formatting; see `docs/DEVELOPMENT.md` for its exact enforcement boundaries.
 - User-visible top-level capability changes must update both README language versions; unfinished work belongs in `docs/ROADMAP.md`.

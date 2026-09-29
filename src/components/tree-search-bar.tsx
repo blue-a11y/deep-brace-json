@@ -89,21 +89,23 @@ const SearchNavigation = ({
   <ButtonGroup size="sm" variant="ghost" className={`shrink-0 ${className}`}>
     <Button
       aria-label="上一个匹配"
+      slot={null}
       isDisabled={isDisabled}
       isIconOnly
       className="tree-search-navigation-button size-7 min-w-7"
       onPress={onPrevious}
     >
-      <ChevronUp size={13} />
+      <ChevronUp size={16} />
     </Button>
     <Button
       aria-label="下一个匹配"
+      slot={null}
       isDisabled={isDisabled}
       isIconOnly
       className="tree-search-navigation-button size-7 min-w-7"
       onPress={onNext}
     >
-      <ChevronDown size={13} />
+      <ChevronDown size={16} />
     </Button>
   </ButtonGroup>
 );
@@ -318,7 +320,7 @@ export const TreeSearchBar = ({
       style={
         draftPosition ? { left: draftPosition.x, right: 'auto', top: draftPosition.y } : undefined
       }
-      className="tree-search-popover fixed top-11 right-3 left-3 z-50 w-[calc(100%-1.5rem)] min-w-0 sm:left-auto sm:w-[min(30rem,calc(100%-1.5rem))]"
+      className="tree-search-popover fixed top-11 right-3 left-3 z-50 w-[calc(100%-1.5rem)] min-w-0 sm:left-auto sm:w-[min(32rem,calc(100%-1.5rem))]"
     >
       <SearchField
         aria-label="搜索键、值或路径"
@@ -328,12 +330,12 @@ export const TreeSearchBar = ({
         className="min-w-0"
         onChange={onQueryChange}
       >
-        <SearchField.Group className="tree-search-input-group h-9 min-h-9 gap-0.5 rounded-[14px] bg-white px-2 text-zinc-900 shadow-md ring-1 ring-black/10 dark:ring-white/10">
+        <SearchField.Group className="tree-search-input-group h-10 min-h-10 gap-0.5 rounded-[14px] bg-white px-2 text-zinc-900 shadow-xs ring-1 ring-black/10 dark:ring-white/10">
           <SearchField.SearchIcon className="mr-0.5 shrink-0" />
           <SearchField.Input
             ref={inputRef}
             placeholder="搜索键、值或路径"
-            className="min-w-0 text-xs"
+            className="min-w-0 text-sm"
             onKeyDown={handleInputKeyDown}
           />
           {query ? (
@@ -358,7 +360,7 @@ export const TreeSearchBar = ({
           >
             <Select.Trigger
               aria-labelledby={scopeLabelId}
-              className="h-7 min-h-7 gap-0.5 rounded-md border-0 bg-transparent px-1.5 text-[11px] shadow-none outline-none hover:bg-foreground/5"
+              className="h-7 min-h-7 gap-0.5 rounded-md border-0 bg-transparent px-1.5 text-[13px] shadow-none outline-none hover:bg-foreground/5"
             >
               <Select.Value aria-hidden="true">{SCOPE_SHORT_LABELS[scope]}</Select.Value>
               <Select.Indicator className="size-3" />
@@ -379,7 +381,7 @@ export const TreeSearchBar = ({
             isSelected={isCaseSensitive}
             onPress={() => onCaseSensitiveChange(!isCaseSensitive)}
           >
-            <CaseSensitive size={14} />
+            <CaseSensitive size={16} />
           </SearchOptionButton>
           <div className="tree-search-result-controls">
             <span
@@ -389,7 +391,7 @@ export const TreeSearchBar = ({
                   ? `结果过多，仅导航前 ${navigableCount} 项`
                   : resultText || undefined
               }
-              className={`tree-search-status max-w-16 min-w-0 shrink-0 truncate text-[10px] tabular-nums ${status === 'error' ? 'text-red-500' : 'text-zinc-500 dark:text-zinc-400'}`}
+              className={`tree-search-status max-w-20 min-w-0 shrink-0 truncate text-xs tabular-nums ${status === 'error' ? 'text-red-500' : 'text-zinc-500 dark:text-zinc-400'}`}
             >
               {resultText}
             </span>
@@ -408,16 +410,18 @@ export const TreeSearchBar = ({
           />
           <Button
             aria-label="关闭树搜索"
+            slot={null}
             size="sm"
             variant="ghost"
             isIconOnly
             className="tree-search-close-button size-7 min-w-7 shrink-0 rounded-md"
             onPress={onClose}
           >
-            <X size={13} />
+            <X size={16} />
           </Button>
           <Button
             aria-label="拖动搜索面板"
+            slot={null}
             aria-description="拖动或使用方向键移动搜索面板"
             size="sm"
             variant="ghost"
@@ -426,7 +430,7 @@ export const TreeSearchBar = ({
             onPointerDown={handleDragStart}
             onKeyDown={handleDragKeyDown}
           >
-            <GripHorizontal size={13} />
+            <GripHorizontal size={16} />
           </Button>
         </SearchField.Group>
       </SearchField>

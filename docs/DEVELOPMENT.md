@@ -53,12 +53,9 @@
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm exec playwright install chromium
 pnpm dev
 pnpm test
 pnpm test:unit
-pnpm test:e2e
-pnpm test:e2e:ui
 pnpm lint
 pnpm build
 pnpm preview
@@ -88,13 +85,11 @@ git diff --check
 | `src/components/react-bits/` | 保留上游 vendor 实现                                            | 产品状态、持久化或业务规则             |
 | `src/index.css`              | 全局主题、共享结构、第三方覆盖、滚动条、关键帧和复杂选择器      | 可由组件 Tailwind 清楚表达的局部样式   |
 | `scripts/`                   | 仓库级静态检查和开发工具                                        | 产品运行时代码                         |
-| `e2e/`                       | Playwright 真实浏览器集成测试                                   | 纯逻辑单元测试、产品运行时代码         |
 | `docs/`                      | 开发规范、开发规划和专项技术资料                                | 运行时代码、生成物、工具固定入口       |
 | `public/`                    | 不经构建转换的静态资源                                          | 业务状态、密钥或敏感配置               |
 
 Vitest 单元测试默认与被测模块同目录，命名为 `*.test.ts` 或 `*.test.tsx`；文件检查器也兼容已有或
-上游约定的 `*.spec.ts(x)`。Playwright 用例统一放在根 `e2e/`，使用 `*.spec.ts`。只有需要跨模块
-共享的测试夹具才建立 kebab-case 的 `test-fixtures/` 目录。
+上游约定的 `*.spec.ts(x)`。只有需要跨模块共享的测试夹具才建立 kebab-case 的 `test-fixtures/` 目录。
 
 ### 3.2 依赖方向
 
@@ -189,8 +184,8 @@ export default SettingsButton;
 - 可重建的派生值使用计算或 selector，不为避免一次计算而重复存入 Store。
 - 异步调用必须有明确的等待、取消或错误处理策略。使用 `void` 忽略 Promise 时，Promise 自身必须在
   适配器边界捕获并报告错误。
-- Playwright E2E 配置已启用 `strict`；应用与 Node 构建配置尚未启用。这不代表允许弱类型，新代码应按
-  strict-safe 的方式编写，应用代码严格模式的整体启用按 `docs/ROADMAP.md` 规划逐步推进。
+- 应用与 Node 构建配置尚未启用 `strict`。这不代表允许弱类型，新代码应按 strict-safe 的方式编写，
+  应用代码严格模式的整体启用按 `docs/ROADMAP.md` 规划逐步推进。
 
 ### 5.2 Effect 与资源生命周期
 
@@ -245,9 +240,14 @@ useEffect(() => {
   字号在 640px 切换，骨架工具栏在 860px 跟随真实菜单收纳高度变化，验证切换前后字形及位置一致。
   骨架和真实工作区共用 HTML 中的 `.workspace-toolbar`、`.workspace-tabs`、`.workspace-status`
   布局尺寸，保持容器层级和间距一致；纯客户端媒体查询在初始化时读取真实匹配结果，避免先渲染错误断点。
+  顶部操作骨架逐项对应真实按钮，包含溢出菜单、文字收缩与 sm 按钮尺寸变化；Vite 从
+  `toolbar-breakpoints.ts` 生成内联可见性样式，与真实工具栏共用收纳断点，不依赖应用脚本或主 CSS。
   品牌图标保持挂载，不随延迟动效重新入场；文字用静态字形预留尺寸，避免拆字动效推动相邻元素。
   布局回归采集骨架、React 首帧及动效接入过程的元素矩形，覆盖移动端、桌面和断点两侧；
-  默认骨架使用均分面板，持久化分栏比例仍由 hydration 后的工作区恢复。
+  骨架通过 head 内联脚本同步读取 localStorage 的分栏记录，与工作区共用面板约束和存储 key，
+  不等待应用脚本或 IndexedDB；缺失、非法或存储不可用时降级为均分。
+  移动端保持上下均分，切回桌面使用保存的比例。
+  骨架桌面面板使用与工作区相同的 8px 分隔区及每侧 4px 内边距，非均分比例下也不能发生横向跳动。
   生产主 CSS 由 Vite HTML 后处理改为非阻塞下载，加载状态通过 `data-workspace-styles` 传递；
   `main.tsx` 并行等待样式与持久化恢复，二者都完成才替换骨架，避免无样式工作区闪现。
   样式失败或等待超过 30 秒保留骨架和重试入口；必须在生产构建上验证 CSS 慢加载期间已经发生
@@ -320,7 +320,8 @@ const isDark = useStore(state => state.isDark);
   `src/main.tsx`，页面组件不得各自竞争恢复状态。
 - Zustand persist 必须保持 `skipHydration: true`，避免模块加载时自动恢复与 `main.tsx` 的手动
   hydration 竞争。
-- 当前 IndexedDB 使用 `app-state`、`panel-layout`、`tab-scroll` 三个 Object Store。Store 使用
+- 当前 IndexedDB 保留 `app-state`、`panel-layout`、`tab-scroll` 三个 Object Store，`panel-layout`
+  仅用于旧布局迁移，当前布局以 localStorage 为唯一持久化来源。Store 使用
   out-of-line key：`createObjectStore(name)`、`put(value, key)`；record root 不重复保存仅用于定位该
   记录的 primary key。`app-state` 内部的标签 `id` 和 `activeTabId` 属于必要业务关系，应当保留。
 - value 使用 IndexedDB structured clone 保存对象、数组、`Set` 等结构。禁止重新退化为整份 JSON
@@ -336,9 +337,9 @@ const isDark = useStore(state => state.isDark);
   `main.tsx`，同一次底层失败仍可能产生两类日志，属于下文受控例外。
 - 数据库收到 `versionchange` 时关闭连接；升级被其他页面阻塞时必须可诊断，不得永久等待。
 - `persistVersion` 是 app-state adapter 的保留字段，业务状态不得使用同名字段。
-- `localStorage` 仅保存两个轻量状态：标签新手引导的“不再提示”标识，以及需要首帧同步读取的
-  明暗模式 `colorMode`（仅接受 `light` / `dark`）。key 集中在纯常量模块 `src/lib/storage-keys.ts`，
-  浏览器读写通过 `src/lib/storage.ts`；禁止保存标签、输入、布局、滚动或其他偏好。
+- `localStorage` 仅保存三个轻量状态：标签新手引导的“不再提示”标识、需要首帧同步读取的
+  明暗模式 `colorMode`（仅接受 `light` / `dark`），以及独立的分栏布局。key 集中在纯常量模块
+  `src/lib/storage-keys.ts`，浏览器读写通过 `src/lib/storage.ts`；禁止保存标签、输入、滚动或其他偏好。
   明暗模式以 localStorage 为唯一持久化来源，Zustand 的 `isDark` 仅为内存状态与撤销快照；
   切换、重置（浅色）及撤销同步写入，写入失败降级为当前页面状态。新手引导标识仍不参与重置及撤销。
   app-state `persistVersion: 2` 将旧 `isDark` 迁入 localStorage（已有合法值优先），随后按白名单重写
@@ -365,8 +366,9 @@ const isDark = useStore(state => state.isDark);
 
 ### 6.3 分栏与滚动
 
-- `react-resizable-panels` 需要同步 storage API，因此布局 adapter 先同步更新内存 `Map`，再异步
-  写入 IndexedDB；JSON 字符串只存在于第三方接口边界，IndexedDB 中保存结构化对象。
+- 分栏布局 adapter 同步更新内存 `Map` 和 localStorage，供 `react-resizable-panels` 和骨架共用。
+  hydration 优先读取 localStorage；缺失时从 IndexedDB 迁移，只有写入新来源成功才删除旧记录。
+  重置同步清空两处内存及 localStorage，并等待旧 IndexedDB 布局清理；撤销同步恢复内存和 localStorage。
 - 滚动位置使用 `[tabId, area]` 作为记录身份；新增滚动区域时必须定义稳定 `area`、缓存生命周期、
   hydration、清理和 reset / undo 行为。
 - 恢复滚动时暂停旧元素写回，等待布局和内容稳定后 clamp 到有效范围；用户主动滚动应中断旧恢复。
@@ -392,13 +394,13 @@ const isDark = useStore(state => state.isDark);
 1. 等待正在执行的重置持久化任务完成，防止清理覆盖恢复数据。
 2. 在 React 重挂载前同步恢复滚动和分栏内存缓存。
 3. 恢复 Zustand 快照并递增 `resetEpoch`。
-4. 把最终状态写回 IndexedDB；对后续步骤、刷新正确性或调用方完成语义有影响的事务必须纳入
+4. 分栏布局同步写回 localStorage，其余最终状态写回 IndexedDB；对后续步骤、刷新正确性或调用方完成语义有影响的事务必须纳入
    可等待的完成 Promise。
 
 重置 / 撤销测试不能只断言最终 Promise 完成后的数据，还要断言 Promise 完成前内存缓存已经按正确
 顺序切换，因为 React cleanup 和 layout effect 发生在中间阶段。当前 app-state 与滚动 adapter
-使用串行队列，重置 / 撤销的完成 Promise 同时等待 app-state、滚动与布局的最终事务；普通分栏拖拽
-写入仍是 fire-and-forget，其余失败、并发和迁移边界继续由 `PLAN-001` 验收。
+使用串行队列，重置 / 撤销的完成 Promise 等待 app-state、滚动的最终事务以及旧布局记录的清理；
+分栏拖拽和撤销恢复同步写入 localStorage，其余失败、并发和迁移边界继续由 `PLAN-001` 验收。
 
 ## 7. UI、交互与样式
 
@@ -424,16 +426,31 @@ const isDark = useStore(state => state.isDark);
 - 新增或修改的核心操作必须同时支持键盘；新增快捷键要处理 IME、重复按键、Ctrl / Meta 冲突和
   弹层聚焦。
 - 快捷键定义集中在 `shortcuts.ts`，使用物理 `event.code` 与全部修饰键精确匹配；默认
-  Alt/Option + Shift。统一修饰键偏好必须经过校验、结构化持久化，并覆盖重置 / 撤销。
+  Alt/Option + Shift。允许全部取消修饰键或仅保留 Shift；偏好必须经过校验、结构化持久化，
+  并覆盖刷新、重置 / 撤销。
   `ShortcutKbd`、提示文字和 `aria-keyshortcuts` 必须响应同一偏好，禁止硬编码组合。
   当前 React Aria 过滤的 `aria-keyshortcuts` 通过 `useShortcutLabels` 返回的 callback ref
   补到真实元素；验收要检查浏览器 DOM，而不是只检查 JSX 属性。
+  面板动作按钮内使用 Kbd 填充样式直接显示完整快捷键组合；复制使用 C，清空当前内容使用
+  Backspace（Mac 显示为 ⌫），
+  两者沿用统一修饰键偏好。复制命令复用树预览的复制逻辑和反馈，未成功解析时不复制。
 - 全局快捷键在 dialog、alertdialog、listbox 和 menu 内暂停；不能用浏览器合成按键测试声称
   可以拦截系统保留组合。编辑器聚焦命令调用现有 EditorView 的 `focus()`，保留输入和选区。
+  编辑器内容聚焦时，无修饰键的 Escape 调用现有 `contentDOM.blur()` 退出聚焦，保留输入和选区；
+  该局部按键不受全局修饰键偏好影响，输入法组合期间不触发。
+  编辑器面板初始 outline 颜色保持透明，仅在包含 CodeMirror 时设置宽度、线型和过渡，
+  避免挂载时从默认文字颜色渐变到透明；骨架不得应用聚焦边框。根据 `.cm-focused`
+  显示 2px 强调色 outline，向内偏移 2px，聚焦 / 失焦
+  使用 180ms 颜色过渡，不能改变布局尺寸；减少动态效果时取消过渡。
+  输入光标使用界面强调色、2px 圆角竖线和轻微光晕。
+- 无 Ctrl、Alt/Option 或 Cmd/Meta 时，全局快捷键在 input、textarea、select、可编辑内容、
+  textbox / searchbox 和 CodeMirror 编辑器内暂停，防止普通输入触发搜索、关闭标签等操作。
+  含上述修饰键的组合仍可在编辑器和输入框内使用；搜索输入框中的 Escape 保留关闭行为。
 - 跨组件弹层 / 焦点命令通过 `workspace-commands.ts` 瞬时分发，组件使用
   `useWorkspaceCommand` 订阅并清理；不把 DOM、弹层开关或焦点请求写入持久化 Store。
 - 树搜索使用统一快捷键切换悬浮搜索面板；打开时聚焦搜索输入框，通过快捷键、Escape 或关闭按钮
-  关闭时聚焦树预览容器，避免触发搜索按钮焦点环和 Tooltip。面板
+  关闭时聚焦树预览容器，避免触发搜索按钮焦点环和 Tooltip。单键或仅 Shift 模式下，搜索输入框
+  仅通过 Escape 或关闭按钮关闭，字母键继续作为搜索输入。面板
   不得改变树滚动区域的布局尺寸。搜索面板常驻挂载以完成显隐过渡，关闭时必须禁用焦点与点击，并在
   减少动态效果下取消位移和透明度动画。
 - 树搜索面板支持鼠标 / 触控拖拽和方向键移动；拖动过程中使用组件局部状态，结束后才把全局位置偏好
@@ -441,6 +458,7 @@ const isDark = useStore(state => state.isDark);
   视口尺寸收敛在可见范围，并参与全部数据的重置与撤销。
 - 树搜索的范围选择、大小写开关、结果导航和关闭动作作为紧凑后缀集成在同一个 HeroUI SearchField
   内；范围触发器不得再呈现为与输入框割裂的大尺寸胶囊，窄屏下输入与后缀均不得横向溢出。
+  导航、关闭与拖拽的自定义 Button 使用 `slot={null}`，避免继承 SearchField 的默认清空动作。
 - 新增或修改的非必要动效必须在 `prefers-reduced-motion: reduce` 下关闭或显著简化。
 - 新窗口链接必须带 `noopener,noreferrer`。
 
@@ -460,8 +478,8 @@ const isDark = useStore(state => state.isDark);
 
 新增或调整动作时：
 
-- 在 `ToolbarActionVisibility` / `useToolbarActionVisibility` 中定义唯一可见性和优先级，不在多个
-  组件复制断点。
+- 在 `toolbar-breakpoints.ts` 中定义唯一收纳阈值，由 `useToolbarActionVisibility` 和启动骨架共享；
+  不在多个组件复制断点。
 - 同时实现直显入口与溢出菜单中的等价入口，复用同一 action 和 overlay state。
 - 宽度变窄时逐项收纳低优先级动作，尽量保留右侧动作；禁止在单一断点突然隐藏全部工具。
 - Logo 与产品名保持 `shrink-0` 且不换行，按钮与 Icon 不得被 Flex 压缩变形。
@@ -469,8 +487,8 @@ const isDark = useStore(state => state.isDark);
 - 修改断点时覆盖断点前后 1px 的浏览器验收；顶层响应式规则变化时同步双语 README。
 
 当前 `<768px` 使用上下工作区，`>=768px` 使用可拖拽左右分栏；单个面板内容宽度不超过 520px 时，
-面板动作隐藏文字和按钮内快捷键文案，但保留图标、可访问名称及 Tooltip 中的快捷键提示，
-避免挤掉同一行的大文档说明。
+面板动作隐藏文字，保留图标、按钮内快捷键、可访问名称及 Tooltip。动作空间不足时换行，
+不得产生横向溢出，也不能挤掉大文档说明。
 Logo 右侧「大文档优化」亮点在 `>=1280px` 显示，悬停或键盘聚焦展示后台解析、按需渲染和完整
 复制说明；既有其他亮点保持 `>=1536px` 显示。亮点优先让位于产品名与工具，不改变动作收纳阈值。
 亮点统一使用同等强调的胶囊标签、小图标与间距，每项支持悬停或键盘聚焦查看说明；标签样式与文案
@@ -525,23 +543,16 @@ Logo 右侧「大文档优化」亮点在 `>=1280px` 显示，悬停或键盘聚
 - 工具栏各关键断点、Logo / Icon 收缩、移动 / 桌面工作区切换。
 - IndexedDB 刷新恢复、分栏、双区滚动、重置、8 秒撤销及撤销后再次刷新。
 
-可自动化的真实浏览器流程统一使用 Playwright：
+真实浏览器验收按需手工执行，仓库测试命令只运行 Vitest 单元测试：
 
-- 优先使用 `getByRole`、`getByLabel`、可见文本等语义定位器；只有第三方组件没有稳定语义时才使用
-  局部 CSS locator，不绑定 Tailwind 视觉 class 或 DOM 层级。
-- 使用 Playwright assertion 的自动等待，禁止用固定 `waitForTimeout` 掩盖 hydration、动画或写入
-  竞态。
-- 每个用例使用独立 BrowserContext；同一用例内通过 reload 验证 IndexedDB 时，先观察用户可见状态
-  已稳定，不在测试之间共享 storage state。
-- 默认测试服务由 `playwright.config.ts` 在 4173 端口启动；设置 `E2E_BASE_URL` 时测试指定环境且不
-  启动本地服务。
-- 桌面与移动断点使用显式 viewport；新增响应式规则时覆盖断点前后 1px，而不是依赖测试机器窗口。
+- 按用户可见入口完成操作；先观察 hydration、动画和写入后的状态，再验证刷新恢复。
+- 明确初始存储状态，避免不同验收场景的数据相互影响。
+- 桌面与移动断点使用明确的视口尺寸；新增响应式规则时覆盖断点前后 1px。
 - console warning / error、page error 和框架错误层属于失败，只有明确验证并记录的预期错误可以过滤。
-- `test-results/`、`playwright-report/`、trace 和失败截图是临时诊断产物，不提交仓库。
 
 浏览器验收至少记录：初始状态、操作步骤、预期、实际结果、视口宽度，以及是否刷新页面。记录放在
 当前任务 / MR 的交付说明或对应规划项的验收证据中，不另建进展日志。
-`docs/ROADMAP.md` 的 `PLAN-006` 计划建立完整回归矩阵；完成前按变更范围执行并记录手工验收。
+`docs/ROADMAP.md` 的 `PLAN-006` 计划建立浏览器手工验收矩阵；按变更范围执行并记录验收。
 
 ### 8.3 按风险选择验证
 
@@ -549,15 +560,13 @@ Logo 右侧「大文档优化」亮点在 `>=1280px` 显示，悬停或键盘聚
 | -------------------------------- | ---------------------------------------------------------------------------------------- |
 | 仅文档                           | 检查受影响文档的格式、链接和内容一致性；`git diff --check`                               |
 | 局部纯逻辑、类型或 Store action  | 相关 Vitest 文件；受影响文件的格式 / 静态检查；必要时 TypeScript 构建                    |
-| UI、交互、响应式或浏览器 API     | 相关 Playwright 用例和必要视口；受影响文件的格式 / 静态检查                              |
-| 持久化、启动、构建配置或依赖边界 | 相关单元测试与 E2E；`pnpm build`；受影响文件的格式 / 静态检查                            |
+| UI、交互、响应式或浏览器 API     | 相关行为的手工浏览器验收和必要视口；受影响文件的格式 / 静态检查                          |
+| 持久化、启动、构建配置或依赖边界 | 相关单元测试；`pnpm build`；受影响文件的格式 / 静态检查；涉及浏览器行为时手工验收        |
 | 跨领域重构、发布候选或明确要求   | `pnpm test`、`pnpm lint`、`pnpm build`、`git diff --check`，并补充功能范围内的浏览器验收 |
 
-- 优先用文件路径、测试名称或 Playwright `--grep` 运行针对性用例；没有可靠过滤方式或改动触及共享入口时，
-  再运行对应测试层的全量命令。
-- `pnpm test` 依次执行 Vitest 和 Playwright，用于跨领域改动和完整回归，不是每次局部修改的默认命令。
-- 首次运行 E2E 或升级 Playwright 后执行 `pnpm exec playwright install chromium`，使框架版本与
-  浏览器二进制匹配。
+- 优先用文件路径或 Vitest 测试名称过滤运行针对性用例；没有可靠过滤方式或改动触及共享入口时，
+  再运行完整单元测试。
+- `pnpm test` 和 `pnpm test:unit` 均运行 Vitest 单元测试；局部修改按影响范围选择针对性用例。
 - 工作树中存在与当前任务无关的代码改动，不自动扩大本次验证范围；最终说明当前任务实际执行了哪些
   检查、哪些未执行及原因。
 - 测试和构建通过不代表浏览器交互已验证；根据变更范围补充验收。
@@ -573,8 +582,7 @@ Logo 右侧「大文档优化」亮点在 `>=1280px` 显示，悬停或键盘聚
 | `prettier --check .`  | Prettier 支持且未忽略文件的格式和 import 顺序                             | 架构、命名语义、vendor 目录                            |
 | `pnpm build`          | TypeScript project build 与 Vite 生产构建                                 | 应用配置尚未启用 `strict`、浏览器运行行为、性能预算    |
 | `pnpm test:unit`      | 已编写的 Vitest 纯逻辑、状态与 adapter 用例                               | 真实 DOM、浏览器 API 和用户交互                        |
-| `pnpm test:e2e`       | 已编写的 Playwright Chromium 页面、交互、刷新和响应式用例                 | 尚未编写的流程及 Firefox / WebKit 差异                 |
-| `pnpm test`           | 依次运行上述两层测试                                                      | 尚未被任何测试覆盖的行为                               |
+| `pnpm test`           | 与 `pnpm test:unit` 相同的 Vitest 单元测试                                | 真实 DOM、浏览器 API 和用户交互                        |
 
 不得把工具没有报错表述为“全部规范已经自动验证”。缺失的自动化能力在 `docs/ROADMAP.md` 中规划，
 实施前不以口头约定冒充门禁。
@@ -593,8 +601,8 @@ Logo 右侧「大文档优化」亮点在 `>=1280px` 显示，悬停或键盘聚
   应放入 `*-actions.ts`。
 - 设置 Modal 当前仍用 Footer 承载即时生效的重置入口，确认文案也与 8 秒撤销行为冲突；不得复制
   这一写法，统一调整由 `PLAN-002` 跟踪。
-- app-state 与滚动持久化已有显式串行队列，reset / undo 的完成 Promise 也等待分栏的清理或恢复
-  事务；普通分栏拖拽写入仍是 fire-and-forget。触碰该链路时必须按 6.4 节保持完成语义，其余边界
+- app-state 与滚动持久化已有显式串行队列，reset / undo 的完成 Promise 也等待旧分栏记录的清理；
+  分栏拖拽和撤销恢复同步写入 localStorage。触碰该链路时必须按 6.4 节保持完成语义，其余边界
   由 `PLAN-001` 验收。
 - 当前 IndexedDB 测试共享 fake factory 与模块缓存，并依赖串行执行；扩展用例时必须先显式隔离，
   避免测试数量或并发方式变化后互相污染。

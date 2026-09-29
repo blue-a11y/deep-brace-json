@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Kbd } from '@heroui/react';
-import { getShortcutKey, MODIFIER_OPTIONS, type ShortcutId } from '../lib/shortcuts';
+import { getShortcutDisplayKey, MODIFIER_OPTIONS, type ShortcutId } from '../lib/shortcuts';
 import { useStore } from '../store/use-store';
 
 type ShortcutHintProps = {
@@ -25,7 +25,7 @@ export const ShortcutKbd = ({
       {MODIFIER_OPTIONS.filter(option => modifiers[option.id]).map(option => (
         <Kbd.Abbr key={option.id} keyValue={option.kbd} />
       ))}
-      <Kbd.Content>{getShortcutKey(shortcut)}</Kbd.Content>
+      <Kbd.Content>{getShortcutDisplayKey(shortcut)}</Kbd.Content>
     </Kbd>
   );
 };

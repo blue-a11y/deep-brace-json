@@ -5,3 +5,5 @@ export const STORAGE_KEYS = {
   tabGuideDismissed: 'deep-brace-json:tab-guide-dismissed',
   colorMode: 'deep-brace-json:color-mode',
 } as const;
+
+export const PANEL_LAYOUT_STORAGE_KEY = `react-resizable-panels:${STORAGE_KEYS.splitLayout}`;
