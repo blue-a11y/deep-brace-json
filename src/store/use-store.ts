@@ -1,21 +1,32 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DEFAULT_CODE_FONT, isCodeFont, type CodeFont } from '../lib/code-font';
-import { DEFAULT_INDENT_SIZE, INDENT_OPTIONS, type IndentSize } from '../lib/indent';
-import { createIndexedDbPersistStorage, INDEXED_DB_STORES } from '../lib/indexed-db-storage';
-import { clearPanelLayoutStorage, restorePanelLayoutSnapshot } from '../lib/panel-layout-storage';
-import { parseInput } from '../lib/parse';
-import { SAMPLE } from '../lib/sample';
-import { DEFAULT_SHORTCUT_MODIFIERS, isShortcutModifiers } from '../lib/shortcuts';
-import { getInitialIsDark, readColorMode, STORAGE_KEYS, writeColorMode } from '../lib/storage';
+import { DEFAULT_INDENT_SIZE, INDENT_OPTIONS, type IndentSize } from '../lib/parse/indent';
+import { parseInput } from '../lib/parse/parse';
+import { SAMPLE } from '../lib/parse/sample';
+import { DEFAULT_SHORTCUT_MODIFIERS, isShortcutModifiers } from '../lib/shortcuts/shortcuts';
+import {
+  createIndexedDbPersistStorage,
+  INDEXED_DB_STORES,
+} from '../lib/storage/indexed-db-storage';
+import {
+  clearPanelLayoutStorage,
+  restorePanelLayoutSnapshot,
+} from '../lib/storage/panel-layout-storage';
+import {
+  getInitialIsDark,
+  readColorMode,
+  STORAGE_KEYS,
+  writeColorMode,
+} from '../lib/storage/storage';
 import {
   captureActiveTabScrollPositions,
   clearTabScrollPositions,
   restoreTabScrollSnapshot,
-} from '../lib/tab-scroll';
-import { isTreeSearchPosition } from '../lib/tree-search-position';
-import { DEFAULT_TREE_THEME, TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree-theme';
-import { createTabSlice } from './tab-slice';
+} from '../lib/storage/tab-scroll';
+import { DEFAULT_CODE_FONT, isCodeFont, type CodeFont } from '../lib/theme/code-font';
+import { isTreeSearchPosition } from '../lib/tree/tree-search-position';
+import { DEFAULT_TREE_THEME, TREE_THEME_OPTIONS, type TreeTheme } from '../lib/tree/tree-theme';
+import { createTabSlice } from './tabs/tab-slice';
 import {
   applyParseResult,
   createDefaultTabs,
@@ -23,7 +34,7 @@ import {
   INITIAL_TAB_ID,
   prepareTabForStorage,
   restoreJsonTab,
-} from './tab-state';
+} from './tabs/tab-state';
 import type { DeepBraceState } from './types';
 
 type PersistedDeepBraceState = Pick<
@@ -64,6 +75,13 @@ const isIndentSize = (value: unknown): value is IndentSize =>
 
 const isTreeTheme = (value: unknown): value is TreeTheme =>
   TREE_THEME_OPTIONS.some(option => option.value === value);
+
+const isPreviousDefaultShortcutModifiers = (value: unknown) =>
+  isShortcutModifiers(value) &&
+  value.ctrl === false &&
+  value.alt === true &&
+  value.meta === false &&
+  value.shift === true;
 
 const mergePersistedState = (persistedState: unknown, currentState: DeepBraceState) => {
   const colorMode = readColorMode();
@@ -230,19 +248,20 @@ export const useStore = create<DeepBraceState>()(
       name: STORAGE_KEYS.appState,
       storage: appStateStorage,
       skipHydration: true,
-      version: 2,
+      version: 3,
       migrate: (persistedState): PersistedDeepBraceState => {
-        // 仅迁移旧明暗值；新 localStorage 选择优先，其余字段继续按既有规则校验。
-        if (
-          readColorMode() === null &&
-          persistedState &&
-          typeof persistedState === 'object' &&
-          'isDark' in persistedState &&
-          typeof persistedState.isDark === 'boolean'
-        ) {
-          writeColorMode(persistedState.isDark);
+        // 迁移旧明暗值，并将原内置修饰键默认值更新为单键；用户自定义组合保持不变。
+        const persisted =
+          persistedState && typeof persistedState === 'object'
+            ? (persistedState as Partial<PersistedDeepBraceState> & { isDark?: unknown })
+            : {};
+        const migratedState = isPreviousDefaultShortcutModifiers(persisted.shortcutModifiers)
+          ? { ...persisted, shortcutModifiers: DEFAULT_SHORTCUT_MODIFIERS }
+          : persisted;
+        if (readColorMode() === null && typeof persisted.isDark === 'boolean') {
+          writeColorMode(persisted.isDark);
         }
-        return partializeState(mergePersistedState(persistedState, useStore.getInitialState()));
+        return partializeState(mergePersistedState(migratedState, useStore.getInitialState()));
       },
       merge: mergePersistedState,
       partialize: partializeState,
