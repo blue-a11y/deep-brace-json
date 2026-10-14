@@ -5,7 +5,7 @@ const SHORTCUTS = {
   minify: { code: 'KeyM', key: 'M' },
   escape: { code: 'KeyE', key: 'E' },
   unescape: { code: 'KeyU', key: 'U' },
-  focusEditor: { code: 'KeyI', key: 'I' },
+  toggleEditorFocus: { code: 'KeyI', key: 'I' },
   newTab: { code: 'KeyN', key: 'N' },
   closeTab: { code: 'KeyW', key: 'W' },
   previousTab: { code: 'BracketLeft', key: '[' },
@@ -43,7 +43,7 @@ export const SHORTCUT_GROUPS = [
   {
     title: '编辑器',
     items: [
-      { id: 'focusEditor', label: '聚焦编辑器' },
+      { id: 'toggleEditorFocus', label: '切换编辑器焦点' },
       { id: 'format', label: '格式化 JSON' },
       { id: 'minify', label: '压缩为单行' },
       { id: 'escape', label: '转义输入' },
@@ -83,7 +83,7 @@ export const SHORTCUT_GROUPS = [
       { id: 'scrollTreeTop', label: '树形预览回到顶部' },
       { id: 'scrollTreeBottom', label: '树形预览回到底部' },
       { id: 'toggleWrap', label: '切换自动换行' },
-      { id: 'toggleCollapse', label: '折叠 / 展开全部' },
+      { id: 'toggleCollapse', label: '折叠一级 / 展开全部' },
     ],
   },
 ] as const satisfies ReadonlyArray<ShortcutGroup>;

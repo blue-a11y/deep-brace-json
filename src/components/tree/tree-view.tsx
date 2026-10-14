@@ -27,6 +27,7 @@ import {
   LARGE_INPUT_LENGTH,
   LARGE_VALUE_PREVIEW_LENGTH,
 } from '../../lib/parse/large-document';
+import { collectFirstLevelContainerPaths } from '../../lib/parse/parse';
 import { useShortcutLabels } from '../../lib/shortcuts/use-shortcut-labels';
 import { bindTreeTabScrollPosition } from '../../lib/storage/tab-scroll';
 import { getTreeLineCount } from '../../lib/tree/tree-metrics';
@@ -85,8 +86,12 @@ export const TreeView = () => {
   const handleClear = useStore(state => state.clear);
   const handleToggleWrap = useStore(state => state.toggleWrap);
   const handleToggleNode = useStore(state => state.toggleCollapse);
-  const handleExpandAll = useStore(state => state.expandAll);
-  const handleCollapseAll = useStore(state => state.collapseAll);
+  const handleToggleTreeCollapse = useStore(state => state.toggleTreeCollapse);
+  const canCollapseFirstLevel = useMemo(
+    () => collectFirstLevelContainerPaths(data).size > 0,
+    [data],
+  );
+  const hasCollapsedNodes = collapsed.size > 0;
   const isLargeDocument = activeTab.input.length >= LARGE_INPUT_LENGTH || isLargeResult(result);
   const [pathMenuTarget, setPathMenuTarget] = useState<TreePathMenuTarget | null>(null);
   const handleOpenPathMenu = useCallback((target: TreePathMenuTarget) => {
@@ -205,8 +210,6 @@ export const TreeView = () => {
       element?.scrollTo({ top: element.scrollHeight });
     }
   });
-
-  const handleToggleAll = collapsed.size > 0 ? handleExpandAll : handleCollapseAll;
 
   if (!result?.ok || !stats) return null;
 
@@ -335,28 +338,30 @@ export const TreeView = () => {
               ariaKeyShortcuts={getAriaShortcut('toggleCollapse')}
               label={
                 <ShortcutHint shortcut="toggleCollapse">
-                  {collapsed.size > 0 ? '展开全部' : '折叠全部'}
+                  {hasCollapsedNodes ? '展开全部' : '折叠一级对象 / 数组'}
                 </ShortcutHint>
               }
             >
               <Button
                 size="sm"
                 variant="ghost"
+                aria-label={hasCollapsedNodes ? '展开全部' : '折叠一级对象 / 数组'}
                 aria-keyshortcuts={getAriaShortcut('toggleCollapse')}
                 ref={getShortcutRef('toggleCollapse')}
-                onPress={handleToggleAll}
+                isDisabled={!hasCollapsedNodes && !canCollapseFirstLevel}
+                onPress={handleToggleTreeCollapse}
               >
                 <span className="relative inline-grid place-items-center">
                   <UnfoldVertical
                     size={14}
-                    className={`col-start-1 row-start-1 transition-all duration-200 ${collapsed.size > 0 ? 'rotate-0 opacity-100' : 'rotate-180 opacity-0'}`}
+                    className={`col-start-1 row-start-1 transition-all duration-200 ${hasCollapsedNodes ? 'rotate-0 opacity-100' : 'rotate-180 opacity-0'}`}
                   />
                   <FoldVertical
                     size={14}
-                    className={`col-start-1 row-start-1 transition-all duration-200 ${collapsed.size === 0 ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'}`}
+                    className={`col-start-1 row-start-1 transition-all duration-200 ${!hasCollapsedNodes ? 'rotate-0 opacity-100' : '-rotate-180 opacity-0'}`}
                   />
                 </span>
-                <span className="pane-action-label">{collapsed.size > 0 ? '展开' : '折叠'}</span>
+                <span className="pane-action-label">{hasCollapsedNodes ? '展开' : '折叠'}</span>
                 <ShortcutKbd
                   shortcut="toggleCollapse"
                   variant="default"

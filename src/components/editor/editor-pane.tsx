@@ -1,9 +1,30 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { json } from '@codemirror/lang-json';
-import { foldGutter } from '@codemirror/language';
-import { EditorView } from '@codemirror/view';
+import {
+  bracketMatching,
+  defaultHighlightStyle,
+  foldGutter,
+  foldKeymap,
+  indentOnInput,
+  syntaxHighlighting,
+} from '@codemirror/language';
+import { searchKeymap } from '@codemirror/search';
+import { Annotation, Compartment, EditorState } from '@codemirror/state';
+import {
+  drawSelection,
+  dropCursor,
+  EditorView,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  keymap,
+  lineNumbers,
+  placeholder,
+  rectangularSelection,
+} from '@codemirror/view';
 import { Button } from '@heroui/react';
-import CodeMirror from '@uiw/react-codemirror';
 import { Braces, FileJson, Minimize2, Package, PackageOpen } from 'lucide-react';
 import { EDITOR_BLUR_SHORTCUT } from '../../lib/shortcuts/shortcuts';
 import { useShortcutLabels } from '../../lib/shortcuts/use-shortcut-labels';
@@ -30,32 +51,49 @@ const JSON_FOLD_GUTTER = foldGutter({
   },
 });
 const JSON_EDITOR_ATTRIBUTES = EditorView.contentAttributes.of({ 'aria-label': 'JSON 编辑器' });
+const EXTERNAL_EDITOR_CHANGE = Annotation.define<boolean>();
 const JSON_EDITOR_EXTENSIONS = [
+  lineNumbers(),
+  highlightActiveLineGutter(),
+  highlightSpecialChars(),
+  history(),
+  drawSelection(),
+  dropCursor(),
+  EditorState.allowMultipleSelections.of(true),
+  indentOnInput(),
+  syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+  bracketMatching(),
+  closeBrackets(),
+  rectangularSelection(),
+  highlightActiveLine(),
+  keymap.of([
+    ...closeBracketsKeymap,
+    ...defaultKeymap,
+    ...searchKeymap,
+    ...historyKeymap,
+    ...foldKeymap,
+  ]),
+  keymap.of([indentWithTab]),
+  placeholder('粘贴 JSON / JSON5，输入即自动解析…'),
   json(),
   JSON_FOLD_GUTTER,
   JSON_EDITOR_ATTRIBUTES,
   EditorView.lineWrapping,
 ];
-const JSON_EDITOR_BASIC_SETUP = {
-  foldGutter: false,
-  autocompletion: false,
-  highlightSelectionMatches: false,
-};
 
 export const EditorPane = () => {
   const { getAriaShortcut, getShortcutRef } = useShortcutLabels();
-  const focusShortcut = getAriaShortcut('focusEditor');
-  const extensions = useMemo(
-    () => [
-      ...JSON_EDITOR_EXTENSIONS,
-      EditorView.contentAttributes.of({
-        'aria-keyshortcuts': `${focusShortcut} ${EDITOR_BLUR_SHORTCUT.key}`,
-      }),
-    ],
-    [focusShortcut],
-  );
+  const focusShortcut = getAriaShortcut('toggleEditorFocus');
+  const themeCompartment = useMemo(() => new Compartment(), []);
+  const shortcutCompartment = useMemo(() => new Compartment(), []);
+  const editorHostRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<EditorView | null>(null);
-  useWorkspaceCommand('focusEditor', () => editorRef.current?.focus());
+  useWorkspaceCommand('toggleEditorFocus', () => {
+    const view = editorRef.current;
+    if (!view) return;
+    if (view.hasFocus) view.contentDOM.blur();
+    else view.focus();
+  });
   const activeTab = useStore(selectActiveTab);
   const input = activeTab.input;
   const isDark = useStore(state => state.isDark);
@@ -63,7 +101,6 @@ export const EditorPane = () => {
   const codeFont = useStore(state => state.codeFont);
   const isCodeBold = useStore(state => state.isCodeBold);
   const isCodeItalic = useStore(state => state.isCodeItalic);
-  const handleInputChange = useStore(state => state.editInput);
   const format = useStore(state => state.format);
   const minify = useStore(state => state.minify);
   const escape = useStore(state => state.escape);
@@ -72,13 +109,82 @@ export const EditorPane = () => {
   const [minifyPulse, setMinifyPulse] = useState(0);
   const [escapePulse, setEscapePulse] = useState(0);
   const [unescapePulse, setUnescapePulse] = useState(0);
-  const editorScrollCleanupRef = useRef<(() => void) | null>(null);
+  const editorTheme = getCodeMirrorTheme(isDark, treeTheme);
+  const appliedThemeRef = useRef(editorTheme);
+  const appliedShortcutRef = useRef(focusShortcut);
+  const measuredTypographyRef = useRef({ codeFont, isCodeBold, isCodeItalic });
 
-  const handleCreateEditor = (view: EditorView) => {
+  useLayoutEffect(() => {
+    const host = editorHostRef.current;
+    if (!host) return;
+    const tabId = activeTab.id;
+    const view = new EditorView({
+      parent: host,
+      state: EditorState.create({
+        doc: selectActiveTab(useStore.getState()).input,
+        extensions: [
+          ...JSON_EDITOR_EXTENSIONS,
+          themeCompartment.of(editorTheme),
+          shortcutCompartment.of(
+            EditorView.contentAttributes.of({
+              'aria-keyshortcuts': `${focusShortcut} ${EDITOR_BLUR_SHORTCUT.key}`,
+            }),
+          ),
+          EditorView.updateListener.of(update => {
+            if (
+              !update.docChanged ||
+              update.transactions.some(transaction =>
+                transaction.annotation(EXTERNAL_EDITOR_CHANGE),
+              )
+            )
+              return;
+            if (useStore.getState().activeTabId === tabId)
+              useStore.getState().editInput(update.state.doc.toString());
+          }),
+        ],
+      }),
+    });
     editorRef.current = view;
-    editorScrollCleanupRef.current?.();
-    editorScrollCleanupRef.current = bindEditorTabScrollPosition(activeTab.id, view);
-  };
+    appliedThemeRef.current = editorTheme;
+    appliedShortcutRef.current = focusShortcut;
+    const unbindScroll = bindEditorTabScrollPosition(tabId, view);
+    return () => {
+      unbindScroll();
+      if (editorRef.current === view) editorRef.current = null;
+      view.destroy();
+    };
+  }, [activeTab.id, shortcutCompartment, themeCompartment]);
+
+  useLayoutEffect(() => {
+    if (appliedThemeRef.current === editorTheme) return;
+    appliedThemeRef.current = editorTheme;
+    editorRef.current?.dispatch({ effects: themeCompartment.reconfigure(editorTheme) });
+  }, [editorTheme, themeCompartment]);
+
+  useLayoutEffect(() => {
+    if (appliedShortcutRef.current === focusShortcut) return;
+    appliedShortcutRef.current = focusShortcut;
+    editorRef.current?.dispatch({
+      effects: shortcutCompartment.reconfigure(
+        EditorView.contentAttributes.of({
+          'aria-keyshortcuts': `${focusShortcut} ${EDITOR_BLUR_SHORTCUT.key}`,
+        }),
+      ),
+    });
+  }, [focusShortcut, shortcutCompartment]);
+
+  useLayoutEffect(() => {
+    const view = editorRef.current;
+    const state = useStore.getState();
+    if (!view || state.activeTabId !== activeTab.id) return;
+    const currentInput = view.state.doc.toString();
+    const nextInput = selectActiveTab(state).input;
+    if (currentInput === nextInput) return;
+    view.dispatch({
+      changes: { from: 0, to: currentInput.length, insert: nextInput },
+      annotations: EXTERNAL_EDITOR_CHANGE.of(true),
+    });
+  }, [activeTab.id, input]);
 
   const handleEditorKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     const view = editorRef.current;
@@ -115,8 +221,15 @@ export const EditorPane = () => {
     if (unescape()) setUnescapePulse(pulse => pulse + 1);
   };
 
-  useEffect(() => () => editorScrollCleanupRef.current?.(), []);
   useLayoutEffect(() => {
+    const typography = measuredTypographyRef.current;
+    if (
+      typography.codeFont === codeFont &&
+      typography.isCodeBold === isCodeBold &&
+      typography.isCodeItalic === isCodeItalic
+    )
+      return;
+    measuredTypographyRef.current = { codeFont, isCodeBold, isCodeItalic };
     editorRef.current?.requestMeasure();
   }, [codeFont, isCodeBold, isCodeItalic]);
 
@@ -218,17 +331,7 @@ export const EditorPane = () => {
         </div>
       </div>
       <div className="min-h-0 flex-1">
-        <CodeMirror
-          key={activeTab.id}
-          value={input}
-          height="100%"
-          theme={getCodeMirrorTheme(isDark, treeTheme)}
-          extensions={extensions}
-          basicSetup={JSON_EDITOR_BASIC_SETUP}
-          onCreateEditor={handleCreateEditor}
-          onChange={handleInputChange}
-          placeholder="粘贴 JSON / JSON5，输入即自动解析…"
-        />
+        <div ref={editorHostRef} className="cm-theme h-full" />
       </div>
     </section>
   );

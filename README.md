@@ -41,24 +41,28 @@ Press the keyboard button in the header (or its overflow menu) to view the compa
 
 Defaults use no modifiers and are listed below. The former built-in Alt+Shift default migrates to single keys, while saved custom combinations remain unchanged. Tab commands act on the active tab; bulk closes retain undo. Shortcuts with Ctrl, Alt/Option or Cmd/Meta also work in the editor. Shortcuts without those command modifiers pause in editors and other input fields; all global shortcuts pause in dialogs and menus. Home / End scroll the tree preview to its top / bottom. System/browser-reserved combinations may take priority; use the buttons if a custom combination conflicts.
 
-| Action                               | Shortcut          |
-| ------------------------------------ | ----------------- |
-| Format / Minify                      | `F` / `M`         |
-| Escape / Unescape                    | `E` / `U`         |
-| New / Close tab                      | `N` / `W`         |
-| Previous / Next tab                  | `[` / `]`         |
-| Toggle wrap / Fold all               | `L` / `X`         |
-| Search tree nodes                    | `K`               |
-| Copy / Clear current content         | `C` / `Backspace` |
-| Tree preview top / bottom            | `Home` / `End`    |
-| Focus editor (keep selection)        | `I`               |
-| Leave editor focus (keep selection)  | `Esc`             |
-| Rename active tab                    | `R`               |
-| Add tab to left / right              | `A` / `D`         |
-| Close all to left / right            | `J` / `P`         |
-| Close other tabs                     | `O`               |
-| Code theme & fonts / Light-dark mode | `T` / `B`         |
-| Settings / Shortcut panel            | `S` / `H`         |
+| Action                                       | Shortcut          |
+| -------------------------------------------- | ----------------- |
+| Format / Minify                              | `F` / `M`         |
+| Escape / Unescape                            | `E` / `U`         |
+| New / Close tab                              | `N` / `W`         |
+| Previous / Next tab                          | `[` / `]`         |
+| Toggle wrap / Fold first level or expand all | `L` / `X`         |
+| Search tree nodes                            | `K`               |
+| Copy / Clear current content                 | `C` / `Backspace` |
+| Tree preview top / bottom                    | `Home` / `End`    |
+| Editor focus (keep selection)                | `I`               |
+| Leave editor focus (keep selection)          | `Esc`             |
+| Rename active tab                            | `R`               |
+| Add tab to left / right                      | `A` / `D`         |
+| Close all to left / right                    | `J` / `P`         |
+| Close other tabs                             | `O`               |
+| Code theme & fonts / Light-dark mode         | `T` / `B`         |
+| Settings / Shortcut panel                    | `S` / `H`         |
+
+Folding keeps the root expanded and collapses its non-empty object and array children. Press the button or `X` again to expand all nodes. Folding is unavailable when there are no collapsible children and all nodes are already expanded.
+
+In single-key or Shift-only mode, `I` focuses the editor from outside input fields, and `Esc` leaves it; typing `i` remains available inside the editor. With Ctrl, Alt/Option or Cmd/Meta configured, the same `I` combination toggles editor focus while preserving content, selection and scroll position.
 
 On Mac, Backspace is shown as `⌫`. In single-key mode, press `Esc` to leave the editor before using it to clear the current content.
 
