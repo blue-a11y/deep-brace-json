@@ -92,7 +92,8 @@ export const ShortcutHelp = ({
                   })}
                 </div>
                 <p id="shortcut-modifier-description" className="mt-2 text-xs leading-5 text-muted">
-                  修饰键可全部取消。单字母或仅 Shift 时，输入区域内暂停快捷键；修改自动保存。
+                  修饰键可全部取消。单字母或仅 Shift 时，输入区域内暂停快捷键；含 Ctrl、Alt/Option
+                  或 Cmd/Meta 时，可用同一 I 组合键切换编辑器焦点。修改自动保存。
                 </p>
                 <p className="mt-1 text-xs leading-5 text-muted">
                   系统或浏览器保留组合可能优先执行（如 Cmd/Ctrl + W

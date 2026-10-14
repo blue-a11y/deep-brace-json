@@ -6,6 +6,28 @@ import { TOOLBAR_ACTION_MIN_WIDTH } from './src/lib/layout/toolbar-breakpoints.t
 import { STORAGE_KEYS } from './src/lib/storage/storage-keys.ts';
 
 export default defineConfig({
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react-vendor',
+              test: /[/\\]node_modules[/\\](?:react|react-dom|scheduler)[/\\]/,
+            },
+            {
+              name: 'editor-vendor',
+              test: /[/\\]node_modules[/\\](?:@codemirror|@lezer|@uiw[/\\]codemirror-themes)[/\\]/,
+            },
+            {
+              name: 'ui-vendor',
+              test: /[/\\]node_modules[/\\](?:@heroui|@react-aria|@react-stately|@react-types|@react-spectrum|react-aria|react-aria-components|react-stately|tailwind-variants)[/\\]/,
+            },
+          ],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

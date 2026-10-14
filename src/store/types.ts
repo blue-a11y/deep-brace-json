@@ -50,8 +50,7 @@ export type JsonTabsSlice = {
   clear: () => void;
   toggleWrap: () => void;
   toggleCollapse: (key: string) => void;
-  expandAll: () => void;
-  collapseAll: () => void;
+  toggleTreeCollapse: () => void;
 };
 
 type PreferencesSlice = {

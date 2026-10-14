@@ -1,8 +1,8 @@
 import type { StateCreator } from 'zustand';
 import { startBackgroundParse, type ParseTask } from '../../lib/parse/background-parse';
-import { isLargeResult, LARGE_INPUT_LENGTH } from '../../lib/parse/large-document';
+import { LARGE_INPUT_LENGTH } from '../../lib/parse/large-document';
 import {
-  collectContainerPaths,
+  collectFirstLevelContainerPaths,
   escapeText,
   parseInput,
   unescapeText,
@@ -313,19 +313,13 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
       });
     },
 
-    expandAll: () => {
-      const id = get().activeTabId;
-      patchTab(id, tab => ({ ...tab, collapsed: new Set<string>() }));
-    },
-
-    collapseAll: () => {
+    toggleTreeCollapse: () => {
       const id = get().activeTabId;
       patchTab(id, tab => {
         if (!tab.result?.ok) return tab;
-        const collapsed =
-          tab.input.length >= LARGE_INPUT_LENGTH || isLargeResult(tab.result)
-            ? new Set(['[]'])
-            : collectContainerPaths(tab.result.data, 'all');
+        if (tab.collapsed.size > 0) return { ...tab, collapsed: new Set<string>() };
+        const collapsed = collectFirstLevelContainerPaths(tab.result.data);
+        if (collapsed.size === 0) return tab;
         const touched = new Set(tab.touched);
         for (const key of collapsed) touched.add(key);
         return { ...tab, collapsed, touched };

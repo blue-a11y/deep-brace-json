@@ -189,29 +189,15 @@ export type NodePath = (string | number)[];
 
 export const pathKey = (path: NodePath): string => JSON.stringify(path);
 
-/**
- * 收集所有容器节点路径。
- * mode = 'deep' 只收 depth >= minDepth 的（默认展开浅层）；
- * mode = 'all' 收全部（用于一键折叠）。
- */
-export function collectContainerPaths(
-  data: unknown,
-  mode: 'deep' | 'all',
-  minDepth = 2,
-  path: NodePath = [],
-  depth = 1,
-  paths: Set<string> = new Set(),
-): Set<string> {
-  if (Array.isArray(data)) {
-    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path));
-    data.forEach((item, index) =>
-      collectContainerPaths(item, mode, minDepth, [...path, index], depth + 1, paths),
-    );
-  } else if (data && typeof data === 'object') {
-    if (mode === 'all' || depth >= minDepth) paths.add(pathKey(path));
-    for (const [key, value] of Object.entries(data)) {
-      collectContainerPaths(value, mode, minDepth, [...path, key], depth + 1, paths);
-    }
+/** 只收集根节点下可折叠的一级对象 / 数组，保留根节点展开，不遍历深层子树。 */
+export function collectFirstLevelContainerPaths(data: unknown): Set<string> {
+  const paths = new Set<string>();
+  if (!isJsonContainer(data)) return paths;
+  const isArray = Array.isArray(data);
+  for (const [key, value] of Object.entries(data)) {
+    if (!isJsonContainer(value)) continue;
+    if ((Array.isArray(value) ? value.length : Object.keys(value).length) === 0) continue;
+    paths.add(pathKey([isArray ? Number(key) : key]));
   }
   return paths;
 }

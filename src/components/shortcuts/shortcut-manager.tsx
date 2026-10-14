@@ -7,7 +7,7 @@ import {
   openTabRelative,
 } from '../../lib/workspace/tab-actions';
 import { dispatchWorkspaceCommand } from '../../lib/workspace/workspace-commands';
-import { selectActiveTab, useStore } from '../../store/use-store';
+import { useStore } from '../../store/use-store';
 
 const activateSiblingTab = (offset: number) => {
   const { tabs, activeTabId, setActiveTab } = useStore.getState();
@@ -16,16 +16,8 @@ const activateSiblingTab = (offset: number) => {
   setActiveTab(tabs[(index + offset + tabs.length) % tabs.length].id);
 };
 
-const toggleCollapse = () => {
-  const state = useStore.getState();
-  const activeTab = selectActiveTab(state);
-  if (!activeTab.result?.ok) return;
-  if (activeTab.collapsed.size > 0) state.expandAll();
-  else state.collapseAll();
-};
-
 const shortcutHandlers: Record<ShortcutId, () => void> = {
-  focusEditor: () => dispatchWorkspaceCommand('focusEditor'),
+  toggleEditorFocus: () => dispatchWorkspaceCommand('toggleEditorFocus'),
   renameTab: () => dispatchWorkspaceCommand('renameTab'),
   openTheme: () => dispatchWorkspaceCommand('openTheme'),
   openSettings: () => dispatchWorkspaceCommand('openSettings'),
@@ -50,7 +42,7 @@ const shortcutHandlers: Record<ShortcutId, () => void> = {
   previousTab: () => activateSiblingTab(-1),
   nextTab: () => activateSiblingTab(1),
   toggleWrap: () => useStore.getState().toggleWrap(),
-  toggleCollapse,
+  toggleCollapse: () => useStore.getState().toggleTreeCollapse(),
 };
 
 const isOverlayTarget = (target: EventTarget | null) =>
