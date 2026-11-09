@@ -17,7 +17,6 @@ export type JsonTab = {
   isParsing: boolean;
   collapsed: Set<string>;
   touched: Set<string>;
-  shouldWrap: boolean;
 };
 
 export type JsonTabRestoreTarget = {
@@ -48,7 +47,6 @@ export type JsonTabsSlice = {
   unescape: () => boolean;
   loadSample: (sampleId?: SampleId) => void;
   clear: () => void;
-  toggleWrap: () => void;
   toggleCollapse: (key: string) => void;
   toggleTreeCollapse: () => void;
 };
@@ -74,6 +72,11 @@ type PreferencesSlice = {
   setTreeSearchPosition: (value: TreeSearchPosition | null) => void;
 };
 
+type TreeViewSlice = {
+  shouldWrap: boolean;
+  toggleWrap: () => void;
+};
+
 /** 重置前状态的完整快照,用于 Toast 撤销恢复 */
 export type ResetSnapshot = {
   shortcutModifiers: ShortcutModifiers;
@@ -85,6 +88,7 @@ export type ResetSnapshot = {
   isCodeItalic: boolean;
   indentSize: IndentSize;
   treeTheme: TreeTheme;
+  shouldWrap: boolean;
   shouldShowFullLongStrings: boolean;
   treeSearchPosition: TreeSearchPosition | null;
   scroll: TabScrollSnapshot;
@@ -101,4 +105,4 @@ type AppResetSlice = {
   restoreResetSnapshot: (snapshot: ResetSnapshot) => Promise<void>;
 };
 
-export type DeepBraceState = JsonTabsSlice & PreferencesSlice & AppResetSlice;
+export type DeepBraceState = JsonTabsSlice & PreferencesSlice & TreeViewSlice & AppResetSlice;

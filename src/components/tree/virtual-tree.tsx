@@ -2,11 +2,15 @@ import { useCallback, useLayoutEffect, useMemo, useRef, type CSSProperties } fro
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { LARGE_VALUE_PREVIEW_LENGTH } from '../../lib/parse/large-document';
 import { useShortcutLabels } from '../../lib/shortcuts/use-shortcut-labels';
-import { bindVirtualTreeTabScrollPosition } from '../../lib/storage/tab-scroll';
+import {
+  bindVirtualTreeTabScrollPosition,
+  getSavedTreeScrollPosition,
+} from '../../lib/storage/tab-scroll';
 import { buildTreeRows, findTreeRowIndex } from '../../lib/tree/tree-rows';
 import type { TreeSearchOptions } from '../../lib/tree/tree-search';
 import { useWorkspaceCommand } from '../../lib/workspace/use-workspace-command';
 import { useStore } from '../../store/use-store';
+import { TreeMinimap } from './tree-minimap';
 import { TreeNode } from './tree-node';
 import type { TreePathMenuTarget } from './tree-path-menu';
 
@@ -19,6 +23,7 @@ type VirtualTreeProps = {
   shouldShowFullLongStrings: boolean;
   indent: number;
   theme: string;
+  paletteKey: string;
   style: CSSProperties;
   onToggle: (key: string) => void;
   forcedOpenPaths: Set<string>;
@@ -27,6 +32,11 @@ type VirtualTreeProps = {
   searchOptions?: TreeSearchOptions;
   onOpenPathMenu: (target: TreePathMenuTarget) => void;
 };
+
+const measuredRowSizes = new WeakMap<
+  object,
+  { config: string; sizes: ReadonlyMap<string | number | bigint, number> }
+>();
 
 export const VirtualTree = ({
   tabId,
@@ -37,6 +47,7 @@ export const VirtualTree = ({
   shouldShowFullLongStrings,
   indent,
   theme,
+  paletteKey,
   style,
   onToggle,
   forcedOpenPaths,
@@ -53,16 +64,34 @@ export const VirtualTree = ({
   const codeFont = useStore(state => state.codeFont);
   const isCodeBold = useStore(state => state.isCodeBold);
   const isCodeItalic = useStore(state => state.isCodeItalic);
+  const measurementConfig = `${shouldWrap}:${codeFont}:${isCodeBold}:${isCodeItalic}:${indent}:${shouldShowFullLongStrings}`;
   const rows = useMemo(
     () => buildTreeRows(data, collapsed, forcedOpenPaths),
     [data, collapsed, forcedOpenPaths],
   );
   const indices = useMemo(() => new Map(rows.map((row, index) => [row.key, index])), [rows]);
   const getItemKey = useCallback((index: number) => rows[index].key, [rows]);
+  const savedSizes = data && typeof data === 'object' ? measuredRowSizes.get(data) : undefined;
+  const estimatedSizes = savedSizes?.config === measurementConfig ? savedSizes.sizes : undefined;
+  const initialScrollPosition = useMemo(() => getSavedTreeScrollPosition(tabId), [tabId]);
+  const initialOffset = useMemo(() => {
+    if (!initialScrollPosition) return 0;
+    if (initialScrollPosition.isPinnedToBottom) return initialScrollPosition.top;
+    const anchor = initialScrollPosition.anchor;
+    const index = anchor?.nodeKey
+      ? indices.get(anchor.nodeKey)
+      : anchor
+        ? findTreeRowIndex(rows, anchor.value + 1)
+        : undefined;
+    return index === undefined
+      ? initialScrollPosition.top
+      : Math.max(0, index * 24 - (anchor?.viewportOffset ?? 0));
+  }, [initialScrollPosition, indices, rows]);
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => elementRef.current,
-    estimateSize: () => 24,
+    initialOffset,
+    estimateSize: index => estimatedSizes?.get(rows[index].key) ?? 24,
     getItemKey,
     overscan: 8,
     anchorTo: 'end',
@@ -79,6 +108,15 @@ export const VirtualTree = ({
       });
     },
   });
+  const getRowOffset = useCallback(
+    (index: number) => virtualizer.measurementsCache[index]?.start ?? index * 24,
+    [virtualizer],
+  );
+  const handleMinimapNavigateStart = useCallback(() => {
+    shouldStickToEndRef.current = false;
+    pendingAnchorRef.current = null;
+    bindingRef.current?.interrupt();
+  }, []);
   // 不换行时为完整逻辑列表保留宽度，避免横向滚动范围随纵向视口收缩。
   const contentWidth = useMemo(() => {
     if (shouldWrap) return undefined;
@@ -95,6 +133,12 @@ export const VirtualTree = ({
   }, [rows, shouldWrap, indent]);
   const currentRef = useRef({ rows, indices, virtualizer });
   const pendingAnchorRef = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    if (data && typeof data === 'object') {
+      // 标签重挂载时复用上次测得的行高，避免回到末尾时先只显示少量估算行。
+      measuredRowSizes.set(data, { config: measurementConfig, sizes: virtualizer.itemSizeCache });
+    }
+  }, [data, measurementConfig, virtualizer]);
   useLayoutEffect(() => {
     currentRef.current = { rows, indices, virtualizer };
   }, [rows, indices, virtualizer]);
@@ -165,7 +209,6 @@ export const VirtualTree = ({
     };
   }, [tabId]);
 
-  const measurementConfig = `${shouldWrap}:${codeFont}:${isCodeBold}:${isCodeItalic}:${indent}:${shouldShowFullLongStrings}`;
   const previousMeasurementConfigRef = useRef(measurementConfig);
   useLayoutEffect(() => {
     if (previousMeasurementConfigRef.current === measurementConfig) return;
@@ -213,92 +256,101 @@ export const VirtualTree = ({
   }, [activeSearchKey, indices, virtualizer]);
 
   return (
-    <div
-      ref={elementRef}
-      role="region"
-      aria-label="树形预览内容"
-      aria-keyshortcuts={`${getAriaShortcut('scrollTreeTop')} ${getAriaShortcut('scrollTreeBottom')}`}
-      tabIndex={0}
-      onWheel={() => {
-        shouldStickToEndRef.current = false;
-      }}
-      onTouchStart={() => {
-        shouldStickToEndRef.current = false;
-      }}
-      onPointerDown={() => {
-        shouldStickToEndRef.current = false;
-      }}
-      onKeyDown={event => {
-        shouldStickToEndRef.current = event.key === 'End' && event.target === event.currentTarget;
-        if (event.target !== event.currentTarget) return;
-        if (event.key === 'End' || event.key === 'Home') {
-          event.preventDefault();
-          pendingAnchorRef.current = null;
-          bindingRef.current?.scrollToEdge(event.key === 'End' ? 'end' : 'start');
-        }
-      }}
-      className={`tree-body tree-virtual min-h-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
-      data-active-search-key={activeSearchKey}
-      data-tree-theme={theme}
-      style={style}
-    >
-      <div ref={virtualizer.containerRef} style={{ position: 'relative', width: contentWidth }}>
-        {virtualizer.getVirtualItems().map(item => {
-          const row = rows[item.index];
-          return (
-            <div
-              key={item.key}
-              ref={virtualizer.measureElement}
-              data-index={item.index}
-              data-node-key={row.key}
-              data-line-number={row.lineNumber}
-              className="virtual-tree-row absolute left-0 top-0 w-full font-mono text-[13px] leading-6"
-            >
-              {row.depth > 0 && (
-                <span
-                  aria-hidden="true"
-                  className="virtual-tree-guides"
-                  style={{
-                    width: row.depth * (20 + indent),
-                    backgroundSize: `${20 + indent}px 100%`,
-                  }}
-                />
-              )}
-              {row.isClosing ? (
-                <div
-                  className="tree-line tree-token-punctuation rounded hover:bg-foreground/5"
-                  style={{
-                    paddingLeft: `calc(var(--tree-gutter-width) + ${(row.depth + 1) * (20 + indent) - indent}px)`,
-                  }}
-                >
-                  {Array.isArray(row.value) ? ']' : '}'}
-                  {row.hasTrailingComma && ','}
-                </div>
-              ) : (
-                <TreeNode
-                  label={row.label}
-                  value={row.value}
-                  path={row.path}
-                  arrayIndex={row.arrayIndex}
-                  depth={row.depth}
-                  hasTrailingComma={row.hasTrailingComma}
-                  collapsed={collapsed}
-                  touched={touched}
-                  onToggle={onToggle}
-                  shouldShowFullLongStrings={shouldShowFullLongStrings}
-                  indent={indent}
-                  isVirtualRow
-                  forcedOpenPaths={forcedOpenPaths}
-                  searchMatchKeys={searchMatchKeys}
-                  activeSearchKey={activeSearchKey}
-                  searchOptions={searchOptions}
-                  onOpenPathMenu={onOpenPathMenu}
-                />
-              )}
-            </div>
-          );
-        })}
+    <div className="flex min-h-0 flex-1">
+      <div
+        ref={elementRef}
+        role="region"
+        aria-label="树形预览内容"
+        aria-keyshortcuts={`${getAriaShortcut('scrollTreeTop')} ${getAriaShortcut('scrollTreeBottom')}`}
+        tabIndex={0}
+        onWheel={() => {
+          shouldStickToEndRef.current = false;
+        }}
+        onTouchStart={() => {
+          shouldStickToEndRef.current = false;
+        }}
+        onPointerDown={() => {
+          shouldStickToEndRef.current = false;
+        }}
+        onKeyDown={event => {
+          shouldStickToEndRef.current = event.key === 'End' && event.target === event.currentTarget;
+          if (event.target !== event.currentTarget) return;
+          if (event.key === 'End' || event.key === 'Home') {
+            event.preventDefault();
+            pendingAnchorRef.current = null;
+            bindingRef.current?.scrollToEdge(event.key === 'End' ? 'end' : 'start');
+          }
+        }}
+        className={`tree-body tree-virtual min-h-0 min-w-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
+        data-active-search-key={activeSearchKey}
+        data-tree-theme={theme}
+        style={style}
+      >
+        <div ref={virtualizer.containerRef} style={{ position: 'relative', width: contentWidth }}>
+          {virtualizer.getVirtualItems().map(item => {
+            const row = rows[item.index];
+            return (
+              <div
+                key={item.key}
+                ref={virtualizer.measureElement}
+                data-index={item.index}
+                data-node-key={row.key}
+                data-line-number={row.lineNumber}
+                className="virtual-tree-row absolute left-0 top-0 w-full font-mono text-[13px] leading-6"
+              >
+                {row.depth > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="virtual-tree-guides"
+                    style={{
+                      width: row.depth * (20 + indent),
+                      backgroundSize: `${20 + indent}px 100%`,
+                    }}
+                  />
+                )}
+                {row.isClosing ? (
+                  <div
+                    className="tree-line tree-token-punctuation rounded hover:bg-foreground/5"
+                    style={{
+                      paddingLeft: `calc(var(--tree-gutter-width) + ${(row.depth + 1) * (20 + indent) - indent}px)`,
+                    }}
+                  >
+                    {Array.isArray(row.value) ? ']' : '}'}
+                    {row.hasTrailingComma && ','}
+                  </div>
+                ) : (
+                  <TreeNode
+                    label={row.label}
+                    value={row.value}
+                    path={row.path}
+                    arrayIndex={row.arrayIndex}
+                    depth={row.depth}
+                    hasTrailingComma={row.hasTrailingComma}
+                    collapsed={collapsed}
+                    touched={touched}
+                    onToggle={onToggle}
+                    shouldShowFullLongStrings={shouldShowFullLongStrings}
+                    indent={indent}
+                    isVirtualRow
+                    forcedOpenPaths={forcedOpenPaths}
+                    searchMatchKeys={searchMatchKeys}
+                    activeSearchKey={activeSearchKey}
+                    searchOptions={searchOptions}
+                    onOpenPathMenu={onOpenPathMenu}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
+      <TreeMinimap
+        rows={rows}
+        scrollRef={elementRef}
+        paletteKey={paletteKey}
+        onNavigateStart={handleMinimapNavigateStart}
+        getRowOffset={getRowOffset}
+      />
     </div>
   );
 };

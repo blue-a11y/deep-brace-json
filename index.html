@@ -4,11 +4,27 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="canonical" href="https://json.blueblog.me/" />
     <meta
       name="description"
-      content="DeepBrace JSON — 支持 JSON / JSON5、转义文本与嵌套子节点的一站式解析工具"
+      content="DeepBrace JSON 是在线 JSON / JSON5 解析与格式化工具，支持树形查看、压缩、转义及嵌套 JSON 逐层解析。内容仅在浏览器本地处理，不上传服务器。"
     />
-    <title>DeepBrace JSON · 深入解析每一层 JSON</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content="DeepBrace JSON" />
+    <meta property="og:url" content="https://json.blueblog.me/" />
+    <meta property="og:title" content="在线 JSON / JSON5 解析与格式化工具 | DeepBrace JSON" />
+    <meta
+      property="og:description"
+      content="树形查看 JSON / JSON5，格式化、压缩并逐层解析嵌套 JSON。所有内容只在浏览器本地处理。"
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="在线 JSON / JSON5 解析与格式化工具 | DeepBrace JSON" />
+    <meta
+      name="twitter:description"
+      content="树形查看 JSON / JSON5，格式化、压缩并逐层解析嵌套 JSON。所有内容只在浏览器本地处理。"
+    />
+    <title>在线 JSON / JSON5 解析与格式化工具 | DeepBrace JSON</title>
     <style>
       /* Silkscreen: brand-text subset. Copyright The Silkscreen Project Authors.
          SIL Open Font License 1.1: /licenses/silkscreen.txt */
@@ -20,13 +36,13 @@
         src: url(data:font/woff2;base64,d09GMgABAAAAAANYAA4AAAAAB+QAAAMFAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGhYbHhweBmAAgQQRCAqFAINmCxwAATYCJAM0BCAFhEYHIBs3BsgEHtLW7yWb08VlUZdTXZi5IC3eeiWlS0cN02tl9o1FcrXfvqIdGqFcKtT0xBfXKGqRIVRCIasn+97iV5HNZ4jqsAIXz0YAzVCdEiGBHYUgTDeUi7nzl64liOo1G8PTg52s5DNxCh+C8ojcqGiWJNPFdkbj4XKHALFVaHZh3fIly3mGQ1H5jR9m6z2vRARFnXykuR2sIwIJ304GAaUi/7dOtMIiiMNs5rKYFaxhF3uIkKd4MKZTzfI3zWfz1Dwx980dc9NcNpfMRXPGnCbt7GYKhDG0ZNLm4i7izoYHQPtivFbdUbeFvK9UJrWyJCgV9FXtmin102YqGFTNwqqVsn3N1XrbCtu+5tgyzGZbhKXEVInuO3ssW+4UYWFjY/siDBHLVmHhEWNNlj1AG5EtojkbTYrPtVM0Z9QgBh7VGo4NCHvniaQgoPA1B+yApBZBcTIVXNCJ2Q/rglv4XdOuRhdcrV2tf1frdb2LpgZfk8v5VavTddWadgVvrEZjyM3MeLxUtPv3YS/j8fuXdnWt2iTneLT+RQR1lV112vM819vn8WuYUEzV6lSNO5qk13oetRscI553NGpBMiFb2Hf9lmD27tvbJu9oObU+2NJ6f3Hf7+Q9/T2vnl/wmXnGryJd4H83yRnUOzyzemfm/TupIu/StOaygJZfgzFWqkqiedgq6g4SaU5ffKzNeiCrriDRN6xGhYAbYniBBO1EFyRpIZohi8m85JWgvQLkYy2bkZ++jOdbyNchTpkyeUpMZgQj5NI9FEmQp2wph1Pi07iXo0iMEaxgPktZ06FNcZZGiJBlGKtZaowKaXaBXy9Ace72HFkcRjGckYwU3FNwCENRdlFBao44CbJKxGEgVa7QRIYz1vz/CQxjHHsZx24GUapzWiiWv47lLGE5Uw7bptKRO3MOOfLsvzsQu29eh9FEi3FYS5wIzgH3raRIjiQR9syBWdcN8bsKJbPtc3DHSAzuq7Cb4ewhR6bDmSPHImkiRO8r8ZTkI9oQwqB/K65NNOcY/fMDAA==)
           format('woff2');
       }
-      .brand-wordmark,
-      .brand-metrics {
+      .brand-wordmark {
         font-family: 'DeepBrace Logo', ui-monospace, monospace;
         font-size: 18px;
         font-weight: 400;
         line-height: 1.5;
         letter-spacing: -0.025em;
+        margin: 0;
         white-space: nowrap;
       }
       .brand-symbol {
@@ -37,20 +53,17 @@
         display: inline-grid;
         flex-shrink: 0;
       }
-      .brand-metrics {
-        visibility: hidden;
-      }
-      .brand-slot > .brand-wordmark {
+      .brand-animation {
         position: absolute;
         inset: 0;
+        background: var(--color-background, var(--startup-background));
       }
       /* 动效等待其他字体时仍显示已就绪的品牌字形。 */
       .brand-wordmark.shuffle-parent {
         visibility: visible;
       }
       @media (min-width: 640px) {
-        .brand-wordmark,
-        .brand-metrics {
+        .brand-wordmark {
           font-size: 20px;
         }
       }
@@ -398,15 +411,6 @@
           opacity: 0.45;
         }
       }
-      @media (prefers-color-scheme: dark) {
-        :root:not([data-theme]) {
-          --startup-background: oklch(0.12 0.005 285.823);
-          --startup-foreground: oklch(0.9911 0 0);
-          --startup-surface: color-mix(in oklab, var(--startup-foreground) 5%, transparent);
-          --startup-placeholder: #343438;
-          --startup-muted: #a1a1aa;
-        }
-      }
       :root[data-theme='dark'] {
         --startup-background: oklch(0.12 0.005 285.823);
         --startup-foreground: oklch(0.9911 0 0);
@@ -430,7 +434,7 @@
         <div class="startup-toolbar workspace-toolbar" aria-hidden="true">
           <div class="startup-brand">
             <span class="startup-logo brand-symbol">{ }</span>
-            <span class="brand-wordmark">DeepBrace JSON</span>
+            <h1 class="brand-wordmark">DeepBrace JSON</h1>
             <div class="startup-features">
               <!-- 隐藏文字仅用于与正式亮点标签保持相同占位宽度。 -->
               <span class="startup-feature-placeholder">大文档优化</span>

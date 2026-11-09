@@ -100,7 +100,7 @@ export const MODIFIER_OPTIONS = [
 
 export type ShortcutModifiers = Readonly<Record<(typeof MODIFIER_OPTIONS)[number]['id'], boolean>>;
 export const DEFAULT_SHORTCUT_MODIFIERS: ShortcutModifiers = {
-  ctrl: false,
+  ctrl: true,
   alt: false,
   meta: false,
   shift: false,

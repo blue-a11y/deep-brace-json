@@ -318,6 +318,46 @@ body {
   --tree-token-boolean: var(--color-violet-300);
   --tree-token-null: var(--color-zinc-400);
 }
+.tree-minimap {
+  position: relative;
+  flex: none;
+  width: 70px;
+  min-height: 0;
+  overflow: hidden;
+  border-left: 1px solid color-mix(in oklab, var(--color-foreground) 10%, transparent);
+  background: color-mix(in oklab, var(--color-foreground) 2%, transparent);
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+.tree-minimap[data-visible='false'] {
+  width: 0;
+  border-left: 0;
+  pointer-events: none;
+}
+.tree-minimap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.tree-minimap-viewport {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  box-sizing: border-box;
+  background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+  pointer-events: none;
+}
+.tree-minimap:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+@container (max-width: 480px) {
+  .tree-minimap[data-visible='true'] {
+    width: 44px;
+  }
+}
 .tree-body[data-tree-theme='dracula'] {
   --tree-token-key: #7c3aed;
   --tree-token-string: #15803d;
@@ -504,6 +544,13 @@ body {
   counter-increment: treeline;
   padding-left: var(--tree-gutter-width);
   cursor: default;
+}
+.tree-wrap-toggle[aria-pressed='true'] {
+  background: color-mix(in oklab, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+.tree-wrap-toggle[aria-pressed='true']:hover {
+  background: color-mix(in oklab, var(--color-accent) 18%, transparent);
 }
 .tree-line--toggle {
   cursor: pointer;

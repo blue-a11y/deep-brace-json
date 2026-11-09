@@ -76,6 +76,8 @@ const isIndentSize = (value: unknown): value is IndentSize =>
 const isTreeTheme = (value: unknown): value is TreeTheme =>
   TREE_THEME_OPTIONS.some(option => option.value === value);
 
+const DEFAULT_TREE_VIEW_STATE = { shouldWrap: false } as const;
+
 const isPreviousDefaultShortcutModifiers = (value: unknown) =>
   isShortcutModifiers(value) &&
   value.ctrl === false &&
@@ -148,6 +150,7 @@ export const useStore = create<DeepBraceState>()(
       isCodeItalic: false,
       indentSize: DEFAULT_INDENT_SIZE,
       treeTheme: DEFAULT_TREE_THEME,
+      shouldWrap: DEFAULT_TREE_VIEW_STATE.shouldWrap,
       shouldShowFullLongStrings: true,
       treeSearchPosition: null,
       toggleTheme: () => {
@@ -172,6 +175,9 @@ export const useStore = create<DeepBraceState>()(
       },
       setTreeTheme: treeTheme => {
         set({ treeTheme });
+      },
+      toggleWrap: () => {
+        set(state => ({ shouldWrap: !state.shouldWrap }));
       },
       setShouldShowFullLongStrings: shouldShowFullLongStrings => {
         set({ shouldShowFullLongStrings });
@@ -207,6 +213,7 @@ export const useStore = create<DeepBraceState>()(
           isCodeItalic: false,
           indentSize: DEFAULT_INDENT_SIZE,
           treeTheme: DEFAULT_TREE_THEME,
+          shouldWrap: DEFAULT_TREE_VIEW_STATE.shouldWrap,
           shouldShowFullLongStrings: true,
           treeSearchPosition: null,
           resetEpoch: state.resetEpoch + 1,
@@ -236,6 +243,7 @@ export const useStore = create<DeepBraceState>()(
           isCodeItalic: snapshot.isCodeItalic,
           indentSize: snapshot.indentSize,
           treeTheme: snapshot.treeTheme,
+          shouldWrap: snapshot.shouldWrap,
           shouldShowFullLongStrings: snapshot.shouldShowFullLongStrings,
           treeSearchPosition: snapshot.treeSearchPosition,
           resetEpoch: state.resetEpoch + 1,
@@ -250,7 +258,7 @@ export const useStore = create<DeepBraceState>()(
       skipHydration: true,
       version: 3,
       migrate: (persistedState): PersistedDeepBraceState => {
-        // 迁移旧明暗值，并将原内置修饰键默认值更新为单键；用户自定义组合保持不变。
+        // 迁移旧明暗值，并将原内置 Alt+Shift 默认值更新为当前默认组合；用户自定义组合保持不变。
         const persisted =
           persistedState && typeof persistedState === 'object'
             ? (persistedState as Partial<PersistedDeepBraceState> & { isDark?: unknown })

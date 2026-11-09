@@ -34,16 +34,14 @@ export const Brand = () => {
       <div className="brand-symbol brand-symbol-animated grid size-7 shrink-0 place-items-center self-center rounded-lg bg-foreground text-xs font-bold text-background">
         {'{ }'}
       </div>
-      <span className="brand-slot">
-        <span className="brand-metrics" aria-hidden="true">
-          DeepBrace JSON
-        </span>
-        {Animation && !shouldReduceMotion ? (
-          <Animation />
-        ) : (
-          <span className="brand-wordmark shrink-0 font-logo">DeepBrace JSON</span>
+      <div className="brand-slot">
+        <h1 className="brand-wordmark m-0 shrink-0 font-logo">DeepBrace JSON</h1>
+        {Animation && !shouldReduceMotion && (
+          <span className="brand-animation" aria-hidden="true" data-nosnippet>
+            <Animation />
+          </span>
         )}
-      </span>
+      </div>
     </>
   );
 };

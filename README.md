@@ -15,11 +15,12 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 - **Live JSON / JSON5 parsing** after a 300ms debounce, with syntax highlighting, plain-text fallback and line/column errors
 - **Sample picker**: keep the ordinary JSON5 example or load large documents of about 1 MB (2,000 records) and 10 MB (20,000 records). The desktop button and overflow menu offer the same choices. Large samples are generated and parsed on demand in a cancellable Worker, replace only the current tab, and persist like normal input; generation failures keep the existing content
 - **Transform**: format, minify, escape and unescape (repeatable — stack or peel escape layers one at a time)
-- **Collapsible tree preview** with outline-style stable line numbers, an adaptive line-number column, full-row hover, per-line copy
+- **Collapsible tree preview** with outline-style stable line numbers, an adaptive line-number column, full-row hover, per-line copy, and a syntax-colored minimap of the actual tree text on the right when the tree scrolls. Click, drag, or use the keyboard on the minimap to navigate; its viewport indicator follows scrolling and folding
 - **Structured search and path navigation** across the complete parsed result by key, value or path, with contains matching and optional case sensitivity. Exact matched text is highlighted, and Enter / Shift+Enter moves between results; locating a folded or unmounted virtual row temporarily opens its ancestors and scrolls to it, while closing search restores the original fold state. The floating search panel is draggable, keyboard-movable and remembers its position across reloads. Each node menu can copy the full value, JSONPath or RFC 6901 JSON Pointer. Large documents build their search index in a dedicated Worker so typing stays responsive
 - **Large-paste protection**: inputs of at least 262,144 characters parse in a cancellable Worker. Large previews (that input size, over 5,000 nodes, or depth over 40) use dynamic-height tree virtualization: scroll directly through the document while only nearby rows are mounted. Node anchors restore position across tabs and reloads; wrapping, fonts and folding retain stable outline numbers. Small documents keep their existing fold animations. Strings and keys preview up to 500 characters, while the editor and copy retain complete data. Preview depth is capped at 40; deeper data remains in the editor. Native selection and browser Find only cover mounted tree rows; use the editor or copy buttons for the complete content
 - **Nested JSON extraction**: string values that parse as objects/arrays get a one-click `Parse` button to open in a new tab
-- **Multi-tab workspace** starts new users with a sample and a blank tab, with right-click rename, close and bulk-close actions; tab titles, input, wrapping, active tab, editor scroll and tree scroll are persisted in structured IndexedDB
+- **Multi-tab workspace** starts new users with a sample and a blank tab, with right-click rename, close and bulk-close actions; tab titles, input, active tab, editor scroll and tree scroll are persisted in structured IndexedDB
+- **Shared tree wrapping** is off by default. The preview button shows whether wrapping is on or off; the state applies to every tab and resets to off on reload. With wrapping off, long keys and values stay on one line and can be viewed by scrolling horizontally
 - **Global long-string preference**: show values in full by default, or truncate escaped strings over 120 characters with a bounded, scrollable full-text tooltip
 - **Unified code theme settings**: one Theme dialog configures 11 synchronized syntax color schemes and 11 code fonts for the editor and tree preview, with independent bold and italic switches (off by default). Preferences persist across reloads and participate in reset/undo
 - **Contextual tab guide** introduces right-click tab actions on every reload until the user explicitly chooses "Don't show again"
@@ -27,7 +28,7 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 - **Feature highlights** beside the logo use matching icon tags with hover and keyboard-focus descriptions. The large-document tag appears from 1,280px, with the remaining capabilities from 1,536px; narrower screens prioritize the product name and tools
 - **Reset to defaults**: "Reset all data" in Settings restores factory state (sample tab + blank tab + default preferences + scroll & split layout) behind a confirm dialog; a toast offers full undo for 8 seconds
 - **Live status bar** with line, character and UTF-8 size metrics plus parse type, node count, depth and errors
-- **Progressive startup**: show a lightweight workspace skeleton before application JavaScript is ready, with responsive panes, matching light/dark styling and reduced-motion support. Desktop skeleton panes synchronously restore the saved split ratio from localStorage, using equal widths when no valid layout is available. Existing IndexedDB layouts migrate on the first workspace load. Light/dark mode is stored only in localStorage and applied before the first paint, falling back to the system preference when unset; split ratios also use localStorage; code themes, fonts, tabs and scroll positions remain in IndexedDB. Load settings, theme and shortcut dialogs with the workspace so opening them requires no additional script download. Shared layout dimensions and an inline brand-font subset align the skeleton with the default workspace without an external font request. Main styles download without blocking the skeleton; the workspace mounts once styles are ready, with a retry entry on failure. Other fonts do not block rendering; wordmark animation loads after the workspace mounts without resizing the logo, with a static fallback for reduced motion or download failures
+- **Progressive startup**: show a lightweight workspace skeleton before application JavaScript is ready, with responsive panes, matching light/dark styling and reduced-motion support. Desktop skeleton panes synchronously restore the saved split ratio from localStorage, using equal widths when no valid layout is available. Existing IndexedDB layouts migrate on the first workspace load. Light/dark mode is stored only in localStorage and applied before the first paint, defaulting to light when unset; split ratios also use localStorage; code themes, fonts, tabs and scroll positions remain in IndexedDB. Load settings, theme and shortcut dialogs with the workspace so opening them requires no additional script download. Shared layout dimensions and an inline brand-font subset align the skeleton with the default workspace without an external font request. Main styles download without blocking the skeleton; the workspace mounts once styles are ready, with a retry entry on failure. Other fonts do not block rendering; wordmark animation loads after the workspace mounts without resizing the logo, with a static fallback for reduced motion or download failures
 - **100% client-side** — your data never leaves the browser
 
 ## Documentation
@@ -39,28 +40,28 @@ Most JSON viewers stop at the surface. When a value itself contains a nested JSO
 
 Press the keyboard button in the header (or its overflow menu) to view the compact shortcut panel and configure a shared combination of Ctrl, Alt/Option, Cmd/Meta and Shift. All modifiers can be turned off to use single-key shortcuts. Changes apply immediately to all shortcuts and hints, persist in IndexedDB, and participate in reset/undo. These are simultaneous modifier combinations, not sequential leader keys.
 
-Defaults use no modifiers and are listed below. The former built-in Alt+Shift default migrates to single keys, while saved custom combinations remain unchanged. Tab commands act on the active tab; bulk closes retain undo. Shortcuts with Ctrl, Alt/Option or Cmd/Meta also work in the editor. Shortcuts without those command modifiers pause in editors and other input fields; all global shortcuts pause in dialogs and menus. Home / End scroll the tree preview to its top / bottom. System/browser-reserved combinations may take priority; use the buttons if a custom combination conflicts.
+Defaults use Ctrl and are listed below. The former built-in Alt+Shift default migrates to Ctrl, while saved custom combinations, including single keys, remain unchanged. Tab commands act on the active tab; bulk closes retain undo. Shortcuts with Ctrl, Alt/Option or Cmd/Meta also work in the editor. Shortcuts without those command modifiers pause in editors and other input fields; all global shortcuts pause in dialogs and menus. Ctrl+Home / Ctrl+End scroll the tree preview to its top / bottom. System/browser-reserved combinations may take priority; use the buttons if a custom combination conflicts.
 
-| Action                                       | Shortcut          |
-| -------------------------------------------- | ----------------- |
-| Format / Minify                              | `F` / `M`         |
-| Escape / Unescape                            | `E` / `U`         |
-| New / Close tab                              | `N` / `W`         |
-| Previous / Next tab                          | `[` / `]`         |
-| Toggle wrap / Fold first level or expand all | `L` / `X`         |
-| Search tree nodes                            | `K`               |
-| Copy / Clear current content                 | `C` / `Backspace` |
-| Tree preview top / bottom                    | `Home` / `End`    |
-| Editor focus (keep selection)                | `I`               |
-| Leave editor focus (keep selection)          | `Esc`             |
-| Rename active tab                            | `R`               |
-| Add tab to left / right                      | `A` / `D`         |
-| Close all to left / right                    | `J` / `P`         |
-| Close other tabs                             | `O`               |
-| Code theme & fonts / Light-dark mode         | `T` / `B`         |
-| Settings / Shortcut panel                    | `S` / `H`         |
+| Action                                       | Shortcut                    |
+| -------------------------------------------- | --------------------------- |
+| Format / Minify                              | `Ctrl+F` / `Ctrl+M`         |
+| Escape / Unescape                            | `Ctrl+E` / `Ctrl+U`         |
+| New / Close tab                              | `Ctrl+N` / `Ctrl+W`         |
+| Previous / Next tab                          | `Ctrl+[` / `Ctrl+]`         |
+| Toggle wrap / Fold first level or expand all | `Ctrl+L` / `Ctrl+X`         |
+| Search tree nodes                            | `Ctrl+K`                    |
+| Copy / Clear current content                 | `Ctrl+C` / `Ctrl+Backspace` |
+| Tree preview top / bottom                    | `Ctrl+Home` / `Ctrl+End`    |
+| Editor focus (keep selection)                | `Ctrl+I`                    |
+| Leave editor focus (keep selection)          | `Esc`                       |
+| Rename active tab                            | `Ctrl+R`                    |
+| Add tab to left / right                      | `Ctrl+A` / `Ctrl+D`         |
+| Close all to left / right                    | `Ctrl+J` / `Ctrl+P`         |
+| Close other tabs                             | `Ctrl+O`                    |
+| Code theme & fonts / Light-dark mode         | `Ctrl+T` / `Ctrl+B`         |
+| Settings / Shortcut panel                    | `Ctrl+S` / `Ctrl+H`         |
 
-Folding keeps the root expanded and collapses its non-empty object and array children. Press the button or `X` again to expand all nodes. Folding is unavailable when there are no collapsible children and all nodes are already expanded.
+Folding keeps the root expanded and collapses its non-empty object and array children. Press the button or `Ctrl+X` again to expand all nodes. Folding is unavailable when there are no collapsible children and all nodes are already expanded.
 
 In single-key or Shift-only mode, `I` focuses the editor from outside input fields, and `Esc` leaves it; typing `i` remains available inside the editor. With Ctrl, Alt/Option or Cmd/Meta configured, the same `I` combination toggles editor focus while preserving content, selection and scroll position.
 
