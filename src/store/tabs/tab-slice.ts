@@ -160,7 +160,7 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
       set(state => {
         const customTitle = title?.trim();
         const nextTitle = customTitle || getNextTabTitle(state.tabs);
-        const baseTab = createJsonTab(input, nextTitle, id, true, Boolean(customTitle));
+        const baseTab = createJsonTab(input, nextTitle, id, Boolean(customTitle));
         const tab =
           input.trim() && input.length < LARGE_INPUT_LENGTH
             ? applyParseResult(baseTab, parseInput(input))
@@ -295,11 +295,6 @@ export const createTabSlice: StateCreator<DeepBraceState, [], [], JsonTabsSlice>
         touched: new Set<string>(),
       }));
       toast('已清空');
-    },
-
-    toggleWrap: () => {
-      const id = get().activeTabId;
-      patchTab(id, tab => ({ ...tab, shouldWrap: !tab.shouldWrap }));
     },
 
     toggleCollapse: key => {

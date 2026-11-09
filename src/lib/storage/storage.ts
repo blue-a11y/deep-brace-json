@@ -22,12 +22,7 @@ export const writeColorMode = (isDark: boolean) => {
 };
 
 export const getInitialIsDark = () => {
-  const colorMode = readColorMode();
-  if (colorMode) return colorMode === 'dark';
-  return (
-    typeof window !== 'undefined' &&
-    Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches)
-  );
+  return readColorMode() === 'dark';
 };
 
 /** react-resizable-panels 会给 autoSaveId 加前缀后再交给 storage */

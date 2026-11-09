@@ -11,7 +11,6 @@ export const createJsonTab = (
   input = '',
   title = 'JSON 1',
   id = createTabId(),
-  shouldWrap = true,
   hasCustomTitle = false,
 ): JsonTab => ({
   id,
@@ -23,7 +22,6 @@ export const createJsonTab = (
   isParsing: false,
   collapsed: new Set<string>(),
   touched: new Set<string>(),
-  shouldWrap,
 });
 
 export const createInitialTab = (input: string): JsonTab =>
@@ -75,11 +73,10 @@ export const restoreJsonTab = (value: unknown, index: number): JsonTab => {
   const input = typeof stored.input === 'string' ? stored.input : '';
   const title = typeof stored.title === 'string' ? stored.title : `JSON ${index + 1}`;
   const id = typeof stored.id === 'string' ? stored.id : createTabId();
-  const shouldWrap = typeof stored.shouldWrap === 'boolean' ? stored.shouldWrap : true;
   const hasCustomTitle =
     typeof stored.hasCustomTitle === 'boolean' ? stored.hasCustomTitle : !/^JSON \d+$/.test(title);
   return {
-    ...createJsonTab(input, title, id, shouldWrap, hasCustomTitle),
+    ...createJsonTab(input, title, id, hasCustomTitle),
     collapsed: restoreStringKeySet(stored.collapsed),
     touched: restoreStringKeySet(stored.touched),
   };

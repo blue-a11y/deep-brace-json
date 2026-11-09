@@ -102,6 +102,11 @@ const pendingScrollKeys = new Set<string>();
 
 const getScrollKey = (tabId: string, area: TabScrollArea) => `${tabId}:${area}`;
 
+export const getSavedTreeScrollPosition = (
+  tabId: string,
+): Readonly<Pick<ScrollPosition, 'top' | 'isPinnedToBottom' | 'anchor'>> | undefined =>
+  scrollPositions.get(getScrollKey(tabId, 'tree'));
+
 const rememberScrollPosition = (tabId: string, area: TabScrollArea, position: ScrollPosition) => {
   const key = getScrollKey(tabId, area);
   scrollPositions.set(key, position);

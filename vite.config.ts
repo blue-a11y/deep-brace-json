@@ -71,11 +71,12 @@ export default defineConfig({
           injectTo: 'head-prepend',
           children: `try {
   const mode = localStorage.getItem(${JSON.stringify(STORAGE_KEYS.colorMode)});
-  if (mode === 'light' || mode === 'dark') {
-    document.documentElement.dataset.theme = mode;
-    document.documentElement.classList.toggle('dark', mode === 'dark');
-  }
-} catch { /* Storage may be disabled; CSS falls back to the system theme. */ }`,
+  document.documentElement.dataset.theme = mode === 'dark' ? 'dark' : 'light';
+  document.documentElement.classList.toggle('dark', mode === 'dark');
+} catch {
+  document.documentElement.dataset.theme = 'light';
+  document.documentElement.classList.remove('dark');
+}`,
         },
       ],
     },

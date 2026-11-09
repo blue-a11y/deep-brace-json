@@ -31,11 +31,13 @@ import { collectFirstLevelContainerPaths } from '../../lib/parse/parse';
 import { useShortcutLabels } from '../../lib/shortcuts/use-shortcut-labels';
 import { bindTreeTabScrollPosition } from '../../lib/storage/tab-scroll';
 import { getTreeLineCount } from '../../lib/tree/tree-metrics';
+import { buildTreeRows } from '../../lib/tree/tree-rows';
 import { toast } from '../../lib/workspace/toast';
 import { useWorkspaceCommand } from '../../lib/workspace/use-workspace-command';
 import { selectActiveTab, useStore } from '../../store/use-store';
 import { Tip } from '../shared/tip';
 import { ShortcutHint, ShortcutKbd } from '../shortcuts/shortcut-hint';
+import { TreeMinimap } from './tree-minimap';
 import { TreeNode } from './tree-node';
 import { TreePathMenu, type TreePathMenuTarget } from './tree-path-menu';
 import { TreeSearchBar } from './tree-search-bar';
@@ -77,9 +79,11 @@ export const TreeView = () => {
   const result = activeTab.result;
   const data = result?.ok ? result.data : null;
   const stats = result?.ok ? result.stats : null;
-  const { collapsed, touched, shouldWrap } = activeTab;
+  const { collapsed, touched } = activeTab;
+  const shouldWrap = useStore(state => state.shouldWrap);
   const indentSize = useStore(state => state.indentSize);
   const treeTheme = useStore(state => state.treeTheme);
+  const isDark = useStore(state => state.isDark);
   const shouldShowFullLongStrings = useStore(state => state.shouldShowFullLongStrings);
   const treeSearchPosition = useStore(state => state.treeSearchPosition);
   const handleTreeSearchPositionChange = useStore(state => state.setTreeSearchPosition);
@@ -107,6 +111,13 @@ export const TreeView = () => {
     collapsed,
     isLargeDocument,
   });
+  const minimapRows = useMemo(
+    () =>
+      result?.ok && !isLargeDocument
+        ? buildTreeRows(data, treeSearch.effectiveCollapsed, treeSearch.forcedOpenPaths)
+        : [],
+    [result?.ok, isLargeDocument, data, treeSearch.effectiveCollapsed, treeSearch.forcedOpenPaths],
+  );
   const treePaneRef = useRef<HTMLElement>(null);
   const handleCloseSearch = () => {
     treeSearch.handleClose();
@@ -153,6 +164,7 @@ export const TreeView = () => {
   const [isCopied, setIsCopied] = useState(false);
   const copyFeedbackTimerRef = useRef<number | null>(null);
   const treeScrollRef = useRef<HTMLDivElement>(null);
+  const treeScrollBindingRef = useRef<ReturnType<typeof bindTreeTabScrollPosition> | null>(null);
   const treeStyle = {
     '--tree-indent-size': `${indentSize * TREE_INDENT_PIXEL_RATIO}px`,
     '--tree-line-number-width': `${Math.max(3, String(getTreeLineCount(data)).length)}ch`,
@@ -160,8 +172,17 @@ export const TreeView = () => {
 
   useLayoutEffect(() => {
     const element = treeScrollRef.current;
-    return element ? bindTreeTabScrollPosition(activeTab.id, element) : undefined;
+    if (!element) return;
+    const binding = bindTreeTabScrollPosition(activeTab.id, element);
+    treeScrollBindingRef.current = binding;
+    return () => {
+      binding();
+      if (treeScrollBindingRef.current === binding) treeScrollBindingRef.current = null;
+    };
   }, [activeTab.id, isLargeDocument]);
+  const handleMinimapNavigateStart = useCallback(() => {
+    treeScrollBindingRef.current?.interrupt();
+  }, []);
 
   useLayoutEffect(() => {
     if (isLargeDocument || !treeSearch.activeEntry) return;
@@ -305,13 +326,16 @@ export const TreeView = () => {
               ariaKeyShortcuts={getAriaShortcut('toggleWrap')}
               label={
                 <ShortcutHint shortcut="toggleWrap">
-                  {shouldWrap ? '不换行(左右滚动)' : '自动换行'}
+                  {shouldWrap ? '关闭自动换行（可左右滚动）' : '开启自动换行'}
                 </ShortcutHint>
               }
             >
               <Button
                 size="sm"
                 variant="ghost"
+                className="tree-wrap-toggle"
+                aria-label={shouldWrap ? '自动换行已开启，点击关闭' : '自动换行已关闭，点击开启'}
+                aria-pressed={shouldWrap}
                 aria-keyshortcuts={getAriaShortcut('toggleWrap')}
                 ref={getShortcutRef('toggleWrap')}
                 onPress={handleToggleWrap}
@@ -326,7 +350,7 @@ export const TreeView = () => {
                     className={`col-start-1 row-start-1 transition-all duration-200 ${!shouldWrap ? 'rotate-0 opacity-100' : '-rotate-90 opacity-0'}`}
                   />
                 </span>
-                <span className="pane-action-label">{shouldWrap ? '换行' : '不换行'}</span>
+                <span className="pane-action-label">{shouldWrap ? '换行已开' : '换行已关'}</span>
                 <ShortcutKbd
                   shortcut="toggleWrap"
                   variant="default"
@@ -403,6 +427,7 @@ export const TreeView = () => {
           shouldShowFullLongStrings={shouldShowFullLongStrings}
           indent={indentSize * TREE_INDENT_PIXEL_RATIO}
           theme={treeTheme}
+          paletteKey={`${treeTheme}:${isDark}`}
           style={treeStyle}
           onToggle={handleToggleNode}
           forcedOpenPaths={treeSearch.forcedOpenPaths}
@@ -412,15 +437,24 @@ export const TreeView = () => {
           onOpenPathMenu={handleOpenPathMenu}
         />
       ) : (
-        <div
-          ref={treeScrollRef}
-          role="region"
-          aria-label="树形预览内容"
-          className={`tree-body min-h-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
-          data-tree-theme={treeTheme}
-          style={treeStyle}
-        >
-          {treeContent}
+        <div className="flex min-h-0 flex-1">
+          <div
+            ref={treeScrollRef}
+            role="region"
+            aria-label="树形预览内容"
+            className={`tree-body min-h-0 min-w-0 flex-1 overflow-auto px-4 ${shouldWrap ? 'tree-wrap' : 'tree-nowrap'}`}
+            data-tree-theme={treeTheme}
+            style={treeStyle}
+          >
+            {treeContent}
+          </div>
+          <TreeMinimap
+            key={activeTab.id}
+            rows={minimapRows}
+            scrollRef={treeScrollRef}
+            paletteKey={`${treeTheme}:${isDark}`}
+            onNavigateStart={handleMinimapNavigateStart}
+          />
         </div>
       )}
       <TreePathMenu target={pathMenuTarget} onOpenChange={handlePathMenuOpenChange} />
