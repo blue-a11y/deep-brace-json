@@ -66,7 +66,7 @@ const PaneHeader = ({
           <span className="block truncate">{notice}</span>
         </Tip>
       )}
-      <div className="panel-header-actions ml-auto flex min-w-0 flex-wrap justify-end gap-0.5">
+      <div className="panel-header-actions ml-auto flex min-w-0 flex-wrap justify-end gap-2">
         {extra}
       </div>
     </div>

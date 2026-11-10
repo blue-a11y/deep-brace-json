@@ -241,7 +241,7 @@ export const EditorPane = () => {
       <div className="flex shrink-0 flex-wrap items-center gap-x-2 px-4 py-1 text-xs text-foreground/55">
         <FileJson size={13} className="shrink-0" />
         <span className="shrink-0 font-medium">编辑器</span>
-        <div className="panel-header-actions ml-auto flex min-w-0 flex-wrap justify-end gap-0.5">
+        <div className="panel-header-actions ml-auto flex min-w-0 flex-wrap justify-end gap-2">
           <Tip
             ariaKeyShortcuts={getAriaShortcut('format')}
             label={<ShortcutHint shortcut="format">格式化 · JSON5 → 标准 JSON</ShortcutHint>}

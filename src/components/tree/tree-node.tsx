@@ -1,12 +1,16 @@
 import {
   useEffect,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
   type MouseEvent,
   type ReactNode,
 } from 'react';
+import { Tooltip } from '@heroui/react';
 import { ArrowRight, ChevronRight } from 'lucide-react';
+import { useFocusable } from 'react-aria/useFocusable';
 import { LARGE_VALUE_PREVIEW_LENGTH, TREE_PREVIEW_DEPTH } from '../../lib/parse/large-document';
 import { isStrictJson, pathKey, type NodePath } from '../../lib/parse/parse';
 import { getTreeLineCount } from '../../lib/tree/tree-metrics';
@@ -49,6 +53,50 @@ const HighlightedText = ({ text, ranges }: { text: string; ranges: TextMatchRang
 const getHighlightRanges = (text: string, options?: TreeSearchOptions) =>
   options ? findTextMatchRanges(text, options) : [];
 
+let textMeasureContext: CanvasRenderingContext2D | null | undefined;
+
+const getEllipsisWidth = (style: CSSStyleDeclaration) => {
+  textMeasureContext ??= document.createElement('canvas').getContext('2d');
+  if (!textMeasureContext) return Number.parseFloat(style.fontSize);
+  textMeasureContext.font = style.font;
+  return textMeasureContext.measureText('…').width;
+};
+
+const getWebUrl = (text: string): string | null => {
+  if (!/^https?:\/\/\S+$/i.test(text) || text.includes('\\')) return null;
+  try {
+    return new URL(text).href;
+  } catch {
+    return null;
+  }
+};
+
+const LinkedText = ({
+  originalText,
+  displayedText,
+  ranges,
+}: {
+  originalText: string;
+  displayedText: string;
+  ranges: TextMatchRange[];
+}) => {
+  const text = <HighlightedText text={displayedText} ranges={ranges} />;
+  const href = getWebUrl(originalText);
+  if (!href) return text;
+  return (
+    <a
+      className="tree-token-url"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-description="在新标签页打开"
+      onClick={event => event.stopPropagation()}
+    >
+      {text}
+    </a>
+  );
+};
+
 /* ---------- 叶子值：类型语义色 ---------- */
 
 const LeafValue = ({
@@ -82,8 +130,9 @@ const LeafValue = ({
             title="大文档仅预览前 500 字符；编辑器与复制保留完整内容"
           >
             &quot;
-            <HighlightedText
-              text={previewString}
+            <LinkedText
+              originalText={stringValue}
+              displayedText={previewString}
               ranges={getHighlightRanges(previewString, highlightOptions)}
             />
             &quot;…（共 {stringValue.length} 字符）
@@ -98,8 +147,9 @@ const LeafValue = ({
       const renderedValue = (
         <span className="tree-token-string break-all">
           &quot;
-          <HighlightedText
-            text={displayedString}
+          <LinkedText
+            originalText={stringValue}
+            displayedText={displayedString}
             ranges={getHighlightRanges(displayedString, highlightOptions)}
           />
           &quot;
@@ -143,6 +193,124 @@ const LeafValue = ({
 
 /* ---------- key 标签：属性名 / 数组索引 ---------- */
 
+const KeyTooltipTrigger = ({
+  label,
+  displayed,
+  hasPreviewEllipsis,
+  highlightOptions,
+}: {
+  label: string;
+  displayed: string;
+  hasPreviewEllipsis: boolean;
+  highlightOptions?: TreeSearchOptions;
+}) => {
+  const href = getWebUrl(label);
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  const { focusableProps } = useFocusable({}, href ? linkRef : spanRef);
+  const [hasHiddenMatch, setHasHiddenMatch] = useState(false);
+  const fullRanges = useMemo(
+    () => getHighlightRanges(label, highlightOptions),
+    [label, highlightOptions],
+  );
+
+  useLayoutEffect(() => {
+    const element = href ? linkRef.current : spanRef.current;
+    if (!element || fullRanges.length === 0) {
+      setHasHiddenMatch(false);
+      return;
+    }
+
+    const measure = () => {
+      const hasPreviewHiddenMatch = fullRanges.some(range => range.end > displayed.length);
+      if (hasPreviewHiddenMatch) {
+        setHasHiddenMatch(true);
+        return;
+      }
+      if (element.scrollWidth <= element.clientWidth) {
+        setHasHiddenMatch(false);
+        return;
+      }
+      const style = getComputedStyle(element);
+      const bounds = element.getBoundingClientRect();
+      const left = bounds.left + element.clientLeft;
+      const right = left + element.clientWidth;
+      const ellipsisWidth = getEllipsisWidth(style);
+      const visibleLeft = style.direction === 'rtl' ? left + ellipsisWidth : left;
+      const visibleRight = style.direction === 'rtl' ? right : right - ellipsisWidth;
+      const hasClippedMatch = [...element.querySelectorAll('.tree-search-highlight')].some(
+        match => {
+          const rect = match.getBoundingClientRect();
+          return rect.left < visibleLeft || rect.right > visibleRight;
+        },
+      );
+      setHasHiddenMatch(hasClippedMatch);
+    };
+
+    measure();
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(element);
+    const styleObserver = new MutationObserver(measure);
+    styleObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-code-font', 'data-code-bold', 'data-code-italic'],
+    });
+    document.fonts.addEventListener('loadingdone', measure);
+    return () => {
+      resizeObserver.disconnect();
+      styleObserver.disconnect();
+      document.fonts.removeEventListener('loadingdone', measure);
+    };
+  }, [displayed, fullRanges, href]);
+
+  const contents = (
+    <>
+      &quot;
+      <HighlightedText text={displayed} ranges={getHighlightRanges(displayed, highlightOptions)} />
+      {hasPreviewEllipsis && '…'}
+      &quot;
+    </>
+  );
+  return href ? (
+    <a
+      {...focusableProps}
+      ref={linkRef}
+      className="tree-token-key tree-token-url"
+      data-hidden-key-match={hasHiddenMatch || undefined}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-description="在新标签页打开"
+      onClick={event => event.stopPropagation()}
+    >
+      {contents}
+    </a>
+  ) : (
+    <span
+      {...focusableProps}
+      ref={spanRef}
+      className="tree-token-key"
+      data-hidden-key-match={hasHiddenMatch || undefined}
+      tabIndex={0}
+      onClick={handleTokenClick}
+    >
+      {contents}
+    </span>
+  );
+};
+
+const KeyTooltipContent = ({
+  label,
+  highlightOptions,
+}: {
+  label: string;
+  highlightOptions?: TreeSearchOptions;
+}) => (
+  <span className="code-text-style block max-h-[min(50dvh,24rem)] max-w-md overflow-y-auto break-all whitespace-normal font-mono">
+    <HighlightedText text={label} ranges={getHighlightRanges(label, highlightOptions)} />
+  </span>
+);
+
 const KeyLabel = ({
   label,
   isLargeDocument = false,
@@ -152,16 +320,20 @@ const KeyLabel = ({
   isLargeDocument?: boolean;
   highlightOptions?: TreeSearchOptions;
 }) => {
-  const displayed =
-    isLargeDocument && label.length > LARGE_VALUE_PREVIEW_LENGTH
-      ? `${label.slice(0, LARGE_VALUE_PREVIEW_LENGTH)}…`
-      : label;
+  const hasPreviewEllipsis = isLargeDocument && label.length > LARGE_VALUE_PREVIEW_LENGTH;
+  const displayed = hasPreviewEllipsis ? label.slice(0, LARGE_VALUE_PREVIEW_LENGTH) : label;
   return (
-    <span className="tree-token-key shrink-0">
-      &quot;
-      <HighlightedText text={displayed} ranges={getHighlightRanges(displayed, highlightOptions)} />
-      &quot;
-    </span>
+    <Tooltip delay={300}>
+      <KeyTooltipTrigger
+        label={label}
+        displayed={displayed}
+        hasPreviewEllipsis={hasPreviewEllipsis}
+        highlightOptions={highlightOptions}
+      />
+      <Tooltip.Content>
+        <KeyTooltipContent label={label} highlightOptions={highlightOptions} />
+      </Tooltip.Content>
+    </Tooltip>
   );
 };
 
@@ -308,13 +480,11 @@ export const TreeNode = ({
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
-            <span className="contents" onClick={handleTokenClick}>
-              <KeyLabel
-                label={label}
-                isLargeDocument={isVirtualRow}
-                highlightOptions={keyHighlightOptions}
-              />
-            </span>
+            <KeyLabel
+              label={label}
+              isLargeDocument={isVirtualRow}
+              highlightOptions={keyHighlightOptions}
+            />
             <span className={`shrink-0 ${PUNCTUATION_CLASS_NAME}`}>:</span>
           </>
         )}
@@ -348,13 +518,11 @@ export const TreeNode = ({
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
-            <span className="contents" onClick={handleTokenClick}>
-              <KeyLabel
-                label={label}
-                isLargeDocument={isVirtualRow}
-                highlightOptions={keyHighlightOptions}
-              />
-            </span>
+            <KeyLabel
+              label={label}
+              isLargeDocument={isVirtualRow}
+              highlightOptions={keyHighlightOptions}
+            />
             <span className={PUNCTUATION_CLASS_NAME}>:</span>
           </>
         )}
@@ -386,6 +554,8 @@ export const TreeNode = ({
         .join(', ')}${entries.length > 3 ? ', …' : ''} }`;
 
   const handleToggleRow = (event: MouseEvent<HTMLDivElement>) => {
+    // Tooltip 等 Portal 的点击会沿 React 树冒泡，但不属于当前行。
+    if (!(event.target instanceof Node) || !event.currentTarget.contains(event.target)) return;
     if (isDepthLimited) return;
     // 多击选词复制:偶数次点击撤销首次翻转,净展开状态不变
     if (event.detail > 1) {
@@ -443,13 +613,11 @@ export const TreeNode = ({
         <span className="w-4 shrink-0" />
         {label !== null && (
           <>
-            <span className="contents" onClick={handleTokenClick}>
-              <KeyLabel
-                label={label}
-                isLargeDocument={isVirtualRow}
-                highlightOptions={keyHighlightOptions}
-              />
-            </span>
+            <KeyLabel
+              label={label}
+              isLargeDocument={isVirtualRow}
+              highlightOptions={keyHighlightOptions}
+            />
             <span className={PUNCTUATION_CLASS_NAME}>:</span>
           </>
         )}
