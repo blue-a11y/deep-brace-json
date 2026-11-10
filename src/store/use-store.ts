@@ -46,6 +46,7 @@ type PersistedDeepBraceState = Pick<
   | 'isCodeItalic'
   | 'indentSize'
   | 'treeTheme'
+  | 'shouldWrap'
   | 'shouldShowFullLongStrings'
   | 'treeSearchPosition'
   | 'shortcutModifiers'
@@ -113,6 +114,8 @@ const mergePersistedState = (persistedState: unknown, currentState: DeepBraceSta
     isCodeItalic: typeof persisted.isCodeItalic === 'boolean' ? persisted.isCodeItalic : false,
     indentSize: isIndentSize(persisted.indentSize) ? persisted.indentSize : currentState.indentSize,
     treeTheme: isTreeTheme(persisted.treeTheme) ? persisted.treeTheme : currentState.treeTheme,
+    shouldWrap:
+      typeof persisted.shouldWrap === 'boolean' ? persisted.shouldWrap : currentState.shouldWrap,
     shouldShowFullLongStrings:
       typeof persisted.shouldShowFullLongStrings === 'boolean'
         ? persisted.shouldShowFullLongStrings
@@ -132,6 +135,7 @@ const partializeState = (state: DeepBraceState): PersistedDeepBraceState => ({
   isCodeItalic: state.isCodeItalic,
   indentSize: state.indentSize,
   treeTheme: state.treeTheme,
+  shouldWrap: state.shouldWrap,
   shouldShowFullLongStrings: state.shouldShowFullLongStrings,
   treeSearchPosition: state.treeSearchPosition,
 });

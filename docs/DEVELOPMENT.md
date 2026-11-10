@@ -280,9 +280,9 @@ useEffect(() => {
   用户滚动或卸载可中止恢复。
   `src/components/tree/tree-minimap.tsx` 在树可滚动时绘制右侧 Canvas 缩略图，复用当前展开的大纲行，
   按真实键名、值和括号绘制微缩文本；短文档按树行高度紧凑排列，长文档按画布高度采样且不增加已挂载树行。
-  树预览换行是所有标签共用的页面状态，默认关闭，刷新后回到默认值，不持久化。按钮显示当前
-  “换行已开 / 换行已关”，以 `aria-pressed` 和强调色同步表达状态；关闭后键名和值保持单行，超出
-  视口的内容通过横向滚动查看。
+  树预览换行是所有标签共用的状态，默认关闭并存入 app-state，刷新后恢复。按钮显示当前
+  “换行已开 / 换行已关”，以 `aria-pressed` 和强调色同步表达状态；开启时长键名和值在行内换行，
+  关闭时保持单行，超出视口的内容通过横向滚动查看。
   缩略图的视口框按真实滚动尺寸换算，点击、拖动或键盘导航前
   中断该标签的滚动恢复；虚拟树还要清除末尾吸附与待恢复锚点。折叠、换行、尺寸、主题与标签变化应同步
   缩略内容和视口标记，短内容不占右侧宽度。
@@ -363,8 +363,9 @@ const isDark = useStore(state => state.isDark);
   切换、重置（浅色）及撤销同步写入，写入失败降级为当前页面状态。新手引导标识仍不参与重置及撤销。
   app-state `persistVersion: 3` 将旧 `isDark` 迁入 localStorage（已有合法值优先），并把旧内置
   Alt+Shift 默认快捷键更新为当前 Ctrl 默认组合；用户自定义组合（包括无修饰键）保持不变。随后按白名单
-  重写 IndexedDB，移除旧字段并保留其他偏好及标签；数据库 Object Store schema 不变。旧标签中的
-  `shouldWrap` 不再恢复，后续写入时移除；工作区换行状态只在当前页面内有效。
+  重写 IndexedDB，移除旧字段并保留其他偏好及标签；数据库 Object Store schema 不变。树预览换行
+  使用 app-state 顶层 `shouldWrap` 字段，缺失或非法时默认关闭；旧标签里的同名字段不再恢复，后续
+  写入时移除。无需变更 Object Store 或 persistVersion。
 
 ### 6.2 新增持久化偏好检查表
 
@@ -454,8 +455,8 @@ app-state 与滚动 adapter 使用串行队列，重置 / 撤销的完成 Promis
   `ShortcutKbd`、提示文字和 `aria-keyshortcuts` 必须响应同一偏好，禁止硬编码组合。
   当前 React Aria 过滤的 `aria-keyshortcuts` 通过 `useShortcutLabels` 返回的 callback ref
   补到真实元素；验收要检查浏览器 DOM，而不是只检查 JSX 属性。
-  面板动作按钮内使用 Kbd 填充样式直接显示完整快捷键组合；复制使用 C，清空当前内容使用
-  Backspace（Mac 显示为 ⌫），
+  编辑器与树预览面板的动作按钮内不显示快捷键徽标；Tooltip、快捷键说明和
+  `aria-keyshortcuts` 保留统一偏好。复制使用 C，清空当前内容使用 Backspace（Mac 显示为 ⌫），
   两者沿用统一修饰键偏好。复制命令复用树预览的复制逻辑和反馈，未成功解析时不复制。
 - 全局快捷键在 dialog、alertdialog、listbox 和 menu 内暂停；不能以合成按键事件推断能拦截系统保留组合，
   按需用真实键盘确认。编辑器焦点切换命令按现有 EditorView 的 `hasFocus` 调用 `focus()` 或
@@ -602,8 +603,8 @@ Logo 右侧「大文档优化」亮点在 `>=1280px` 显示，悬停或键盘聚
 - `src/lib` 当前按职责分目录，但仍包含纯逻辑、adapter、Hook 和命令服务；新增代码仍按依赖方向隔离。
 - `src/store/tabs/tab-slice.ts` 仍编排少量 Toast 和滚动副作用；不得继续堆叠新的跨层流程，复杂用户命令
   应放入 `*-actions.ts`。
-- 设置 Modal 当前仍用 Footer 承载即时生效的重置入口，确认文案也与 8 秒撤销行为冲突；不得复制
-  这一写法，统一调整由 `PLAN-002` 跟踪。
+- 设置 Modal 当前仍用 Footer 承载即时生效的重置入口；不得复制这一写法，统一调整由
+  `PLAN-002` 跟踪。
 - app-state 与滚动持久化已有显式串行队列，reset / undo 的完成 Promise 也等待旧分栏记录的清理；
   分栏拖拽和撤销恢复同步写入 localStorage。触碰该链路时必须按 6.4 节保持完成语义，其余边界
   由 `PLAN-001` 验收。

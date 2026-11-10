@@ -148,12 +148,6 @@ body {
   width: 14px;
   height: 14px;
 }
-.panel-header-actions .pane-action-shortcut {
-  height: 20px;
-  padding-inline: 6px;
-  font-size: 11px;
-}
-
 [data-workspace-pane='editor'] {
   outline-color: transparent;
 }
@@ -828,9 +822,10 @@ body {
     transparent 1px
   );
 }
-.tree-virtual.tree-wrap .tree-token-key {
+.tree-wrap .tree-token-key {
   max-width: 40%;
   min-width: 0;
+  flex-shrink: 1;
 }
 .tree-nowrap {
   overflow-x: auto;

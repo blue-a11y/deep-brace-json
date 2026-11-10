@@ -33,7 +33,7 @@ import { getCodeMirrorTheme } from '../../lib/theme/cm-theme';
 import { useWorkspaceCommand } from '../../lib/workspace/use-workspace-command';
 import { selectActiveTab, useStore } from '../../store/use-store';
 import { Tip } from '../shared/tip';
-import { ShortcutHint, ShortcutKbd } from '../shortcuts/shortcut-hint';
+import { ShortcutHint } from '../shortcuts/shortcut-hint';
 
 /** 与 TreeView 同款 chevron:默认 ⌄/› 字形墨迹偏行底,换 SVG 在 24px 行内精确居中 */
 const FOLD_MARKER_SVG =
@@ -259,7 +259,6 @@ export const EditorPane = () => {
                 className={formatPulse > 0 ? 'icon-feedback-format' : undefined}
               />
               <span className="pane-action-label">格式化</span>
-              <ShortcutKbd shortcut="format" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
           <Tip
@@ -279,7 +278,6 @@ export const EditorPane = () => {
                 className={minifyPulse > 0 ? 'icon-feedback-minify' : undefined}
               />
               <span className="pane-action-label">压缩</span>
-              <ShortcutKbd shortcut="minify" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
           <Tip
@@ -303,7 +301,6 @@ export const EditorPane = () => {
                 className={escapePulse > 0 ? 'icon-feedback-wrap' : undefined}
               />
               <span className="pane-action-label">转义</span>
-              <ShortcutKbd shortcut="escape" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
           <Tip
@@ -325,7 +322,6 @@ export const EditorPane = () => {
                 className={unescapePulse > 0 ? 'icon-feedback-unwrap' : undefined}
               />
               <span className="pane-action-label">反转义</span>
-              <ShortcutKbd shortcut="unescape" variant="default" className="pane-action-shortcut" />
             </Button>
           </Tip>
         </div>
