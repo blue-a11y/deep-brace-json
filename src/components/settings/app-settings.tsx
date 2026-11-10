@@ -94,7 +94,7 @@ export const AppSettings = ({ overlayState, shouldHideTrigger = false }: AppSett
                       <AlertDialog.Body>
                         <p className="text-sm leading-6 text-muted">
                           将清空全部标签页内容，恢复默认偏好（主题、代码字体、缩进、树形主题、
-                          长字符串展示），并回到示例数据。此操作不可撤销。
+                          换行、长字符串展示），并回到示例数据。重置后 8 秒内可撤销。
                         </p>
                       </AlertDialog.Body>
                       <AlertDialog.Footer>

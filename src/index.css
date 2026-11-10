@@ -828,9 +828,10 @@ body {
     transparent 1px
   );
 }
-.tree-virtual.tree-wrap .tree-token-key {
+.tree-wrap .tree-token-key {
   max-width: 40%;
   min-width: 0;
+  flex-shrink: 1;
 }
 .tree-nowrap {
   overflow-x: auto;
