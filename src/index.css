@@ -514,6 +514,13 @@ body {
 }
 .tree-token-key {
   color: var(--tree-token-key);
+  display: block;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: min(40%, 40cqi);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 /* 数组条目索引:与标点同级弱化,保证各主题下都不喧宾夺主 */
 .tree-token-index {
@@ -521,6 +528,26 @@ body {
 }
 .tree-token-string {
   color: var(--tree-token-string);
+}
+.tree-token-url {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, currentColor 48%, transparent);
+  text-underline-offset: 2px;
+}
+.tree-token-key.tree-token-url {
+  color: var(--tree-token-key);
+  cursor: pointer;
+}
+.tree-token-url:hover,
+.tree-token-url:focus-visible {
+  text-decoration-color: currentColor;
+}
+.tree-token-url:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 .tree-token-number {
   color: var(--tree-token-number);
@@ -548,6 +575,9 @@ body {
 }
 .tree-line--toggle {
   cursor: pointer;
+}
+.tree-line:where(:has(> .tree-token-key[data-hidden-key-match='true'])) {
+  background: color-mix(in oklab, var(--color-accent) 6%, transparent);
 }
 .tree-line--search-active {
   background: color-mix(in oklab, var(--color-accent) 10%, transparent);
@@ -786,6 +816,9 @@ body {
   opacity: 0;
 }
 /* 树形预览换行/不换行模式 */
+.tree-wrap .tree-children-inner {
+  min-width: 0;
+}
 .tree-wrap .tree-line {
   overflow-wrap: break-word;
   word-break: break-all;
@@ -821,11 +854,6 @@ body {
     color-mix(in oklab, var(--color-foreground) 10%, transparent) 1px,
     transparent 1px
   );
-}
-.tree-wrap .tree-token-key {
-  max-width: 40%;
-  min-width: 0;
-  flex-shrink: 1;
 }
 .tree-nowrap {
   overflow-x: auto;

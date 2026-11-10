@@ -44,7 +44,13 @@ export const findTextMatchRanges = (
   while (start <= source.length - query.length) {
     const index = source.indexOf(query, start);
     if (index < 0) break;
-    ranges.push({ start: index, end: index + query.length });
+    const end = index + query.length;
+    const previousRange = ranges.at(-1);
+    if (previousRange?.end === index) {
+      previousRange.end = end;
+    } else {
+      ranges.push({ start: index, end });
+    }
     start = index + Math.max(query.length, 1);
   }
   return ranges;
