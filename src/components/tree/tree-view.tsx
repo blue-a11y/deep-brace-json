@@ -36,7 +36,7 @@ import { toast } from '../../lib/workspace/toast';
 import { useWorkspaceCommand } from '../../lib/workspace/use-workspace-command';
 import { selectActiveTab, useStore } from '../../store/use-store';
 import { Tip } from '../shared/tip';
-import { ShortcutHint, ShortcutKbd } from '../shortcuts/shortcut-hint';
+import { ShortcutHint } from '../shortcuts/shortcut-hint';
 import { TreeMinimap } from './tree-minimap';
 import { TreeNode } from './tree-node';
 import { TreePathMenu, type TreePathMenuTarget } from './tree-path-menu';
@@ -268,11 +268,6 @@ export const TreeView = () => {
               >
                 <Search size={14} />
                 <span className="pane-action-label">搜索</span>
-                <ShortcutKbd
-                  shortcut="searchTree"
-                  variant="default"
-                  className="pane-action-shortcut"
-                />
               </Button>
             </Tip>
             <Tip
@@ -299,11 +294,6 @@ export const TreeView = () => {
                   />
                 </span>
                 <span className="pane-action-label">{isCopied ? '已复制' : '复制'}</span>
-                <ShortcutKbd
-                  shortcut="copyTree"
-                  variant="default"
-                  className="pane-action-shortcut"
-                />
               </Button>
             </Tip>
             <Tip
@@ -319,7 +309,6 @@ export const TreeView = () => {
               >
                 <Trash2 size={14} />
                 <span className="pane-action-label">清空</span>
-                <ShortcutKbd shortcut="clear" variant="default" className="pane-action-shortcut" />
               </Button>
             </Tip>
             <Tip
@@ -351,11 +340,6 @@ export const TreeView = () => {
                   />
                 </span>
                 <span className="pane-action-label">{shouldWrap ? '换行已开' : '换行已关'}</span>
-                <ShortcutKbd
-                  shortcut="toggleWrap"
-                  variant="default"
-                  className="pane-action-shortcut"
-                />
               </Button>
             </Tip>
             <Tip
@@ -386,11 +370,6 @@ export const TreeView = () => {
                   />
                 </span>
                 <span className="pane-action-label">{hasCollapsedNodes ? '展开' : '折叠'}</span>
-                <ShortcutKbd
-                  shortcut="toggleCollapse"
-                  variant="default"
-                  className="pane-action-shortcut"
-                />
               </Button>
             </Tip>
           </>

@@ -455,8 +455,8 @@ app-state 与滚动 adapter 使用串行队列，重置 / 撤销的完成 Promis
   `ShortcutKbd`、提示文字和 `aria-keyshortcuts` 必须响应同一偏好，禁止硬编码组合。
   当前 React Aria 过滤的 `aria-keyshortcuts` 通过 `useShortcutLabels` 返回的 callback ref
   补到真实元素；验收要检查浏览器 DOM，而不是只检查 JSX 属性。
-  面板动作按钮内使用 Kbd 填充样式直接显示完整快捷键组合；复制使用 C，清空当前内容使用
-  Backspace（Mac 显示为 ⌫），
+  编辑器与树预览面板的动作按钮内不显示快捷键徽标；Tooltip、快捷键说明和
+  `aria-keyshortcuts` 保留统一偏好。复制使用 C，清空当前内容使用 Backspace（Mac 显示为 ⌫），
   两者沿用统一修饰键偏好。复制命令复用树预览的复制逻辑和反馈，未成功解析时不复制。
 - 全局快捷键在 dialog、alertdialog、listbox 和 menu 内暂停；不能以合成按键事件推断能拦截系统保留组合，
   按需用真实键盘确认。编辑器焦点切换命令按现有 EditorView 的 `hasFocus` 调用 `focus()` 或
