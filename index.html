@@ -74,6 +74,7 @@
         --startup-surface: #fff;
         --startup-placeholder: #e8e8eb;
         --startup-muted: #71717a;
+        --workspace-pane-shadow: 0 1px 4px rgb(15 23 42 / 0.08);
         --workspace-toolbar-height: 48px;
         --workspace-tabs-height: 36px;
         /* 状态栏：12.5px 字号 × 1.5 行高 + 上下各 4px。 */
@@ -94,6 +95,10 @@
         box-sizing: border-box;
         height: var(--workspace-status-height);
         line-height: 18.75px;
+      }
+      .workspace-pane-shadow,
+      .startup-pane {
+        box-shadow: var(--workspace-pane-shadow);
       }
       @media (min-width: 768px) {
         :root {
@@ -417,6 +422,7 @@
         --startup-surface: color-mix(in oklab, var(--startup-foreground) 5%, transparent);
         --startup-placeholder: #343438;
         --startup-muted: #a1a1aa;
+        --workspace-pane-shadow: 0 1px 4px rgb(0 0 0 / 0.22);
       }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

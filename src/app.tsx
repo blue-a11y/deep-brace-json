@@ -71,7 +71,8 @@ const App = () => {
     }
   };
 
-  const paneClass = 'h-full overflow-hidden rounded-2xl bg-white dark:bg-foreground/5';
+  const paneClass =
+    'workspace-pane-shadow h-full overflow-hidden rounded-2xl bg-white dark:bg-foreground/5';
   const editorPane = (
     <div key={`${activeTabId}-editor`} data-workspace-pane="editor" className={paneClass}>
       <EditorPane />
